@@ -26,6 +26,6 @@ jobs:
         working-directory: ./user
         run: |
           yarn ci
-          yarn install --frozen-lockfile
+          yarn install
           yarn run build --if-present
  
