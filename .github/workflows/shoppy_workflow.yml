@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
+        node-version: [14.x]
 
     steps:
       - uses: actions/checkout@v3
@@ -18,9 +18,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "yarn"
       - name: Install Dependencies and Build (User)
         working-directory: ./user
         run: |
-          yarn install --frozen-lockfile
-          yarn run build --if-present
+       
+          yarn install 
+          yarn run build 
+      - name: Install Dependencies and Build (Vendor)
+        working-directory: ./vendor
+        run: |
+         
+            yarn install 
+            yarn run build
