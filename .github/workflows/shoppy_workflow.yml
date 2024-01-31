@@ -21,6 +21,6 @@ jobs:
       - name: Install Dependencies and Build (User)
         working-directory: ./user
         run: |
-          cd ./user
+       
           yarn install --frozen-lockfile
           yarn run build --if-present
