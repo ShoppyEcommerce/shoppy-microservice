@@ -22,5 +22,5 @@ jobs:
         working-directory: ./user
         run: |
        
-          yarn install --frozen-lockfile
+          yarn install 
           yarn run build --if-present
