@@ -24,7 +24,7 @@ jobs:
        
           yarn install 
           yarn run build 
-      - name: Install Dependencies and Build (User)
+      - name: Install Dependencies and Build (Vendor)
         working-directory: ./vendor
         run: |
          
