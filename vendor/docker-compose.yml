@@ -1,0 +1,21 @@
+version: "3"
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${{RABBITMQ_USER}}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      MSG_QUEUE_URL: ${{MSG_QUEUE_URL}}
+      EXCHANGE_NAME: ${{EXCHANGE_NAME}}
+      USER_SERVICE: ${{USER_SERVICE}}
+      
+
+  app:
+    build: .
+    ports:
+      - "5000:8004"
+    depends_on:
+      - rabbitmq

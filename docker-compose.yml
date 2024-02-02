@@ -1,0 +1,80 @@
+version: "3"
+
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_PASSWORD: Okechukwu29
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    networks:
+      - e-commerce_backend_network
+
+  rabbitmq:
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+    networks:
+      - e-commerce_backend_network
+
+  user:
+    build:
+      dockerfile: Dockerfile
+      context: ./user
+    container_name: user
+    hostname: vendor
+    ports:
+      - "4000:4000"
+    restart: always
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    volumes:
+      - .:/app
+      - /app/user/node_modules
+    env_file:
+      - ./user/.env
+    networks:
+      - e-commerce_backend_network
+
+  vendor:
+    build:
+      dockerfile: Dockerfile
+      context: ./vendor
+    container_name: vendor
+    ports:
+      - "5000:5000"
+    restart: always
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    volumes:
+      - .:/app
+      - /app/vendor/node_modules
+    env_file:
+      - ./vendor/.env
+    networks:
+      - e-commerce_backend_network
+
+  nginx-proxy:
+    build:
+      dockerfile: Dockerfile
+      context: ./proxy
+    depends_on:
+      - user
+      - vendor
+
+    ports:
+      - 8080:80
+    networks:
+      - e-commerce_backend_network
+
+networks:
+  e-commerce_backend_network:
