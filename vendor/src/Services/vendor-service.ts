@@ -52,11 +52,11 @@ export class VendorService {
       throw new BadRequestError("phone number does not exists", "Bad request");
     }
     const code = Utils.generateRandomNumber();
-    // const sms = await sendSMS(code.OTP, phone);
-    // console.log(sms);
-    // if (sms && sms.status === 400) {
-    //   throw new BadRequestError(sms.message, "");
-    // }
+    const sms = await sendSMS(code.OTP, phone);
+    console.log(sms);
+    if (sms && sms.status === 400) {
+      throw new BadRequestError(sms.message, "");
+    }
 
     const token = await Utils.Encoded({ id: exist.id });
     await VendorModel.update(
