@@ -9,10 +9,11 @@ export interface Vendor {
   phone: string;
   password: string;
   confirmPassword: string;
-
+  OTP: number | null;
   role: string;
   createdAt?: Date;
   verificationCode: number;
+  OTPExpirationDate: number | null;
 }
 export enum Role {
   ADMIN = "admin",
@@ -63,6 +64,15 @@ VendorModel.init(
     confirmPassword: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    OTP: {
+      type: DataTypes.DECIMAL,
+      allowNull: true,
+      defaultValue: null,
+    },
+    OTPExpirationDate: {
+      type: DataTypes.DOUBLE,
+      allowNull: true,
     },
 
     verificationCode: {

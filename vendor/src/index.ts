@@ -7,7 +7,7 @@ import ExpressApp from "./app";
 const startServer = async () => {
   const app = express();
   databaseConnection
-    .sync()
+    .sync({ alter: true })
     .then(() => console.log("Database connected successfully"))
     .catch((err) => console.log(err));
   await ExpressApp(app);

@@ -8,7 +8,7 @@ const startServer = async () => {
   const app = express();
 
   databaseConnection
-    .sync({ alter: true })
+    .sync()
     .then(() => console.log("database connected"))
     .catch((err) => console.log(err));
   await ExpressApp(app);

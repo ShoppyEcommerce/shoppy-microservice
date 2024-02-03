@@ -32,6 +32,10 @@ export const registerVendorSchema = Joi.object().keys({
 export const loginVendorSchema = Joi.object().keys({
   phone: PasswordComplexity(phoneComplexity).required(),
 });
+export const VerifyOtpSchema = Joi.object().keys({
+  phone: Joi.string().required(),
+  OTP: Joi.number().required(),
+});
 //PRODUCT SCHEMA
 export const ProductSchema = Joi.object().keys({
   name: Joi.string().required(),

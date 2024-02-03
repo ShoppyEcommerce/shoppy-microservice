@@ -1,10 +1,16 @@
 import { VendorRepository } from "../database";
-import { Vendor } from "../database/model";
+import { Vendor, VendorModel } from "../database/model";
 import { v4 as uuid } from "uuid";
-import { registerVendorSchema, option, loginVendorSchema } from "./validation";
+import {
+  registerVendorSchema,
+  option,
+  loginVendorSchema,
+  VerifyOtpSchema,
+} from "./validation";
 import shortid from "shortid";
 import { Utils } from "../utils";
 import { ValidationError, BadRequestError } from "../utils/app-error";
+import { sendSMS } from "../lib/sendSmS";
 
 export class VendorService {
   private vendorRepository: VendorRepository;
@@ -27,6 +33,8 @@ export class VendorService {
     }
 
     value.id = uuid();
+    value.password = await Utils.HashPassword(value.password);
+    value.confirmPassword = await Utils.HashPassword(value.confirmPassword);
     const vendor = await this.vendorRepository.createVendor(value);
     return Utils.FormatData(vendor) as unknown as Vendor;
   }
@@ -43,12 +51,62 @@ export class VendorService {
     if (!exist) {
       throw new BadRequestError("phone number does not exists", "Bad request");
     }
+    const code = Utils.generateRandomNumber();
+    // const sms = await sendSMS(code.OTP, phone);
+    // console.log(sms);
+    // if (sms && sms.status === 400) {
+    //   throw new BadRequestError(sms.message, "");
+    // }
+
     const token = await Utils.Encoded({ id: exist.id });
+    await VendorModel.update(
+      { OTP: code.OTP, OTPExpirationDate: code.timestamp },
+      { where: { id: exist.id } }
+    );
 
     //send a verification code to the user phone number
 
     return Utils.FormatData(token);
   }
+  async VerifyOTP(input: { OTP: number; phone: string }, id: string) {
+    const { error, value } = VerifyOtpSchema.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "validation error");
+    }
+    const { OTP } = value;
+    console.log(value, id);
+    const phone = Utils.intertionalizePhoneNumber(value.phone);
+    const vendor = (await this.vendorRepository.Find({
+      OTP,
+      id,
+      phone,
+    })) as unknown as Vendor;
+    if (!vendor) {
+      throw new BadRequestError("invalid Otp", "Bad Request");
+    }
+
+    if (Number(vendor.OTP) !== Number(OTP)) {
+      throw new BadRequestError("Invalid OTP", "Bad Request");
+    }
+    const currentTimestamp = Date.now();
+    const expirationTime = 5 * 60 * 1000;
+    if (
+      vendor &&
+      currentTimestamp - Number(vendor.OTPExpirationDate) > expirationTime
+    ) {
+      throw new BadRequestError("OTP has expired", "Bad Request");
+    }
+    await VendorModel.update(
+      { OTP: null, OTPExpirationDate: null },
+      { where: { id } }
+    );
+    const data = {
+      success: true,
+      statusCode: 200,
+    };
+    return Utils.FormatData(data);
+  }
+
   async SubscribeEvents(payload: any) {
     console.log("Triggering.... Customer Events");
 

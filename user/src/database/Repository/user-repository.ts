@@ -13,4 +13,5 @@ export class UserRepository {
       return await UserModel.findOne({where:input})
 
    }
+  
 }

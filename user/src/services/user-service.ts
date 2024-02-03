@@ -1,9 +1,15 @@
-import { option, registerUserSchema, loginUserSchema } from "./validation";
+import {
+  option,
+  registerUserSchema,
+  loginUserSchema,
+  verifyOTPSchema,
+} from "./validation";
 import { UserRepository } from "../database";
-import { User } from "../database/model";
+import { User, UserModel } from "../database/model";
 import { Utils } from "../utils";
 import shortid from "shortid";
 import { BadRequestError, ValidationError } from "../utils/ErrorHandler";
+import { sendSMS } from "../lib/sendSmS";
 
 export class UserService {
   private userRepository: UserRepository;
@@ -16,6 +22,7 @@ export class UserService {
     if (error) {
       throw new ValidationError(error.details[0].message, "validation error");
     }
+
     value.phone = Utils.intertionalizePhoneNumber(value.phone);
     const phone = await this.userRepository.Find({ phone: value.phone });
     if (phone) {
@@ -27,8 +34,8 @@ export class UserService {
     }
     value.referralCode = shortid();
     value.role = role;
-    value.password = Utils.HashPassword(value.password);
-    value.confirmPassword = Utils.HashPassword(value.confirmPassword);
+    value.password = await Utils.HashPassword(value.password);
+    value.confirmPassword = await Utils.HashPassword(value.confirmPassword);
 
     const vendor = await this.userRepository.createUser(value);
     return Utils.FormatData(vendor) as unknown as User;
@@ -40,17 +47,68 @@ export class UserService {
     }
     const phone = Utils.intertionalizePhoneNumber(value.phone);
 
-    const exist = (await this.userRepository.Find({
+    const exist = await this.userRepository.Find({
       phone,
-    })) as unknown as User;
+    });
     if (!exist) {
       throw new BadRequestError("phone number does not exists", "Bad request");
     }
-    const token = await Utils.Encoded({ id: exist.id });
-    console.log(token);
+    const info = Utils.generateRandomNumber();
+    const sms = await sendSMS(info.OTP, phone);
+    if (sms && sms.status === 400) {
+      throw new BadRequestError(sms.message, "");
+    }
+    let { id } = exist as unknown as User;
+    const token = await Utils.Encoded({ id });
+
+    await UserModel.update(
+      { OTP: info.OTP, OTPExpiration: info.time },
+      { where: { id } }
+    );
 
     //send a verification code to the user phone number
 
     return Utils.FormatData(token);
+  }
+
+  async VerifyOTP(input: { OTP: number; phone: string }, id: string) {
+    const { error, value } = verifyOTPSchema.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "validation error");
+    }
+    const { OTP } = value;
+    const phone = Utils.intertionalizePhoneNumber(value.phone);
+
+    const user = (await this.userRepository.Find({
+      OTP,
+      id,
+      phone,
+    })) as unknown as User;
+    if (!user) {
+      throw new BadRequestError("user does not exist", "Bad Request");
+    }
+
+    if (Number(user.OTP) !== Number(OTP)) {
+      throw new BadRequestError("Invalid OTP", "Bad Request");
+    }
+
+    const currentTimestamp = Date.now();
+    const expirationTime = 5 * 60 * 1000;
+    console.log(currentTimestamp - Number(user.OTPExpiration), expirationTime);
+    if (
+      user &&
+      currentTimestamp - Number(user.OTPExpiration) > expirationTime
+    ) {
+      throw new BadRequestError("OTP has expired", "Bad Request");
+    }
+    await UserModel.update(
+      { OTP: null, OTPExpiration: null },
+      { where: { id } }
+    );
+    const data = {
+      success: true,
+      statusCode: 200,
+    };
+    return Utils.FormatData(data);
   }
 }

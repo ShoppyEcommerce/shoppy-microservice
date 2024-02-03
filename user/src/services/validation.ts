@@ -33,6 +33,12 @@ export const registerUserSchema = Joi.object().keys({
 export const loginUserSchema = Joi.object().keys({
   phone: PasswordComplexity(phoneComplexity).required(),
 });
+//VERIFYOTP
+export const verifyOTPSchema = Joi.object().keys({
+  phone: Joi.string().required(),
+  OTP: Joi.number().required(),
+});
+
 //module
 export const ModuleSchema = Joi.object().keys({
   name: Joi.string().required(),

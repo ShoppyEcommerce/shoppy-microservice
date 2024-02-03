@@ -108,4 +108,9 @@ export class Utils {
       .join("");
     return `${code}${telephone}`;
   }
+  static generateRandomNumber() {
+    const time = Date.now()
+    const OTP =  Math.floor(100000 + Math.random() * 900000);
+    return {OTP, time}
+  }
 }

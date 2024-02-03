@@ -1,6 +1,7 @@
 import Jwt from "jsonwebtoken";
 import amqplib, { Channel, ConsumeMessage } from "amqplib";
 import { BadRequestError, UnAuthorized } from "./app-error";
+import bcryptjs, { genSaltSync } from "bcryptjs";
 
 export class Utils {
   static async Encoded(input: { id: string }) {
@@ -9,6 +10,11 @@ export class Utils {
     } catch (error) {
       throw new BadRequestError("invalid data", "bad request");
     }
+  }
+  static generateRandomNumber() {
+    const timestamp = Date.now();
+    const OTP = Math.floor(100000 + Math.random() * 900000);
+    return { OTP, timestamp };
   }
   static async Decoded(token: string): Promise<string | Jwt.JwtPayload> {
     try {
@@ -19,6 +25,10 @@ export class Utils {
 
       throw new UnAuthorized(customErr.message, "");
     }
+  }
+  static async HashPassword(password: string) {
+    const hashedPassword = bcryptjs.hashSync(password, genSaltSync());
+    return hashedPassword;
   }
   static async CreateChannel() {
     try {
