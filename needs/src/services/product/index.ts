@@ -11,10 +11,16 @@ import {
   ValidationError,
 } from "../../utils/ErrorHandler";
 import * as geolib from "geolib";
-import { ProductSchema, UpdateProductSchema, option } from "./validation";
+import {
+  ClosestProductSchema,
+  ProductSchema,
+  UpdateProductSchema,
+  option,
+} from "./validation";
 import { Utils } from "../../utils";
 import {
   Category,
+  Product,
   ProductModel,
   Vendor,
   VendorModel,
@@ -23,6 +29,7 @@ import {
   VendorProfile,
   VendorProfileModel,
 } from "../../database/model/vendorProfile";
+import { Op } from "sequelize";
 
 interface IProduct {
   categoryId: string;
@@ -137,17 +144,16 @@ export class ProductService {
     const product = await this.repository.getVendorsProducts(user);
     return Utils.FormatData(product);
   }
-  async getClosestProduct(input: {
-    latitude: number;
-    longitude: number;
-    id: string;
-  }) {
+  async getClosestProduct(input: { latitude: number; longitude: number }) {
     try {
+      const { error } = ClosestProductSchema.validate(input, option);
+      if (error) {
+        throw new ValidationError(error.details[0].message, "");
+      }
       const profiles =
         (await this.vendorProfile.findAll()) as unknown as VendorProfile[];
       const vendors: string[] = [];
-      if(profiles.length > 0){
-
+      if (profiles.length > 0) {
         profiles.map((profile: VendorProfile) => {
           const valid = geolib.isPointWithinRadius(
             { latitude: input.latitude, longitude: input.longitude },
@@ -156,15 +162,35 @@ export class ProductService {
           );
           valid && vendors.push(profile.vendorId);
         });
-        if(vendors.length === 0){
-          return []
+        if (vendors.length === 0) {
+          return [];
         }
-       const product =  vendors.map(vendor => this.getVendorsProducts(vendor))
-  
-       return await Promise.all(product)
+        const product = vendors.map((vendor) =>
+          this.getVendorsProducts(vendor)
+        );
+
+        return await Promise.all(product);
       }
     } catch (error) {
       throw new BadRequestError(error as string, "");
     }
   }
+  async searchProductsAndVendors(
+    input: string
+  ): Promise<{ products: ProductModel[]; vendors: VendorModel[] }> {
+    const products = await ProductModel.findAll({
+      where: { name: { [Op.like]: `%${input}%` } },
+    });
+    const vendors = await VendorModel.findAll({
+      where: {
+        [Op.or]: [
+          { firstName: { [Op.like]: `%${input}%` } },
+          { lastName: { [Op.like]: `%${input}%` } },
+        ],
+      },
+      include: ProductModel,
+    });
+    return { products, vendors };
+  }
+  async RatingProduct(productId: string, rating: number) {}
 }

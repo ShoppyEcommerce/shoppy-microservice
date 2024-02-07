@@ -19,7 +19,6 @@ export class AuthMiddleware {
           );
         }
         const verify = (await Utils.Decoded(token)) as JwtPayload;
-        console.log(verify);
 
         const user = (await new UserRepository().Find({
           id: verify.id,

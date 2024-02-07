@@ -118,12 +118,27 @@ export default (app: Application, channel: Channel) => {
   );
   app.get(
     "/product/vendor/close",
-    VendorAuth,
+
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { latitude, longitude } = req.query;
 
-        const product = await service.getClosestProduct({ latitude, longitude, id: req.user });
+        const product = await service.getClosestProduct({
+          latitude,
+          longitude,
+        });
+        return res.status(200).json(product);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.get(
+    "/search/product",
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const { search } = req.query;
+        const product = await service.searchProductsAndVendors(search);
         return res.status(200).json(product);
       } catch (error) {
         next(error);

@@ -21,4 +21,8 @@ export class VendorRepository {
   async update(id: string, input: Partial<Vendor>) {
     return await VendorModel.update(input, { where: { id } });
   }
+  async delete(id:string){
+    await VendorModel.destroy({where:{id}})
+    return 'Deleted Successfully'
+  }
 }

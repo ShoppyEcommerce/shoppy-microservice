@@ -62,10 +62,9 @@ export class VendorService {
     if (!exist) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
-    const isValid = Utils.ComparePassword(value.password,exist.password)
-    if(!isValid){
+    const isValid = Utils.ComparePassword(value.password, exist.password);
+    if (!isValid) {
       throw new BadRequestError("invalid credentials", "Bad request");
-
     }
     // const code = Utils.generateRandomNumber();
     // const sms = await sendSMS(code.OTP, phone);
@@ -129,7 +128,7 @@ export class VendorService {
       phone,
     })) as unknown as Vendor;
     if (!vendor) {
-      throw new BadRequestError("user does not exist", "Bad Request");
+      throw new BadRequestError("vendor does not exist", "Bad Request");
     }
     const info = Utils.generateRandomNumber();
     const sms = await sendSMS(info.OTP, phone);
@@ -142,7 +141,25 @@ export class VendorService {
     );
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
+  async getVendor(id: string) {
+    const vendor = await this.vendorRepository.getVendor(id);
+    if (!vendor) {
+      throw new BadRequestError("vendor does not exist", "Bad Request");
+    }
+    return Utils.FormatData(vendor);
+  }
+  async getVendors() {
+    return await this.vendorRepository.findAll();
+  }
+async deleteVendor(id:string){
+  const vendor = await this.vendorRepository.getVendor(id);
+  if (!vendor) {
+    throw new BadRequestError("vendor does not exist", "Bad Request");
+  }
+  const deleted = await this.vendorRepository.delete(id)
+  return Utils.FormatData(deleted)
 
+}
   async SubscribeEvents(payload: any) {
     console.log("Triggering.... Customer Events");
 

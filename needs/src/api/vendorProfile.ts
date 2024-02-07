@@ -20,59 +20,51 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
-  // app.get(
-  //     "/vendor/:id",
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //     try {
-  //         const data = await service.getVendorProfile(req.params.id);
-  //         return res.status(200).json(data);
-  //     } catch (error) {
-  //         next(error);
-  //     }
-  //     }
-  // );
-  // app.get(
-  //     "/vendor",
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //     try {
-  //         const data = await service.getAllVendorProfile();
-  //         return res.status(200).json(data);
-  //     } catch (error) {
-  //         next(error);
-  //     }
-  //     }
-  // );
-  // app.patch(
-  //     "/vendor/:id",
-  //     VendorAuth.Authenticate(["vendor"]),
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //     try {
-  //         const data = await service.updateVendorProfile(
-  //         req.params.id,
-  //         req.body,
-  //         "UPDATE_VENDOR"
-  //         );
-  //         Utils.PublishMessage(
-  //         channel,
-  //         process.env.VendorService,
-  //         JSON.stringify(data)
-  //         );
-  //         return res.status(200).json(data);
-  //     } catch (error) {
-  //         next(error);
-  //     }
-  //     }
-  // );
-  // app.delete(
-  //     "/vendor/:id",
-  //     VendorAuth.Authenticate(["vendor"]),
-  //     async (req: Request, res: Response, next: NextFunction) => {
-  //     try {
-  //         const data = await service.deleteVendorProfile(req.params.id);
-  //         return res.status(200).json(data);
-  //     } catch (error) {
-  //         next(error);
-  //     }
-  //     }
-  // );
+  app.get(
+    "/profile/vendor/:id",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getVendorProfile(req.params.id);
+        return res.status(200).json(data);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.get(
+    "/profile/vendor",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getVendorsProfile();
+        return res.status(200).json(data);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/profile/vendor/:id",
+    VendorAuth,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.updateVendorProfile(req.params.id, req.body);
+
+        return res.status(200).json(data);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.delete(
+    "/profile/vendor/:id",
+    VendorAuth,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.deleteVendorProfile(req.params.id);
+        return res.status(200).json(data);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

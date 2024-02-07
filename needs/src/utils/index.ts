@@ -97,7 +97,7 @@ export class Utils {
     }
   }
 
-  static intertionalizePhoneNumber(telephone: string, code = "+234") {
+  static intertionalizePhoneNumber(telephone: string, code = "234") {
     const arrangenumber = telephone
       .split("")
       .reverse()
@@ -106,11 +106,12 @@ export class Utils {
       .split("")
       .reverse()
       .join("");
-    return `${code}${telephone}`;
+    console.log(arrangenumber);
+    return `${code}${arrangenumber}`;
   }
   static generateRandomNumber() {
-    const time = Date.now()
-    const OTP =  Math.floor(100000 + Math.random() * 900000);
-    return {OTP, time}
+    const time = Date.now();
+    const OTP = Math.floor(100000 + Math.random() * 900000);
+    return { OTP, time };
   }
 }

@@ -6,22 +6,18 @@ export const sendSMS = async (code: number, to: string) => {
 
   const data = {
     api_key: process.env.API_KEY,
-    message_type: process.env.MESSAGE_TYPE,
     from: process.env.SENDER_ID,
     to,
-    channel: process.env.CHANNEL,
-    pin_attempts: process.env.PIN_ATTEMPTS,
-    pin_time_to_live: process.env.PIN_TIME_TO_LIVE,
-    pin_length: process.env.PIN_LENGTH,
-    pin_placeholder: `< ${code} >`,
-    message_text: `Your pin is ${code}`,
-    pin_type: process.env.MESSAGE_TYPE,
+    sms: `Your pin is - ${code} expires in 5 minutes `,
+    type: "plain",
+    channel: "generic",
+ 
   };
   const options = {
     method: "POST",
     url: process.env.SMS_PATH,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': ['application/json', 'application/json']
     },
     data: data,
   };
@@ -30,7 +26,8 @@ export const sendSMS = async (code: number, to: string) => {
       console.log(response.data);
     })
     .catch((error) => {
-      
+      console.log(error.response);
+
       const data = {
         status: error.response.status,
         message: error.response.data.message,

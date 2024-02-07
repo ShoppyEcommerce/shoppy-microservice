@@ -10,3 +10,5 @@ export { default as Vendor } from "./vendor";
 export { default as Product } from "./product";
 export { default as Delivery } from "./delivery";
 export { default as VendorProfile } from "./vendorProfile";
+export { default as Like } from "./like";
+export { default as Conversation } from "./conversation";

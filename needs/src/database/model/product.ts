@@ -12,9 +12,10 @@ export interface Product {
   quantity: number;
   images: Array<string>;
   description: string;
-  rating: number;
+  rating?: number;
   available: Availabilty;
   ownerId: string;
+  numRating?: number;
 }
 export interface Category {
   id: string;
@@ -76,6 +77,12 @@ ProductModel.init(
     rating: {
       type: DataTypes.FLOAT,
       defaultValue: 0,
+      allowNull: true,
+    },
+    numRating: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: true,
     },
     description: {
       type: DataTypes.TEXT,

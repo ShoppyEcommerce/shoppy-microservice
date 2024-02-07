@@ -3,8 +3,9 @@ import {
   VendorProfileRepository,
   VendorRepository,
 } from "../../database/Repository";
+import { Utils } from "../../utils";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
-import { option, profileSchema } from "./validation";
+import { option, profileSchema, UpdateprofileSchema } from "./validation";
 import { v4 as uuid } from "uuid";
 
 export class VendorProfileService {
@@ -25,6 +26,41 @@ export class VendorProfileService {
     input.vendorId = vendor;
     console.log(input);
 
-     return await this.repository.create(input);
+    return await this.repository.create(input);
+  }
+  async getVendorProfile(id: string) {
+    const profile = await this.repository.findOne({ id });
+    if (!profile) {
+      throw new BadRequestError("no vendor profile found", "");
+    }
+    return Utils.FormatData(profile);
+  }
+  async getVendorsProfile() {
+    return this.repository.findAll();
+  }
+  async updateVendorProfile(id: string, input: Partial<VendorProfile>) {
+    const { error, value } = UpdateprofileSchema.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const profile = await this.repository.findOne({ id });
+    if (!profile) {
+      throw new BadRequestError("no vendor profile found", "");
+    }
+    return await this.repository.update({ id }, input);
+  }
+  async deleteVendorProfile(id: string) {
+    const profile = await this.repository.findOne({ id });
+    if (!profile) {
+      throw new BadRequestError("no vendor profile found", "");
+    }
+    return await this.repository.delete({ id });
+  }
+  async getMyProfile(vendorId: string) {
+    const profile = await this.repository.getVendorProfile(vendorId);
+    if (!profile) {
+      throw new BadRequestError("you do not have a profile yet", "");
+    }
+    return Utils.FormatData(profile);
   }
 }

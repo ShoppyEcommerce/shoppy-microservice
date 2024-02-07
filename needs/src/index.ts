@@ -3,6 +3,7 @@ dotenv.config();
 import express, { NextFunction, Request, Response } from "express";
 import { databaseConnection } from "./database";
 import ExpressApp from "./app";
+import cors from "cors";
 
 const startServer = async () => {
   const app = express();
@@ -11,7 +12,7 @@ const startServer = async () => {
     .sync()
     .then(() => console.log("database connected"))
     .catch((err) => console.log(err));
-  await ExpressApp(app);
+  const httpServer = await ExpressApp(app);
 
   app.use(
     (error: Error | any, req: Request, res: Response, next: NextFunction) => {
@@ -20,11 +21,11 @@ const startServer = async () => {
       res.status(statusCode).json(data);
     }
   );
-  app
+  httpServer
     .listen(process.env.PORT, () => {
       console.log(`listening on port ${process.env.PORT}`);
     })
-    .on("error", (err) => {
+    .on("error", (err: Error) => {
       console.log(err);
       process.exit();
     });

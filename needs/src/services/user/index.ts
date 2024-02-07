@@ -41,10 +41,10 @@ export class UserService {
 
     const user = await this.userRepository.createUser(value);
     const info = Utils.generateRandomNumber();
-    const sms = await sendSMS(info.OTP, value.phone);
-    if (sms && sms.status === 400) {
-      throw new BadRequestError(sms.message, "");
-    }
+    // const sms = await sendSMS(info.OTP, value.phone);
+    // if (sms && sms.status === 400) {
+    //   throw new BadRequestError(sms.message, "");
+    // }
     await UserModel.update(
       { OTP: info.OTP, OTPExpiration: info.time },
       { where: { id: user.id } }
@@ -61,14 +61,19 @@ export class UserService {
 
     const exist = await this.userRepository.Find({
       phone,
-    });
+    }) as unknown as User
     if (!exist) {
+      throw new BadRequestError("phone number does not exists", "Bad request");
+    }
+    const valid =  await Utils.ComparePassword(value.password, exist.password);
+    if(!valid){
       throw new BadRequestError("phone number does not exists", "Bad request");
     }
 
     //send a verification code to the user phone number
 
-    return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
+    const token = await Utils.Encoded({ id: exist.id });
+    return Utils.FormatData(token);
   }
 
   async VerifyOTP(input: { OTP: number; phone: string }) {

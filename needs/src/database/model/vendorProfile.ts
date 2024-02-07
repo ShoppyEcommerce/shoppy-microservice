@@ -43,6 +43,7 @@ VendorProfileModel.init(
     vendorId: {
       type: DataTypes.UUID,
       allowNull: false,
+      onDelete: "CASCADE",
     },
     location: {
       type: DataTypes.STRING,
