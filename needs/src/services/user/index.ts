@@ -4,19 +4,26 @@ import {
   loginUserSchema,
   verifyOTPSchema,
 } from "./validation";
-import { UserRepository, VendorRepository } from "../../database";
+import {
+  UserRepository,
+  VendorRepository,
+  WalletRepository,
+} from "../../database";
 import { User, UserModel, Vendor } from "../../database/model";
 import { Utils } from "../../utils";
 import shortid from "shortid";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import { sendSMS } from "../../lib/sendSmS";
+import { v4 as uuid } from "uuid";
 
 export class UserService {
   private userRepository: UserRepository;
   private vendorRepository: VendorRepository;
+  private wallet: WalletRepository;
   constructor() {
     this.userRepository = new UserRepository();
     this.vendorRepository = new VendorRepository();
+    this.wallet = new WalletRepository();
   }
 
   async createUser(input: User, role: string) {
@@ -41,10 +48,11 @@ export class UserService {
 
     const user = await this.userRepository.createUser(value);
     const info = Utils.generateRandomNumber();
-    // const sms = await sendSMS(info.OTP, value.phone);
-    // if (sms && sms.status === 400) {
-    //   throw new BadRequestError(sms.message, "");
-    // }
+    const sms = await sendSMS(info.OTP, value.phone);
+    if (sms && sms.status === 400) {
+      throw new BadRequestError(sms.message, "");
+    }
+
     await UserModel.update(
       { OTP: info.OTP, OTPExpiration: info.time },
       { where: { id: user.id } }
@@ -59,14 +67,14 @@ export class UserService {
     }
     const phone = Utils.intertionalizePhoneNumber(value.phone);
 
-    const exist = await this.userRepository.Find({
+    const exist = (await this.userRepository.Find({
       phone,
-    }) as unknown as User
+    })) as unknown as User;
     if (!exist) {
       throw new BadRequestError("phone number does not exists", "Bad request");
     }
-    const valid =  await Utils.ComparePassword(value.password, exist.password);
-    if(!valid){
+    const valid = await Utils.ComparePassword(value.password, exist.password);
+    if (!valid) {
       throw new BadRequestError("phone number does not exists", "Bad request");
     }
 

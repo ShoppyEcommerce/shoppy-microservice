@@ -75,14 +75,16 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
-  app.post("/admin/vendor/verify/:id", AuthMiddleware.Authenticate(["Admin"]), async (req:Request, res:Response, next:NextFunction) => {
-    try {
-      const data = await service.VerifyVendor(req.params.id);
-      return res.status(200).json(data);
-      
-    } catch (error) {
-      next(error)
-      
+  app.post(
+    "/admin/vendor/verify/:id",
+    AuthMiddleware.Authenticate(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.VerifyVendor(req.params.id);
+        return res.status(200).json(data);
+      } catch (error) {
+        next(error);
+      }
     }
-  })
+  );
 };

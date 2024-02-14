@@ -15,12 +15,9 @@ export interface Transaction {
 }
 interface product {
   id: string;
-  name: string;
-  price: number;
+  name: string
   quantity: number;
-  vendorId: string;
-  image: string[];
-  totalPrice: number;
+  amount: number;
 }
 
 interface TransactionHistoryCreationAttributes

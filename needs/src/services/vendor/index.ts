@@ -151,15 +151,14 @@ export class VendorService {
   async getVendors() {
     return await this.vendorRepository.findAll();
   }
-async deleteVendor(id:string){
-  const vendor = await this.vendorRepository.getVendor(id);
-  if (!vendor) {
-    throw new BadRequestError("vendor does not exist", "Bad Request");
+  async deleteVendor(id: string) {
+    const vendor = await this.vendorRepository.getVendor(id);
+    if (!vendor) {
+      throw new BadRequestError("vendor does not exist", "Bad Request");
+    }
+    const deleted = await this.vendorRepository.delete(id);
+    return Utils.FormatData(deleted);
   }
-  const deleted = await this.vendorRepository.delete(id)
-  return Utils.FormatData(deleted)
-
-}
   async SubscribeEvents(payload: any) {
     console.log("Triggering.... Customer Events");
 

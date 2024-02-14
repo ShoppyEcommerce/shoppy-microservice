@@ -1,5 +1,12 @@
-import { CategoryRepository } from "../../database/Repository";
-import { ModuleModel, Category } from "../../database/model";
+import { Op } from "sequelize";
+import {
+  CategoryRepository,
+  CategoryModel,
+  ModuleModel,
+  Category,
+  ProductModel,
+} from "../../database";
+
 import { Utils } from "../../utils";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import { CategorySchema, UpdateCategorySchema, option } from "./validation";
@@ -79,5 +86,11 @@ export class CategoryService {
     }
     const data = await this.repository.delete({ id });
     return Utils.FormatData(data);
+  }
+  async searchCategory(search: string) {
+    return await CategoryModel.findAll({
+      where: { name: { [Op.like]: `%${search}%` } },
+      include: ProductModel,
+    });
   }
 }

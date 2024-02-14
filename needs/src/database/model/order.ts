@@ -4,13 +4,13 @@ import { UserModel } from "./user";
 
 export interface Order {
   id: string;
-  product: Product[];
+ cartId:string;
   vendorId: string;
   referenceId: string;
   paymentType: PaymentType;
   userId: string;
   totalAmount: number;
-  store: string;
+  CancelOrderReason?:string
   orderStatus: OrderStatus;
 }
 interface Product {
@@ -19,7 +19,7 @@ interface Product {
   price: number;
   quantity: number;
   vendorId: string;
-  image: string[];
+  image?: string[];
   totalPrice: number;
 }
 export enum PaymentType {
@@ -29,6 +29,7 @@ export enum PaymentType {
 }
 export enum OrderStatus {
   PENDING = "pending",
+  PROCESSING="processing",
   IN_TRANSIT = "in_transit",
   CANCELLED = "canceled",
   DELIVERED = "delivered",
@@ -45,14 +46,11 @@ const OrderSchema = {
     type: DataTypes.UUID,
     allowNull: false,
   },
-  product: {
-    type: DataTypes.JSON,
+  cartId: {
+    type: DataTypes.UUID,
     allowNull: false,
   },
-  store: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
+
   vendorId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -85,6 +83,11 @@ const OrderSchema = {
     allowNull: false,
     defaultValue: OrderStatus.PENDING,
   },
+  CancelOrderReason:{
+    type:DataTypes.TEXT,
+    allowNull:true
+
+  }
 };
 OrderModel.init(OrderSchema, {
   sequelize: databaseConnection,

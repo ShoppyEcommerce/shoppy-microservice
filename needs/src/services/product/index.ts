@@ -192,5 +192,24 @@ export class ProductService {
     });
     return { products, vendors };
   }
-  async RatingProduct(productId: string, rating: number) {}
+  async RatingProduct(productId: string, rating: number) {
+    const product =  await ProductModel.findByPk(productId) as unknown as Product
+    if(!product){
+      throw new BadRequestError('product not found','')
+    }
+  // Calculate new rating based on existing rating and number of ratings
+  const totalRating = (product.rating as number) * (product.numRating ?? 0) + rating;
+
+  const newNumRatings = product.numRating as number + 1;
+  const newRating = totalRating / newNumRatings;
+
+  // Update the product's rating and numRatings fields
+  product.rating = newRating;
+  product.numRating = newNumRatings;
+
+  // Save the updated product
+  await this.repository.update(product,{id:productId})
+
+
+  }
 }

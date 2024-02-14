@@ -1,7 +1,7 @@
 import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
 import { AuthMiddleware } from "./middleware/auth";
-import { OrderService } from "../services/order-service";
+import { OrderService } from "../services";
 import { Utils } from "../utils";
 
 export default (app: Application, channel: Channel) => {
@@ -15,14 +15,14 @@ export default (app: Application, channel: Channel) => {
         const order = await service.createOrder(
           req.body,
           req.user,
-          "ORDER_PRODUCT"
+         
         );
 
-        Utils.PublishMessage(
-          channel,
-          process.env.VendorService,
-          JSON.stringify(order)
-        );
+        // Utils.PublishMessage(
+        //   channel,
+        //   process.env.VendorService,
+        //   JSON.stringify(order)
+        // );
         return res.status(201).json(order);
       } catch (error) {
         next(error);

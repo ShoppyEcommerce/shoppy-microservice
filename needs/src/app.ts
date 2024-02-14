@@ -1,6 +1,5 @@
 import { Application, json } from "express";
-import cors from "cors";
-import { Server } from "socket.io"; // Import Socket.IO Server
+import cors from "cors";// Import Socket.IO Server
 import { Utils } from "./utils";
 import {
   Category,
@@ -16,6 +15,8 @@ import {
   appEvents,
   Like,
   Conversation,
+  Rating,
+  Cart
 } from "./api";
 import { io } from "./config/socket";
 
@@ -42,6 +43,8 @@ export default async (app: Application) => {
   Order(app, channel);
   Like(app, channel);
   Conversation(app, channel);
+  Rating(app, channel)
+  Cart(app, channel)
 
   // Return the http server to be used by index.ts
   return httpServer;

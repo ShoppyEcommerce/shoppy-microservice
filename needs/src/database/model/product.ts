@@ -13,7 +13,7 @@ export interface Product {
   images: Array<string>;
   description: string;
   rating?: number;
-  available: Availabilty;
+  available: Availability;
   ownerId: string;
   numRating?: number;
 }
@@ -36,7 +36,7 @@ export interface ModuleModel {
   updatedAt: Date;
 }
 
-enum Availabilty {
+export enum Availability {
   IN_STOCK = "In Stock",
   OUT_OF_STOCK = "Out Of Stock",
 }
@@ -72,7 +72,7 @@ ProductModel.init(
     images: { type: DataTypes.ARRAY(DataTypes.STRING) },
     available: {
       type: DataTypes.ENUM("In Stock", "Out Of Stock"),
-      defaultValue: Availabilty.IN_STOCK,
+      defaultValue: Availability.IN_STOCK,
     },
     rating: {
       type: DataTypes.FLOAT,

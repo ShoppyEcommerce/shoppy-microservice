@@ -1,15 +1,17 @@
 import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
+import { UserModel } from "./user";
+
 
 export interface VendorOrder {
   id: string;
-  user: User;
+  userId: string;
   product: Product[];
   deliveryAddress: string;
   orderStatus: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
-  ownerId: string;
+  VendorId: string;
 }
 interface Product {
   id: string;
@@ -34,8 +36,8 @@ const VendorOrderSchema = {
     primaryKey: true,
     allowNull: false,
   },
-  user: {
-    type: DataTypes.JSON,
+  userId: {
+    type: DataTypes.UUID,
     allowNull: false,
   },
   product: {
@@ -56,7 +58,7 @@ const VendorOrderSchema = {
     ],
     defaultValue: OrderStatus.Pending,
   },
-  ownerId: {
+  VendorId: {
     type: DataTypes.UUID,
     allowNull: false,
     onDelete: "CASCADE",
@@ -71,9 +73,15 @@ const VendorOrderSchema = {
     allowNull: true,
   },
 };
-//initialise vendorOrder
+
 
 VendorOrderModel.init(VendorOrderSchema, {
   sequelize: databaseConnection,
   tableName: "vendorOrder",
 });
+
+//relationship between  user and vendor
+
+VendorOrderModel.belongsTo(UserModel, {foreignKey:"userId"})
+UserModel.hasMany(VendorOrderModel, {foreignKey:"userId"})
+

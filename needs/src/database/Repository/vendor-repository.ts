@@ -6,7 +6,7 @@ export class VendorRepository {
     const vendor = (await VendorModel.create(input)) as unknown as Vendor;
     return vendor;
   }
-  async Find(input: Record<string, string>) {
+  async Find(input: Record<string, string | boolean>) {
     return await VendorModel.findOne({
       where: input,
       include: [VendorProfileModel],

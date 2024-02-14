@@ -1,18 +1,19 @@
 export { CategoryRepository } from "./category-repository";
-export { LikeRepository } from './like.repository';
+export { LikeRepository } from "./like.repository";
 
 export { UserRepository } from "./user-repository";
 export { VendorRepository } from "./vendor-repository";
 export { VendorProfileRepository } from "./vendor-profile-repository";
 export { ModuleRepository } from "./module-repository";
 export { ProductRepository } from "./product-repository";
-// export {FavoriteRepository} from "./favorite-repository"
+export { RatingRepository } from "./rating-repository";
 export { TransactionRepository } from "./transaction-repository";
 export { WalletRepository } from "./wallet-repository";
 export { ProfileRepository } from "./profile-repository";
 export { OrderRepository } from "./order-repository";
-export {ConversationRepository} from "./conversation-repository"
-export  {MessageRepository} from "./message-repository"
+export { ConversationRepository } from "./conversation-repository";
+export { MessageRepository } from "./message-repository";
+export { CartRepository } from "./cart-repository";
 // export {CartRepository} from "./cart-repository"
 // export {ReviewRepository} from "./review-repository"
 // export {NotificationRepository} from "./notification-repository"

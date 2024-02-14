@@ -79,4 +79,15 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
+  app.get(
+    "/category/search",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const search = await service.searchCategory(req.query.search as string);
+        return res.status(200).json(search);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };
