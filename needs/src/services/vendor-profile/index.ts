@@ -24,12 +24,13 @@ export class VendorProfileService {
     }
     input.id = uuid();
     input.vendorId = vendor;
-    console.log(input);
+  
 
     return await this.repository.create(input);
   }
-  async getVendorProfile(id: string) {
-    const profile = await this.repository.findOne({ id });
+  async getVendorProfile(vendorId: string) {
+    console.log(vendorId)
+    const profile = await this.repository.findOne({ vendorId });
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
     }
@@ -38,23 +39,23 @@ export class VendorProfileService {
   async getVendorsProfile() {
     return this.repository.findAll();
   }
-  async updateVendorProfile(id: string, input: Partial<VendorProfile>) {
+  async updateVendorProfile(vendorId: string, input: Partial<VendorProfile>) {
     const { error, value } = UpdateprofileSchema.validate(input, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const profile = await this.repository.findOne({ id });
+    const profile = await this.repository.findOne({ vendorId }) as unknown as VendorProfile
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
     }
-    return await this.repository.update({ id }, input);
+    return await this.repository.update({ id:profile.id }, input);
   }
-  async deleteVendorProfile(id: string) {
-    const profile = await this.repository.findOne({ id });
+  async deleteVendorProfile(vendorId: string) {
+    const profile = await this.repository.findOne({ vendorId }) as unknown as VendorProfile
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
     }
-    return await this.repository.delete({ id });
+    return await this.repository.delete({ id:profile.id });
   }
   async getMyProfile(vendorId: string) {
     const profile = await this.repository.getVendorProfile(vendorId);

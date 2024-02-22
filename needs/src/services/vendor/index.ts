@@ -7,7 +7,7 @@ import {
   loginVendorSchema,
   VerifyOtpSchema,
 } from "./validation";
-import shortid from "shortid";
+
 import { Utils } from "../../utils";
 import { ValidationError, BadRequestError } from "../../utils/ErrorHandler";
 import { sendSMS } from "../../lib/sendSmS";
@@ -49,39 +49,37 @@ export class VendorService {
 
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
-  async Login(input: { phone: string }) {
+  async Login(input: { phone: string; password: string }) {
     const { error, value } = loginVendorSchema.validate(input, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "validation error");
     }
+
     const phone = Utils.intertionalizePhoneNumber(value.phone);
 
-    const exist = (await this.vendorRepository.Find({
+    const exist = await this.vendorRepository.Find({
       phone,
-    })) as unknown as Vendor;
+    });
     if (!exist) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
-    const isValid = Utils.ComparePassword(value.password, exist.password);
+    const vendor = await this.transformUser(exist.dataValues);
+    if (!vendor.OTPVerification) {
+      throw new BadRequestError("Account not verified", "Bad request");
+    }
+    const isValid = Utils.ComparePassword(value.password, vendor.password);
     if (!isValid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
-    // const code = Utils.generateRandomNumber();
-    // const sms = await sendSMS(code.OTP, phone);
-    // console.log(sms);
-    // if (sms && sms.status === 400) {
-    //   throw new BadRequestError(sms.message, "");
-    // }
 
-    const token = await Utils.Encoded({ id: exist.id });
-    // await VendorModel.update(
-    //   { OTP: code.OTP, OTPExpirationDate: code.time },
-    //   { where: { id: exist.id } }
-    // );
+    const token = await Utils.Encoded({ id: vendor.id });
 
     //send a verification code to the user phone number
 
-    return Utils.FormatData(token);
+    return Utils.FormatData({
+      token,
+      ...vendor,
+    });
   }
   async VerifyOTP(input: { OTP: number; phone: string }) {
     const { error, value } = VerifyOtpSchema.validate(input, option);
@@ -91,17 +89,21 @@ export class VendorService {
     const { OTP } = value;
 
     const phone = Utils.intertionalizePhoneNumber(value.phone);
-    const vendor = (await this.vendorRepository.Find({
+    const exist = await this.vendorRepository.Find({
       OTP,
 
       phone,
-    })) as unknown as Vendor;
-    if (!vendor) {
+    });
+    if (!exist) {
       throw new BadRequestError("invalid Otp", "Bad Request");
     }
+    const vendor = await this.transformUser(exist.dataValues);
 
     if (Number(vendor.OTP) !== Number(OTP)) {
       throw new BadRequestError("Invalid OTP", "Bad Request");
+    }
+    if(vendor.OTPVerification){
+      throw new BadRequestError("Account already verified", "Bad Request");
     }
     const currentTimestamp = Date.now();
     const expirationTime = 5 * 60 * 1000;
@@ -112,18 +114,22 @@ export class VendorService {
       throw new BadRequestError("OTP has expired", "Bad Request");
     }
     await VendorModel.update(
-      { OTP: null, OTPExpirationDate: null, isVerified: true },
+      { OTP: null, OTPExpirationDate: null, OTPVerification: true },
       { where: { id: vendor.id } }
     );
+
     const token = await Utils.Encoded({ id: vendor.id });
     const data = {
-      success: true,
-      statusCode: 200,
       token,
+      ...vendor,
+      OTP: null,
+      OTPExpirationDate: null,
+      OTPVerification: true,
     };
     return Utils.FormatData(data);
   }
-  async resendOtp(phone: string) {
+  async resendOtp(input: string) {
+    const phone = Utils.intertionalizePhoneNumber(input);
     const vendor = (await this.vendorRepository.Find({
       phone,
     })) as unknown as Vendor;
@@ -159,32 +165,23 @@ export class VendorService {
     const deleted = await this.vendorRepository.delete(id);
     return Utils.FormatData(deleted);
   }
-  async SubscribeEvents(payload: any) {
-    console.log("Triggering.... Customer Events");
+  async transformUser(userData: any): Promise<Vendor> {
+    const vendor: Vendor = {
+      id: userData.id,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      phone: userData.phone,
+      password: userData.password,
+      confirmPassword: userData.confirmPassword,
+      role: userData.role,
+      createdAt: new Date(userData.createdAt),
+      OTP: userData.OTP,
+      OTPExpirationDate: userData.OTPExpirationDate,
+      isVerified: userData.isVerified,
+      OTPVerification: userData.OTPVerification,
+    };
 
-    payload = JSON.parse(payload);
-
-    const { event, data } = payload;
-    console.log(event, data);
-
-    // const { userId, product, order, qty } = data;
-
-    // switch(event){
-    //     case 'ADD_TO_WISHLIST':
-    //     case 'REMOVE_FROM_WISHLIST':
-    //         this.AddToWishlist(userId,product)
-    //         break;
-    //     case 'ADD_TO_CART':
-    //         this.ManageCart(userId,product, qty, false);
-    //         break;
-    //     case 'REMOVE_FROM_CART':
-    //         this.ManageCart(userId,product,qty, true);
-    //         break;
-    //     case 'CREATE_ORDER':
-    //         this.ManageOrder(userId,order);
-    //         break;
-    //     default:
-    //         break;
-    // }
+    return vendor;
   }
 }

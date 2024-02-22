@@ -16,7 +16,9 @@ import {
   Like,
   Conversation,
   Rating,
-  Cart
+  Cart,
+  Payment,
+  Wallet
 } from "./api";
 import { io } from "./config/socket";
 
@@ -45,6 +47,8 @@ export default async (app: Application) => {
   Conversation(app, channel);
   Rating(app, channel)
   Cart(app, channel)
+  Payment(app,channel)
+  Wallet(app, channel)
 
   // Return the http server to be used by index.ts
   return httpServer;

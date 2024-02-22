@@ -89,7 +89,7 @@ ProductModel.init(
       allowNull: false,
     },
   },
-  { sequelize: databaseConnection, tableName: "vendor-product" }
+  { sequelize: databaseConnection, tableName: "product" }
 );
 //relationship between vendor and product
 VendorModel.hasMany(ProductModel, { foreignKey: "ownerId" });

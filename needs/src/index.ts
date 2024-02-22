@@ -3,7 +3,7 @@ dotenv.config();
 import express, { NextFunction, Request, Response } from "express";
 import { databaseConnection } from "./database";
 import ExpressApp from "./app";
-import cors from "cors";
+import { errorHandler } from "./utils/ErrorHandler/error";
 
 const startServer = async () => {
   const app = express();
@@ -15,11 +15,12 @@ const startServer = async () => {
   const httpServer = await ExpressApp(app);
 
   app.use(
-    (error: Error | any, req: Request, res: Response, next: NextFunction) => {
-      const statusCode = error.statusCode || 500;
-      const data = error.data || error.message;
-      res.status(statusCode).json(data);
-    }
+    errorHandler
+    // (error: Error | any, req: Request, res: Response, next: NextFunction) => {
+    //   const statusCode = error.statusCode || 500;
+    //   const data = error.data || error.message;
+    //   res.status(statusCode).json(data);
+    // }
   );
   httpServer
     .listen(process.env.PORT, () => {

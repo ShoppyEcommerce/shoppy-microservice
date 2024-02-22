@@ -16,25 +16,30 @@ const phoneComplexity = {
   requirementCount: 2,
 };
 export const registerVendorSchema = Joi.object().keys({
-    email: Joi.string().trim().lowercase().email().required(),
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-    password: PasswordComplexity(complexityOptions).required(),
-    confirmPassword: Joi.any()
-      .equal(Joi.ref("password"))
-      .required()
-      .label("Confirm password")
-      .messages({ "any.only": "{{#label}} does not match" }),
-    phone: PasswordComplexity(phoneComplexity).required(),
-  });
-  export const loginVendorSchema = Joi.object().keys({
-    phone: PasswordComplexity(phoneComplexity).required(),
-  });
-  export const option = {
-    abortEarly: false,
-    errors: {
-      wrap: {
-        label: "",
-      },
+  email: Joi.string().trim().lowercase().email().required(),
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
+  password: PasswordComplexity(complexityOptions).required(),
+  confirmPassword: Joi.any()
+    .equal(Joi.ref("password"))
+    .required()
+    .label("Confirm password")
+    .messages({ "any.only": "{{#label}} does not match" }),
+  phone: PasswordComplexity(phoneComplexity).required(),
+});
+export const loginVendorSchema = Joi.object().keys({
+  phone: PasswordComplexity(phoneComplexity).required(),
+  password: PasswordComplexity(complexityOptions).required(),
+});
+export const verifyOTPSchema = Joi.object().keys({
+  phone: Joi.string().required(),
+  OTP: Joi.number().required(),
+});
+export const option = {
+  abortEarly: false,
+  errors: {
+    wrap: {
+      label: "",
     },
-  };
+  },
+};

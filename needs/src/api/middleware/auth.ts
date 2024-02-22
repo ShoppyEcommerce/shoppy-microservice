@@ -26,7 +26,9 @@ export class AuthMiddleware {
         if (!user) {
           throw new UnAuthorized("user with this token not found", "");
         }
-        console.log(role, user.role);
+        if (!user.isverified) {
+          throw new UnAuthorized("This user has not been verified", "");
+        }
         if (!role.includes(user.role)) {
           throw new UnAuthorized("Unauthorized user", "");
         }

@@ -3,11 +3,9 @@ import {
   CartRepository,
   VendorRepository,
   CartStatus,
-  CartModel,
 } from "../../database";
 import { v4 as uuid } from "uuid";
-import { CartValidationSchema } from "./validation";
-import { option } from "../validation";
+import { CartValidationSchema,option } from "./validation";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 
 export class CartService {

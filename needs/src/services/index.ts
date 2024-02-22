@@ -1,6 +1,6 @@
 export { CategoryService } from "./category";
 export { MediaService } from "./media";
-export { PaymentService } from "./payment-serice";
+export { PaymentService } from "./payment";
 export { ProfileService } from "./profile";
 export { VendorProfileService } from "./vendor-profile";
 export { DeliveryService } from "./delivery";
@@ -15,3 +15,4 @@ export { TransactionService } from "./transaction";
 export { WalletService } from "./wallet";
 export { ConversationService } from "./conversation";
 export { CartService } from "./cart";
+export { DeliveryProfileService } from "./deliveryProfile";

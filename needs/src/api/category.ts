@@ -1,7 +1,7 @@
 import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
 import { CategoryService } from "../services";
-import { AuthMiddleware } from "./middleware/auth";
+import { AuthMiddleware, successHandler } from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new CategoryService();
@@ -11,8 +11,12 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const category = await service.createCategory(req.body);
-        return res.status(201).json(category);
+        const data = await service.createCategory(req.body);
+        return successHandler(res, {
+          data,
+          message: "category created successfully",
+          statusCode: 201,
+        });
       } catch (error) {
         console.log(error);
         next(error);
@@ -23,8 +27,12 @@ export default (app: Application, channel: Channel) => {
     "/category",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const category = await service.getCategories();
-        return res.status(200).json(category);
+        const data = await service.getCategories();
+        return successHandler(res, {
+          data,
+          message: "categories returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -35,8 +43,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const category = await service.getCategory(id);
-        return res.status(200).json(category);
+        const data = await service.getCategory(id);
+        return successHandler(res, {
+          data,
+          message: "category returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -46,8 +58,12 @@ export default (app: Application, channel: Channel) => {
     "/category/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const module = await service.getCategoryModule(req.params.id);
-        return res.status(200).json(module);
+        const data = await service.getCategoryModule(req.params.id);
+        return successHandler(res, {
+          data,
+          message: "categories module returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -60,7 +76,11 @@ export default (app: Application, channel: Channel) => {
       try {
         const data = await service.updateCategory(req.params.id, req.body);
 
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "category updated successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -73,7 +93,11 @@ export default (app: Application, channel: Channel) => {
       try {
         const data = await service.deleteCategory(req.params.id);
 
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "category deleted successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -83,8 +107,12 @@ export default (app: Application, channel: Channel) => {
     "/category/search",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const search = await service.searchCategory(req.query.search as string);
-        return res.status(200).json(search);
+        const data = await service.searchCategory(req.query.search as string);
+        return successHandler(res, {
+          data,
+          message: "search result returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }

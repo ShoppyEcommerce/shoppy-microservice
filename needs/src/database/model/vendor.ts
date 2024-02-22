@@ -12,9 +12,9 @@ export interface Vendor {
   OTP: number | null;
   role: string;
   createdAt?: Date;
-  verificationCode: number;
   OTPExpirationDate: number | null;
   isVerified: boolean;
+  OTPVerification:boolean,
 }
 export enum Role {
   ADMIN = "admin",
@@ -79,11 +79,12 @@ VendorModel.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-
-    verificationCode: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
+    OTPVerification: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
+
+   
   },
   { sequelize: databaseConnection, tableName: "vendor" }
 );

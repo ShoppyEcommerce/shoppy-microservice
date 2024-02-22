@@ -4,6 +4,7 @@ const STATUS_CODES = {
     UNAUTHORIZED: 403, // Corrected typo in status code name
     NOT_FOUND: 404,
     INTERNAL_ERROR: 500,
+    PAYMENT_ERROR:402
 };
 
 class AppError extends Error {
@@ -61,6 +62,11 @@ class ValidationError extends AppError {
         super('BAD REQUEST', STATUS_CODES.BAD_REQUEST, description, true, errorStack, undefined);
     }
 }
+ class PaymentRequiredError extends AppError {
+    constructor(description = "Payment Error") {
+      super(description, STATUS_CODES.PAYMENT_ERROR, description, true, undefined, undefined);
+    }
+  }
 
 // module.exports = {
 //     AppError,
@@ -75,4 +81,5 @@ export  {  AppError,
     BadRequestError,
     ValidationError,
     UnAuthorized,
+    PaymentRequiredError,
     STATUS_CODES,}

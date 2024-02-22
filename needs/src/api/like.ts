@@ -1,8 +1,7 @@
 import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
 import { LikeService } from "../services";
-import { AuthMiddleware } from "./middleware/auth";
-import { VendorAuth } from "./middleware";
+import { VendorAuth, AuthMiddleware, successHandler } from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new LikeService();
@@ -12,8 +11,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { productId } = req.body;
-        const like = await service.toggleProductLike(productId, req.user);
-        return res.status(201).json(like);
+        const data = await service.toggleProductLike(productId, req.user);
+        return successHandler(res, {
+          data,
+          message: data,
+          statusCode: 201,
+        });
       } catch (error) {
         next(error);
       }
@@ -24,19 +27,27 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const like = await service.getLikes(req.user);
+        const data = await service.getLikes(req.user);
+        return successHandler(res, {
+          data,
+          message: "liked product returned successfully",
+          statusCode: 201,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.get(
+    "/like/:productId",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const like = await service.getLike(req.user, req.params.productId);
         return res.status(200).json(like);
       } catch (error) {
         next(error);
       }
     }
   );
-  app.get("/like/:productId", AuthMiddleware.Authenticate(["user"]), async (req: Request | any, res: Response, next: NextFunction) => {
-    try {
-      const like = await service.getLike(req.user,req.params.productId);
-      return res.status(200).json(like);
-    } catch (error) {
-      next(error);
-    }
-  })
 };

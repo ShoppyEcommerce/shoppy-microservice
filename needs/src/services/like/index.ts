@@ -9,14 +9,14 @@ export class LikeService {
   constructor() {
     this.repository = new LikeRepository();
   }
-  async toggleProductLike(productId: string, userId: string): Promise<boolean> {
+  async toggleProductLike(productId: string, userId: string): Promise<string> {
     // Check if the user has already liked the product
     const existingLike = await this.repository.find({ userId, productId });
 
     if (existingLike) {
       // If the user has already liked the product, unlike it
       await existingLike.destroy();
-      return false; // Product unliked
+      return "product unliked"; // Product unliked
     } else {
       // If the user has not liked the product, like it
       const newLike = await this.repository.createLike({
@@ -26,7 +26,7 @@ export class LikeService {
         UserModelId: userId, // Set UserModelId explicitly
         ProductModelId: productId, // Set ProductModelId explicitly
       });
-      return true; // Product liked
+      return "product liked"; // Product liked
     }
   }
   async getLikes(userId: string) {

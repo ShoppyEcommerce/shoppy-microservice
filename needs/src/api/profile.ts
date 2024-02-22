@@ -1,7 +1,7 @@
 import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
 import { ProfileService } from "../services";
-import { AuthMiddleware } from "./middleware/auth";
+import { AuthMiddleware, successHandler } from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new ProfileService();
@@ -10,8 +10,12 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const profile = await service.createProfile(req.body, req.user);
-        return res.status(201).json(profile);
+        const data = await service.createProfile(req.body, req.user);
+        return successHandler(res, {
+          data,
+          message: "profile created successfully",
+          statusCode: 201,
+        });
       } catch (error) {
         next(error);
       }
@@ -22,8 +26,12 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const profile = await service.getProfile(req.user);
-        return res.status(200).json(profile);
+        const data = await service.getProfile(req.user);
+        return successHandler(res, {
+          data,
+          message: "profile returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -35,8 +43,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
-        const profile = await service.updateProfile(id, req.body);
-        return res.status(200).json(profile);
+        const data = await service.updateProfile(id, req.body);
+        return successHandler(res, {
+          data,
+          message: "profile updated successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -48,8 +60,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
-        const profile = await service.deleteProfile(id);
-        return res.status(200).json(profile);
+        const data = await service.deleteProfile(id);
+        return successHandler(res, {
+          data,
+          message: "profile deleted successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }

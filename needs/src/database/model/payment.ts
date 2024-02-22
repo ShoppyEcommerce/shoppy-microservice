@@ -11,6 +11,8 @@ export interface Payment {
   status: PaymentStatus;
   createdAt?: Date;
   updatedAt?: Date;
+  paymentType:string
+
 }
 //paymentStatus
 export enum PaymentStatus {
@@ -28,6 +30,7 @@ export class PaymentModel extends Model<Payment> implements Payment {
   status!: PaymentStatus;
   createdAt!: Date;
   updatedAt!: Date;
+  paymentType!:string
 }
 //paymentSchema
 const paymentSchema = {
@@ -52,6 +55,7 @@ const paymentSchema = {
     type: DataTypes.UUID,
     allowNull: false,
   },
+  paymentType:{type:DataTypes.STRING, allowNull: false},
   status: {
     type: DataTypes.ENUM,
     values: [

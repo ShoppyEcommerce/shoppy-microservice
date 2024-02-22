@@ -29,6 +29,7 @@ export const registerUserSchema = Joi.object().keys({
     .messages({ "any.only": "{{#label}} does not match" }),
   phone: PasswordComplexity(phoneComplexity).required(),
   id: Joi.string().required(),
+  referral:Joi.string().optional()
 });
 export const loginUserSchema = Joi.object().keys({
   phone: PasswordComplexity(phoneComplexity).required(),

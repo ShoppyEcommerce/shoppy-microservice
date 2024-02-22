@@ -5,8 +5,7 @@ import {
   ProductRepository,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
-import { option } from "../validation";
-import { RatingValidation } from "./validation";
+import { RatingValidation,option } from "./validation";
 import { v4 as uuid } from "uuid";
 
 export class RatingService {
@@ -21,7 +20,6 @@ export class RatingService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    console.log(input, user);
     const product = await this.productRepo.getProduct({
       id: input.productId,
     }) as unknown as Product;

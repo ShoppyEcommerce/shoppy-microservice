@@ -2,7 +2,7 @@ import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
 import { ModuleService } from "../services";
 import { Utils } from "../utils";
-import { AuthMiddleware } from "./middleware/auth";
+import { successHandler , AuthMiddleware} from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new ModuleService();
@@ -13,7 +13,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.createModule(req.body);
-        return res.status(201).json(data);
+        return successHandler(res, {
+          data,
+          message: "module created successfully",
+          statusCode: 201,
+        });
       } catch (error) {
         next(error);
       }
@@ -24,7 +28,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.getModule(req.params.id);
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "module returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -35,7 +43,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.getAllModule();
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "module returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -51,12 +63,12 @@ export default (app: Application, channel: Channel) => {
           req.body,
           "UPDATE_MODULE"
         );
-        Utils.PublishMessage(
-          channel,
-          process.env.VendorService,
-          JSON.stringify(data)
-        );
-        return res.status(200).json(data);
+      
+        return successHandler(res, {
+          data,
+          message: "module updated successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -69,7 +81,11 @@ export default (app: Application, channel: Channel) => {
       try {
         const data = await service.delete(req.params.id);
 
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "module deleted successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }

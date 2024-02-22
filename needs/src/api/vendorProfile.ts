@@ -2,7 +2,7 @@ import { Application, NextFunction, Request, Response } from "express";
 import { VendorProfileService } from "../services";
 import { Channel } from "amqplib";
 import { Utils } from "../utils/index";
-import { VendorAuth } from "./middleware/vendorAuth";
+import { VendorAuth, successHandler } from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new VendorProfileService();
@@ -11,21 +11,29 @@ export default (app: Application, channel: Channel) => {
     "/profile/vendor/create",
     VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
-      console.log(req.body, req.user);
       try {
         const data = await service.createVendorProfile(req.body, req.user);
-        return res.status(201).json(data);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "vendor profile created successfully",
+        });
       } catch (error) {
         next(error);
       }
     }
   );
   app.get(
-    "/profile/vendor/:id",
-    async (req: Request, res: Response, next: NextFunction) => {
+    "/profile/vendor",
+    VendorAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getVendorProfile(req.params.id);
-        return res.status(200).json(data);
+        const data = await service.getVendorProfile(req.user);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "vendor returned successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -36,32 +44,44 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.getVendorsProfile();
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "vendor returned successfully",
+        });
       } catch (error) {
         next(error);
       }
     }
   );
   app.patch(
-    "/profile/vendor/:id",
+    "/profile/vendor",
     VendorAuth,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.updateVendorProfile(req.params.id, req.body);
+        const data = await service.updateVendorProfile(req.user, req.body);
 
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "vendor profile updated successfully",
+        });
       } catch (error) {
         next(error);
       }
     }
   );
   app.delete(
-    "/profile/vendor/:id",
+    "/profile/vendor",
     VendorAuth,
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.deleteVendorProfile(req.params.id);
-        return res.status(200).json(data);
+        const data = await service.deleteVendorProfile(req.user);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "vendor deleted successfully",
+        });
       } catch (error) {
         next(error);
       }

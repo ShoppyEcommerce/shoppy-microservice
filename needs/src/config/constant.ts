@@ -1,0 +1,1 @@
+export const PAYSTACK_API="https://api.paystack.co"

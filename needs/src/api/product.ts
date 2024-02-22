@@ -2,7 +2,7 @@ import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
 import { ProductService } from "../services";
 import { v4 as uuid } from "uuid";
-import { VendorAuth } from "./middleware/vendorAuth";
+import { VendorAuth, successHandler } from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new ProductService();
@@ -12,11 +12,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const id = uuid();
-        const product = await service.createProduct(
-          { ...req.body, id },
-          req.user
-        );
-        return res.status(201).json(product);
+        const data = await service.createProduct({ ...req.body, id }, req.user);
+        return successHandler(res, {
+          data,
+          message: "product created successfully",
+          statusCode: 201,
+        });
       } catch (error) {
         next(error);
       }
@@ -26,8 +27,12 @@ export default (app: Application, channel: Channel) => {
     "/product",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const product = await service.getProducts();
-        return res.status(200).json(product);
+        const data = await service.getProducts();
+        return successHandler(res, {
+          data,
+          message: "products returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -38,8 +43,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const product = await service.getProduct(id);
-        return res.status(200).json(product);
+        const data = await service.getProduct(id);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -50,8 +59,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const product = await service.getProductCategory(id);
-        return res.status(200).json(product);
+        const data = await service.getProductCategory(id);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -62,8 +75,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const product = await service.getProductModule(id);
-        return res.status(200).json(product);
+        const data = await service.getProductModule(id);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -74,7 +91,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.updateProduct(req.params.id, req.body);
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "product updated successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -85,7 +106,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.deleteProduct(req.params.id);
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          message: "product deleted successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -97,8 +122,12 @@ export default (app: Application, channel: Channel) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
-        const product = await service.getVendorsProduct(id, req.user);
-        return res.status(200).json(product);
+        const data = await service.getVendorsProduct(id, req.user);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -109,8 +138,12 @@ export default (app: Application, channel: Channel) => {
     VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const product = await service.getVendorsProducts(req.user);
-        return res.status(200).json(product);
+        const data = await service.getVendorsProducts(req.user);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -123,11 +156,15 @@ export default (app: Application, channel: Channel) => {
       try {
         const { latitude, longitude } = req.query;
 
-        const product = await service.getClosestProduct({
+        const data = await service.getClosestProduct({
           latitude,
           longitude,
         });
-        return res.status(200).json(product);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }
@@ -138,8 +175,28 @@ export default (app: Application, channel: Channel) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { search } = req.query;
-        const product = await service.searchProductsAndVendors(search);
-        return res.status(200).json(product);
+        const data = await service.searchProductsAndVendors(search);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.get(
+    "/favorite/product/all",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        console.log("favorite");
+        const data = await service.getFavorite();
+        return successHandler(res, {
+          data,
+          message: "favorite product returned successfully",
+          statusCode: 200,
+        });
       } catch (error) {
         next(error);
       }

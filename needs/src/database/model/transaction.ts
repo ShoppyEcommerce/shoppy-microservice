@@ -11,7 +11,7 @@ export interface Transaction {
   description: string;
   createdAt?: Date;
   updatedAt?: Date;
-  product: product[];
+  product?: product[];
 }
 interface product {
   id: string;
@@ -76,6 +76,7 @@ TransactionHistoryModel.init(
     },
     product: {
       type: DataTypes.JSONB,
+      allowNull: true,
     },
   },
   { sequelize: databaseConnection, tableName: "TransactionHistory" }

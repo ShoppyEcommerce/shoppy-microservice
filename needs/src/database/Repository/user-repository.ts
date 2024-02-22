@@ -3,9 +3,9 @@ import { User, UserModel } from "../model";
 
 
 export class UserRepository {
-    async createUser(input:User) : Promise<User> {
-      const user =   await UserModel.create(input) as unknown as User
-      return user
+    async createUser(input:User)  {
+     return  await UserModel.create(input)
+  
 
     }
     async Find(input:Record<string, string>){

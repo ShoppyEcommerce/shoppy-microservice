@@ -11,8 +11,23 @@ export interface Delivery {
   confirmPassword: string;
   role: string;
   createdAt?: Date;
-  verificationCode: number;
+  OTP?: number | null;
+  OTPExpiration?: number | null;
+  OTPVerification:boolean,
+  isVerified:boolean,
+  status:status
+
+
+
 }
+enum status{
+  Online="online",
+  OffLine="offline",
+  OnTrip="ontrip" 
+
+
+}
+
 
 export class DeliveryModel extends Model<Delivery> {}
 
@@ -50,13 +65,34 @@ const deliverySchema = {
     type: DataTypes.STRING,
     defaultValue: "deliveryman",
   },
-  verificationCode: {
+  OTP: {
     type: DataTypes.INTEGER,
     defaultValue: null,
   },
+  OTPVerification: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  OTPExpiration:{
+    type:DataTypes.FLOAT,
+    defaultValue:null
+  },
+  isVerified:{
+    type:DataTypes.BOOLEAN,
+    defaultValue:false
+  },
+  status:{
+    type:DataTypes.ENUM(),
+    values: [
+      status.OffLine,
+      status.OnTrip,
+      status.Online,
+    ],
+    defaultValue:status.Online
+  }
 };
 
 DeliveryModel.init(deliverySchema, {
   sequelize: databaseConnection,
-  tableName: "DeliveryMan",
+  tableName: "deliveryMan",
 });

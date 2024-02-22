@@ -1,10 +1,8 @@
 import { Application, NextFunction, Request, Response } from "express";
-import { UserService } from "../services";
+import { UserService, WalletService } from "../services";
 import { Channel } from "amqplib";
-import { WalletService } from "../services/wallet-service";
-
 import { v4 as uuid } from "uuid";
-import { AuthMiddleware } from "./middleware/auth";
+import { successHandler, AuthMiddleware } from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new UserService();
@@ -15,11 +13,15 @@ export default (app: Application, channel: Channel) => {
         const role = "user";
         const id = uuid();
 
-        const user = await service.createUser({ ...req.body, id }, role);
+        const data = await service.createUser({ ...req.body, id }, role);
 
         await new WalletService().createWallet(id);
 
-        res.status(201).json(user);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "user created successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -32,9 +34,13 @@ export default (app: Application, channel: Channel) => {
         const role = "admin";
         const id = uuid();
 
-        const user = await service.createUser({ ...req.body, id }, role);
+        const data = await service.createUser({ ...req.body, id }, role);
 
-        res.status(201).json(user);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "admin created successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -44,8 +50,12 @@ export default (app: Application, channel: Channel) => {
     "/login",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const login = await service.Login(req.body);
-        return res.status(200).json(login);
+        const data = await service.Login(req.body);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "user login successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -58,7 +68,11 @@ export default (app: Application, channel: Channel) => {
       try {
         const { OTP, phone } = req.body;
         const data = await service.VerifyOTP({ OTP, phone });
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "user verified successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -69,7 +83,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.resendOtp(req.body);
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "OTP sent successfully",
+        });
       } catch (err) {
         next(err);
       }
@@ -81,7 +99,11 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.VerifyVendor(req.params.id);
-        return res.status(200).json(data);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "vendor verified successfully",
+        });
       } catch (error) {
         next(error);
       }

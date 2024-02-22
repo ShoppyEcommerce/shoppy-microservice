@@ -12,7 +12,7 @@ export interface User {
   referralCode: string;
   role: Role;
   createdAt?: Date;
-  verificationCode: number;
+
   OTP?: number | null;
   OTPExpiration?: number | null;
   isverified: boolean
@@ -71,10 +71,7 @@ UserModel.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    verificationCode: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
+  
     OTP: {
       type: DataTypes.DECIMAL,
       allowNull: true,

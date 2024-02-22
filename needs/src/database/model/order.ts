@@ -23,7 +23,7 @@ interface Product {
   totalPrice: number;
 }
 export enum PaymentType {
-  CREDIT_CARD = "credit_card",
+  PAYSTACK = "paystack",
   WALLET = "wallet",
   PAY_ON_DELIVERY = "pay_on_delivery",
 }
@@ -62,7 +62,7 @@ const OrderSchema = {
   paymentType: {
     type: DataTypes.ENUM,
     values: [
-      PaymentType.CREDIT_CARD,
+      PaymentType.PAYSTACK,
       PaymentType.PAY_ON_DELIVERY,
       PaymentType.WALLET,
     ],
@@ -79,6 +79,7 @@ const OrderSchema = {
       OrderStatus.IN_TRANSIT,
       OrderStatus.CANCELLED,
       OrderStatus.DELIVERED,
+      OrderStatus.PROCESSING
     ],
     allowNull: false,
     defaultValue: OrderStatus.PENDING,
