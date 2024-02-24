@@ -22,8 +22,8 @@ export class CategoryRepository {
         return CategoryModel.findAll({where:input})
     }
     async update(input:{id:string}, update:any){
-        await CategoryModel.update(update,{where:input})
-        return "category updated"
+        return  await CategoryModel.update(update,{where:input, returning: true,})
+         
     }
     async delete (input:{id:string}){
         await CategoryModel.destroy({where:input})

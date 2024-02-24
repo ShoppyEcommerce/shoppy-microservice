@@ -14,6 +14,6 @@ export { ConversationRepository } from "./conversation-repository";
 export { MessageRepository } from "./message-repository";
 export { CartRepository } from "./cart-repository";
 export { DeliveryRepository } from "./delivery-repository";
- export {DeliveryProfileRepository} from "./delivery-profile-repository"
+export { DeliveryProfileRepository } from "./delivery-profile-repository";
 export { PaymentRepository } from "./payment-repository";
-
+export { VendorWalletRepository } from "./vendor-wallet-repository";

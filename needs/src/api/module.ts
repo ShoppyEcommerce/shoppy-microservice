@@ -12,7 +12,7 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.createModule(req.body);
+        const {data} = await service.createModule(req.body);
         return successHandler(res, {
           data,
           message: "module created successfully",
@@ -27,7 +27,7 @@ export default (app: Application, channel: Channel) => {
     "/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getModule(req.params.id);
+        const {data} = await service.getModule(req.params.id);
         return successHandler(res, {
           data,
           message: "module returned successfully",
@@ -42,7 +42,7 @@ export default (app: Application, channel: Channel) => {
     "/module",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getAllModule();
+        const {data} = await service.getAllModule();
         return successHandler(res, {
           data,
           message: "module returned successfully",
@@ -63,6 +63,7 @@ export default (app: Application, channel: Channel) => {
           req.body,
           "UPDATE_MODULE"
         );
+     
       
         return successHandler(res, {
           data,
@@ -79,7 +80,7 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.delete(req.params.id);
+        const {data} = await service.delete(req.params.id);
 
         return successHandler(res, {
           data,

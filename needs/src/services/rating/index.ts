@@ -5,7 +5,7 @@ import {
   ProductRepository,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
-import { RatingValidation,option } from "./validation";
+import { RatingValidation, option } from "./validation";
 import { v4 as uuid } from "uuid";
 
 export class RatingService {
@@ -20,9 +20,9 @@ export class RatingService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const product = await this.productRepo.getProduct({
+    const product = (await this.productRepo.getProduct({
       id: input.productId,
-    }) as unknown as Product;
+    })) as unknown as Product;
     if (!product) {
       throw new BadRequestError("product not found", "");
     }
@@ -41,11 +41,10 @@ export class RatingService {
     product.numRating = newNumRatings;
     console.log(product, totalRating, newNumRatings);
     const update = {
-        rating:newRating,
-         numRating:newNumRatings
-
-    }
-     await this.productRepo.update( { id: input.productId }, update);
+      rating: newRating,
+      numRating: newNumRatings,
+    };
+    await this.productRepo.update({ id: input.productId }, update);
 
     await this.repository.create({
       id: uuid(),
@@ -58,5 +57,8 @@ export class RatingService {
     });
     return "rating created successfully";
   }
-//   async getFavoriteProduct
+  async getAllRating(productId: string) {
+    const ratings = await this.repository.findAll({ productId });
+    return ratings;
+  }
 }

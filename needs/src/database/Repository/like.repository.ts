@@ -11,10 +11,12 @@ export class LikeRepository {
         {
           model: UserModel, // Include the User model
           as: "UserModel", // Alias for the User model
+          attributes:["id","firstName","lastName", "phone","email"]
         },
         {
           model: ProductModel, // Include the Product model
           as: "ProductModel", // Alias for the Product model
+          attributes:["id","name","price", "images","quantity","available"]
         },
       ],
     });
@@ -26,10 +28,12 @@ export class LikeRepository {
         {
           model: UserModel, // Include the User model
           as: "UserModel", // Alias for the User model
+          attributes:["id","firstName","lastName", "phone","email"]
         },
         {
           model: ProductModel, // Include the Product model
           as: "ProductModel", // Alias for the Product model
+          attributes:["id","name","price", "images","quantity","available"]
         },
       ],
     });

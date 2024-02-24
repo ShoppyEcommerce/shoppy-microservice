@@ -15,11 +15,13 @@ export class CartRepository {
   async updateCart(update: any, input: Partial<Cart>) {
    return await CartModel.update(update, {
       where: { id: input.id, ownerId: input.ownerId },
-    });
+      returning: true,
+    }); 
   }
   async deleteCart(input: Partial<Cart>) {
-    await CartModel.destroy({
+ await CartModel.destroy({
       where: { id: input.id, ownerId: input.ownerId },
+      
     });
     return "cart deleted";
   }

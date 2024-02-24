@@ -1,4 +1,11 @@
-import { CartModel, Order, OrderModel, UserModel } from "../model";
+import {
+  CartModel,
+  Order,
+  OrderModel,
+  UserModel,
+  VendorModel,
+  VendorProfileModel,
+} from "../model";
 
 export class OrderRepository {
   async create(input: Order) {
@@ -17,6 +24,14 @@ export class OrderRepository {
 
           attributes: ["products", "totalAmount"],
         },
+        {
+          model:VendorModel,
+          attributes: ["firstName","lastName","phone","email"],
+          include:[{
+            model:VendorProfileModel,
+            attributes:["location"]
+          }]
+        }
       ],
     });
   }
@@ -33,6 +48,14 @@ export class OrderRepository {
 
           attributes: ["products", "totalAmount"],
         },
+        {
+          model:VendorModel,
+          attributes: ["firstName","lastName","phone","email"],
+          include:[{
+            model:VendorProfileModel,
+            attributes:["location"]
+          }]
+        }
       ],
     });
   }
@@ -41,6 +64,7 @@ export class OrderRepository {
       where: {
         id,
       },
+      returning: true,
     });
   }
 }

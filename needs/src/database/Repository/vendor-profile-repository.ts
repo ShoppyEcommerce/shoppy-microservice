@@ -1,5 +1,4 @@
-import { VendorModel } from "../model";
-import { VendorProfile, VendorProfileModel } from "../model/vendorProfile";
+import { VendorProfile, VendorProfileModel, VendorModel } from "../model";
 
 export class VendorProfileRepository {
   async create(input: VendorProfile) {
@@ -12,8 +11,8 @@ export class VendorProfileRepository {
     return VendorProfileModel.findAll({ include: [VendorModel] });
   }
   async update(input: { id: string }, update: any) {
-    await VendorProfileModel.update(update, { where: input });
-    return "vendor updated";
+    return  await VendorProfileModel.update(update, { where: input, returning: true });
+     
   }
   async delete(input: { id: string }) {
     await VendorProfileModel.destroy({ where: input });

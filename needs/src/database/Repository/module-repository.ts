@@ -16,11 +16,11 @@ export class ModuleRepository {
    }
    async update(input:Record<string, string>, update:any){
 
-    await ModuleModel.update(update, {
-      where: input
+   return await ModuleModel.update(update, {
+      where: input, returning: true,
     });
   
-    return "module updated"
+     
 
    }
    async getAllModules(){

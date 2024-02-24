@@ -14,7 +14,7 @@ export class ProfileRepository {
     return profile;
   }
   async update(id: string, update: any) {
-    const profile = await ProfileModel.update(update, { where: { id } });
+    const profile = await ProfileModel.update(update, { where: { id }, returning: true, });
     console.log(profile);
     return profile;
   }

@@ -1,10 +1,5 @@
 import axios, { AxiosError } from "axios";
-import {
-  ProductRepository,
-  CategoryRepository,
-  VendorProfileRepository,
-  VendorRepository,
-} from "../../database/Repository";
+
 import {
   BadRequestError,
   UnAuthorized,
@@ -24,11 +19,12 @@ import {
   ProductModel,
   Vendor,
   VendorModel,
-} from "../../database/model";
-import {
   VendorProfile,
-  VendorProfileModel,
-} from "../../database/model/vendorProfile";
+  ProductRepository,
+  CategoryRepository,
+  VendorProfileRepository,
+  VendorRepository,
+} from "../../database";
 import { Op } from "sequelize";
 
 interface IProduct {
@@ -75,18 +71,12 @@ export class ProductService {
     if (!profile) {
       throw new BadRequestError("pls create a profile first", "Bad Request");
     }
+    value.name =  Utils.Capitalizeword(value.name);
+    const exist =  await this.repository.getProduct({name: value.name, ownerId: user});
+    if (exist) {
+      throw new BadRequestError("This product already exist for this vendor", "");
+    }
 
-    // try {
-
-    //   const category = await axios.get(
-    //     `http://localhost:8002/category/${input.categoryId}`
-    //   );
-    //   value.category = category.data.data;
-    //   value.moduleId = category.data.data.ModuleModel.id;
-    // } catch (error) {
-    //   const err = error as AxiosError;
-    //   throw new BadRequestError(`${err.response?.data}`, "");
-    // }
     value.category = category;
     value.moduleId = category.moduleId;
     value.ownerId = user;
@@ -158,7 +148,7 @@ export class ProductService {
           const valid = geolib.isPointWithinRadius(
             { latitude: input.latitude, longitude: input.longitude },
             { latitude: profile.latitude, longitude: profile.longitude },
-            5000
+            10000
           );
           valid && vendors.push(profile.vendorId);
         });
@@ -169,7 +159,8 @@ export class ProductService {
           this.getVendorsProducts(vendor)
         );
 
-        return await Promise.all(product);
+        const close =  await Promise.all(product);
+        return close
       }
     } catch (error) {
       throw new BadRequestError(error as string, "");

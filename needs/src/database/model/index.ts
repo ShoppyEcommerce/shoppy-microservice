@@ -14,9 +14,11 @@ export { CartModel, Cart, CartStatus } from "./cart";
 export { Wallet, WalletModel } from "./wallet";
 export { Payment, PaymentModel, PaymentStatus } from "./payment";
 export { Transaction, TransactionHistoryModel } from "./transaction";
+export {VendorProfile, VendorProfileModel} from "./vendor-profile";
 export {
   DeliveryProfile,
   DeliveryProfileModel,
   ModeOfIdentification,
 } from "./deliveryProfile";
+export {VendorWalletModel} from "./vendor-wallet"
 // export { Favorite, FavoriteModel } from "./favorite";

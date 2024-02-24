@@ -11,7 +11,7 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.createCategory(req.body);
+        const {data} = await service.createCategory(req.body);
         return successHandler(res, {
           data,
           message: "category created successfully",
@@ -27,7 +27,7 @@ export default (app: Application, channel: Channel) => {
     "/category",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getCategories();
+        const {data} = await service.getCategories();
         return successHandler(res, {
           data,
           message: "categories returned successfully",
@@ -43,7 +43,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const data = await service.getCategory(id);
+        const {data} = await service.getCategory(id);
         return successHandler(res, {
           data,
           message: "category returned successfully",
@@ -58,7 +58,7 @@ export default (app: Application, channel: Channel) => {
     "/category/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getCategoryModule(req.params.id);
+        const {data} = await service.getCategoryModule(req.params.id);
         return successHandler(res, {
           data,
           message: "categories module returned successfully",
@@ -74,7 +74,7 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.updateCategory(req.params.id, req.body);
+        const {data} = await service.updateCategory(req.params.id, req.body);
 
         return successHandler(res, {
           data,
@@ -91,7 +91,7 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.deleteCategory(req.params.id);
+        const {data} = await service.deleteCategory(req.params.id);
 
         return successHandler(res, {
           data,
@@ -104,9 +104,10 @@ export default (app: Application, channel: Channel) => {
     }
   );
   app.get(
-    "/category/search",
+    "/search/category",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
+        console.log(req.query.search)
         const data = await service.searchCategory(req.query.search as string);
         return successHandler(res, {
           data,

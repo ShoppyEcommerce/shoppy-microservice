@@ -28,7 +28,7 @@ export default (app: Application, channel: Channel) => {
     VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getVendorProfile(req.user);
+        const {data} = await service.getVendorProfile(req.user);
         return successHandler(res, {
           data,
           statusCode: 200,
@@ -40,7 +40,7 @@ export default (app: Application, channel: Channel) => {
     }
   );
   app.get(
-    "/profile/vendor",
+    "/profile/vendor/all",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const data = await service.getVendorsProfile();

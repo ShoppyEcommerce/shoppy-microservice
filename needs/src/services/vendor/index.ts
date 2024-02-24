@@ -1,5 +1,11 @@
-import { VendorRepository } from "../../database/Repository";
-import { Vendor, VendorModel } from "../../database/model";
+import {
+  Vendor,
+  VendorModel,
+  VendorRepository,
+  OrderRepository,
+  Order,
+  OrderStatus,
+} from "../../database";
 import { v4 as uuid } from "uuid";
 import {
   registerVendorSchema,
@@ -11,11 +17,14 @@ import {
 import { Utils } from "../../utils";
 import { ValidationError, BadRequestError } from "../../utils/ErrorHandler";
 import { sendSMS } from "../../lib/sendSmS";
+import { VendorWalletService } from "..";
 
 export class VendorService {
   private vendorRepository: VendorRepository;
+  private orderRepo: OrderRepository;
   constructor() {
     this.vendorRepository = new VendorRepository();
+    this.orderRepo = new OrderRepository();
   }
   async createVendor(input: Vendor) {
     const { error, value } = registerVendorSchema.validate(input, option);
@@ -37,15 +46,16 @@ export class VendorService {
     value.confirmPassword = await Utils.HashPassword(value.confirmPassword);
     const vendor = await this.vendorRepository.createVendor(value);
     const code = Utils.generateRandomNumber();
-    const sms = await sendSMS(code.OTP, value.phone);
-    console.log(sms);
-    if (sms && sms.status === 400) {
-      throw new BadRequestError(sms.message, "");
-    }
+    // const sms = await sendSMS(code.OTP, value.phone);
+    // console.log(sms);
+    // if (sms && sms.status === 400) {
+    //   throw new BadRequestError(sms.message, "");
+    // }
     await VendorModel.update(
       { OTP: code.OTP, OTPExpirationDate: code.time },
       { where: { id: vendor.id } }
     );
+    await new VendorWalletService().createWallet(value.id);
 
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
@@ -102,7 +112,11 @@ export class VendorService {
     if (Number(vendor.OTP) !== Number(OTP)) {
       throw new BadRequestError("Invalid OTP", "Bad Request");
     }
-    if(vendor.OTPVerification){
+    if (vendor.OTPVerification) {
+      await VendorModel.update(
+        { OTP: null, OTPExpirationDate: null, OTPVerification: true },
+        { where: { id: vendor.id } }
+      );
       throw new BadRequestError("Account already verified", "Bad Request");
     }
     const currentTimestamp = Date.now();
@@ -137,10 +151,10 @@ export class VendorService {
       throw new BadRequestError("vendor does not exist", "Bad Request");
     }
     const info = Utils.generateRandomNumber();
-    const sms = await sendSMS(info.OTP, phone);
-    if (sms && sms.status === 400) {
-      throw new BadRequestError(sms.message, "");
-    }
+    // const sms = await sendSMS(info.OTP, phone);
+    // if (sms && sms.status === 400) {
+    //   throw new BadRequestError(sms.message, "");
+    // }
     await VendorModel.update(
       { OTP: info.OTP, OTPExpirationDate: info.time },
       { where: { id: vendor.id } }
@@ -183,5 +197,35 @@ export class VendorService {
     };
 
     return vendor;
+  }
+  async VendorDashboard(vendorId: string) {
+    const orders = (await this.orderRepo.FindAll({
+      vendorId,
+    })) as unknown as Order[];
+
+    const cancel: Order[] = orders.filter(
+      (order) => order.orderStatus === OrderStatus.CANCELLED
+    );
+    const sales = orders.reduce((curr, acc) => curr + acc.totalAmount, 0);
+    const pending = orders.filter(
+      (order) => order.orderStatus === OrderStatus.PENDING
+    );
+    const returned = orders.filter(
+      (order) => order.orderStatus === OrderStatus.RETURNED
+    );
+    const progress = orders
+      .filter((order) => order.orderStatus === OrderStatus.PROCESSING)
+      .reduce((cur, acc) => cur + acc.totalAmount, 0);
+    const cancelAmount = cancel.reduce((cur, acc) => cur + acc.totalAmount, 0);
+
+    return {
+      sales,
+      inProgress: progress,
+      pending,
+      cancelAmount,
+      orders,
+      cancel,
+      returned,
+    };
   }
 }

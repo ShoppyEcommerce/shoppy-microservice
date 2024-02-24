@@ -12,7 +12,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const id = uuid();
-        const data = await service.createProduct({ ...req.body, id }, req.user);
+        const {data} = await service.createProduct({ ...req.body, id }, req.user);
         return successHandler(res, {
           data,
           message: "product created successfully",
@@ -27,7 +27,7 @@ export default (app: Application, channel: Channel) => {
     "/product",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getProducts();
+        const {data} = await service.getProducts();
         return successHandler(res, {
           data,
           message: "products returned successfully",
@@ -43,7 +43,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const data = await service.getProduct(id);
+        const {data} = await service.getProduct(id);
         return successHandler(res, {
           data,
           message: "product returned successfully",
@@ -59,7 +59,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const data = await service.getProductCategory(id);
+        const {data} = await service.getProductCategory(id);
         return successHandler(res, {
           data,
           message: "product returned successfully",
@@ -75,7 +75,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const data = await service.getProductModule(id);
+        const {data} = await service.getProductModule(id);
         return successHandler(res, {
           data,
           message: "product returned successfully",
@@ -90,7 +90,7 @@ export default (app: Application, channel: Channel) => {
     "/product/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.updateProduct(req.params.id, req.body);
+        const {data} = await service.updateProduct(req.params.id, req.body);
         return successHandler(res, {
           data,
           message: "product updated successfully",
@@ -105,7 +105,7 @@ export default (app: Application, channel: Channel) => {
     "/product/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.deleteProduct(req.params.id);
+        const {data} = await service.deleteProduct(req.params.id);
         return successHandler(res, {
           data,
           message: "product deleted successfully",
@@ -122,7 +122,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
-        const data = await service.getVendorsProduct(id, req.user);
+        const {data} = await service.getVendorsProduct(id, req.user);
         return successHandler(res, {
           data,
           message: "product returned successfully",
@@ -134,13 +134,13 @@ export default (app: Application, channel: Channel) => {
     }
   );
   app.get(
-    "/product/vendor",
+    "/product/vendor/me",
     VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getVendorsProducts(req.user);
+        const data= await service.getVendorsProducts(req.user);
         return successHandler(res, {
-          data,
+          data: data.data,
           message: "product returned successfully",
           statusCode: 200,
         });
@@ -160,11 +160,20 @@ export default (app: Application, channel: Channel) => {
           latitude,
           longitude,
         });
-        return successHandler(res, {
-          data,
-          message: "product returned successfully",
-          statusCode: 200,
-        });
+        
+        if (data && data.length > 0) {
+          return successHandler(res, {
+            data: data[0].data,
+            message: "Product returned successfully",
+            statusCode: 200,
+          });
+        } else {
+          return successHandler(res, {
+            data: [],
+            message: "Product returned successfully",
+            statusCode: 200,
+          });
+        }
       } catch (error) {
         next(error);
       }

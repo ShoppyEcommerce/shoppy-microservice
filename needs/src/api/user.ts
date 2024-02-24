@@ -13,7 +13,7 @@ export default (app: Application, channel: Channel) => {
         const role = "user";
         const id = uuid();
 
-        const data = await service.createUser({ ...req.body, id }, role);
+        const {data} = await service.createUser({ ...req.body, id }, role);
 
         await new WalletService().createWallet(id);
 
@@ -34,7 +34,7 @@ export default (app: Application, channel: Channel) => {
         const role = "admin";
         const id = uuid();
 
-        const data = await service.createUser({ ...req.body, id }, role);
+        const {data} = await service.createUser({ ...req.body, id }, role);
 
         return successHandler(res, {
           data,
@@ -50,7 +50,7 @@ export default (app: Application, channel: Channel) => {
     "/login",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.Login(req.body);
+        const {data} = await service.Login(req.body);
         return successHandler(res, {
           data,
           statusCode: 201,
@@ -67,7 +67,7 @@ export default (app: Application, channel: Channel) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { OTP, phone } = req.body;
-        const data = await service.VerifyOTP({ OTP, phone });
+        const {data} = await service.VerifyOTP({ OTP, phone });
         return successHandler(res, {
           data,
           statusCode: 201,
@@ -82,7 +82,7 @@ export default (app: Application, channel: Channel) => {
     "/resend-OTP",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.resendOtp(req.body);
+        const {data} = await service.resendOtp(req.body);
         return successHandler(res, {
           data,
           statusCode: 201,
@@ -98,7 +98,7 @@ export default (app: Application, channel: Channel) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.VerifyVendor(req.params.id);
+        const {data} = await service.VerifyVendor(req.params.id);
         return successHandler(res, {
           data,
           statusCode: 201,

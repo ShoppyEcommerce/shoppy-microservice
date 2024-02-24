@@ -8,28 +8,40 @@ export class ProductRepository {
   async getProduct(input: Record<string, string>) {
     const product = await ProductModel.findOne({
       where: input,
-      include: [VendorModel],
+      include: [{
+        model:VendorModel,
+        attributes:["id", "firstName","lastName","email", "phone"]
+      }],
     });
     return product;
   }
   async getProducts() {
-    return ProductModel.findAll({ include: [VendorModel] });
+    return ProductModel.findAll({  include: [{
+      model:VendorModel,
+      attributes:["id", "firstName","lastName","email", "phone"]
+    }], });
   }
   async getProductCategory(id: string) {
     return ProductModel.findAll({
       where: { categoryId: id },
-      include: [VendorModel],
+      include: [{
+        model:VendorModel,
+        attributes:["id", "firstName","lastName","email", "phone"]
+      }],
     });
   }
   async getProductModule(id: string) {
     return ProductModel.findAll({
       where: { moduleId: id },
-      include: [VendorModel],
+      include: [{
+        model:VendorModel,
+        attributes:["id", "firstName","lastName","email", "phone"]
+      }],
     });
   }
   async update(input: { id: string }, update: any) {
-    await ProductModel.update(update, { where: input });
-    return "product updated";
+   return await ProductModel.update(update, { where: input, returning: true, });
+   
   }
   async delete(input: { id: string }) {
     await ProductModel.destroy({ where: input });

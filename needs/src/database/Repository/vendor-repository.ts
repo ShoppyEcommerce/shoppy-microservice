@@ -1,5 +1,5 @@
 import { Vendor, VendorModel } from "../model";
-import { VendorProfileModel } from "../model/vendorProfile";
+import { VendorProfileModel } from "../model/vendor-profile";
 
 export class VendorRepository {
   async createVendor(input: Vendor): Promise<Vendor> {
@@ -19,10 +19,10 @@ export class VendorRepository {
     return await VendorModel.findOne({ where: { id } });
   }
   async update(id: string, input: Partial<Vendor>) {
-    return await VendorModel.update(input, { where: { id } });
+    return await VendorModel.update(input, { where: { id }, returning: true });
   }
-  async delete(id:string){
-    await VendorModel.destroy({where:{id}})
-    return 'Deleted Successfully'
+  async delete(id: string) {
+    await VendorModel.destroy({ where: { id } });
+    return "Deleted Successfully";
   }
 }

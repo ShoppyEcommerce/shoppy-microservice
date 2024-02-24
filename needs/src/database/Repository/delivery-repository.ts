@@ -8,6 +8,6 @@ export class DeliveryRepository {
     return DeliveryModel.findOne({ where: input });
   }
   async update(input: Partial<Delivery>, id: string) {
-    await DeliveryModel.update(input, { where: { id } });
+    await DeliveryModel.update(input, { where: { id }, returning: true, });
   }
 }

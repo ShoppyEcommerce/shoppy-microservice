@@ -1,6 +1,11 @@
 import { Channel } from "amqplib";
 import { Application, NextFunction, Request, Response } from "express";
-import { AuthMiddleware, VendorAuth, successHandler } from "./middleware";
+import {
+  AuthMiddleware,
+  DeliveryAuth,
+  VendorAuth,
+  successHandler,
+} from "./middleware";
 import { OrderService } from "../services";
 import { Utils } from "../utils";
 
@@ -103,4 +108,50 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
+  app.post(
+    "order/delivery/accept/:id",
+    DeliveryAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const { id } = req.params;
+        const data = await service.acceptOrder(req.user, id);
+        return successHandler(res, {
+          data,
+          message: "order accepted",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.get("/order/track/user/:id", AuthMiddleware.Authenticate(["user"]), async(req:Request | any, res:Response, next:NextFunction) =>{
+    try {
+      const data =  await service.TrackUserOrder(req.user, req.params.id)
+      return successHandler(res,{
+        data,
+        message:"user order returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
+  app.get("/order/track/user", AuthMiddleware.Authenticate(["user"]), async(req:Request | any, res:Response, next:NextFunction) =>{
+    try {
+      const data =  await service.TrackUserOrders(req.user, )
+      return successHandler(res,{
+        data,
+        message:"user order returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
+  app.get("/order/vendor/dashboard")
 };

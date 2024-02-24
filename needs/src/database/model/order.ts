@@ -1,17 +1,21 @@
 import { databaseConnection } from "../connection";
 import { Model, DataTypes } from "sequelize";
 import { UserModel } from "./user";
+import { DeliveryModel } from "./delivery";
+import { VendorModel } from "./vendor";
 
 export interface Order {
   id: string;
- cartId:string;
+  cartId: string;
   vendorId: string;
   referenceId: string;
   paymentType: PaymentType;
   userId: string;
   totalAmount: number;
-  CancelOrderReason?:string
+  CancelOrderReason?: string;
   orderStatus: OrderStatus;
+  deliveryMan?: string;
+  deliveryFee?: number;
 }
 interface Product {
   id: string;
@@ -29,10 +33,11 @@ export enum PaymentType {
 }
 export enum OrderStatus {
   PENDING = "pending",
-  PROCESSING="processing",
+  PROCESSING = "processing",
   IN_TRANSIT = "in_transit",
   CANCELLED = "canceled",
   DELIVERED = "delivered",
+  RETURNED = "returned",
 }
 
 export class OrderModel extends Model<Order> {}
@@ -52,7 +57,7 @@ const OrderSchema = {
   },
 
   vendorId: {
-    type: DataTypes.STRING,
+    type: DataTypes.UUID,
     allowNull: false,
   },
   referenceId: {
@@ -79,16 +84,24 @@ const OrderSchema = {
       OrderStatus.IN_TRANSIT,
       OrderStatus.CANCELLED,
       OrderStatus.DELIVERED,
-      OrderStatus.PROCESSING
+      OrderStatus.PROCESSING,
+      OrderStatus.RETURNED,
     ],
     allowNull: false,
     defaultValue: OrderStatus.PENDING,
   },
-  CancelOrderReason:{
-    type:DataTypes.TEXT,
-    allowNull:true
-
-  }
+  CancelOrderReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  deliveryMan: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  deliveryFee: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
 };
 OrderModel.init(OrderSchema, {
   sequelize: databaseConnection,
@@ -97,3 +110,7 @@ OrderModel.init(OrderSchema, {
 // relationship between user model and order model
 OrderModel.belongsTo(UserModel, { foreignKey: "userId" });
 UserModel.hasMany(OrderModel, { foreignKey: "userId" });
+OrderModel.belongsTo(DeliveryModel, { foreignKey: "deliveryMan" });
+DeliveryModel.hasMany(OrderModel, { foreignKey: "deliveryMan" });
+OrderModel.belongsTo(VendorModel, { foreignKey: "vendorId" });
+VendorModel.hasMany(OrderModel, { foreignKey: "vendorId" });

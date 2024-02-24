@@ -1,11 +1,16 @@
-import { VendorProfile } from "../../database/model/vendorProfile";
+import { VendorProfile } from "../../database/model/vendor-profile";
 import {
   VendorProfileRepository,
   VendorRepository,
 } from "../../database/Repository";
 import { Utils } from "../../utils";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
-import { option, profileSchema, UpdateprofileSchema } from "./validation";
+import {
+  option,
+  profileSchema,
+  UpdateBankDetails,
+  UpdateprofileSchema,
+} from "./validation";
 import { v4 as uuid } from "uuid";
 
 export class VendorProfileService {
@@ -24,12 +29,11 @@ export class VendorProfileService {
     }
     input.id = uuid();
     input.vendorId = vendor;
-  
 
     return await this.repository.create(input);
   }
   async getVendorProfile(vendorId: string) {
-    console.log(vendorId)
+    console.log(vendorId);
     const profile = await this.repository.findOne({ vendorId });
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
@@ -44,18 +48,23 @@ export class VendorProfileService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const profile = await this.repository.findOne({ vendorId }) as unknown as VendorProfile
+    const profile = (await this.repository.findOne({
+      vendorId,
+    })) as unknown as VendorProfile;
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
     }
-    return await this.repository.update({ id:profile.id }, input);
+    const updated =  await this.repository.update({ id: profile.id }, input);
+    return updated[1][0].dataValues
   }
   async deleteVendorProfile(vendorId: string) {
-    const profile = await this.repository.findOne({ vendorId }) as unknown as VendorProfile
+    const profile = (await this.repository.findOne({
+      vendorId,
+    })) as unknown as VendorProfile;
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
     }
-    return await this.repository.delete({ id:profile.id });
+    return await this.repository.delete({ id: profile.id });
   }
   async getMyProfile(vendorId: string) {
     const profile = await this.repository.getVendorProfile(vendorId);
@@ -63,5 +72,11 @@ export class VendorProfileService {
       throw new BadRequestError("you do not have a profile yet", "");
     }
     return Utils.FormatData(profile);
+  }
+  async updateBankDetails(input: Partial<VendorProfile>, vendorId: string) {
+    const { error } = UpdateBankDetails.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
   }
 }

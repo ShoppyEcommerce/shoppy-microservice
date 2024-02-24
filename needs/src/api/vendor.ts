@@ -3,33 +3,41 @@ import { VendorService } from "../services";
 
 import { Channel } from "amqplib";
 import { Utils } from "../utils/index";
-import { AuthMiddleware, GeneralAuth, VendorAuth, successHandler } from "./middleware";
+import {
+  AuthMiddleware,
+  GeneralAuth,
+  VendorAuth,
+  successHandler,
+} from "./middleware";
 
 export default (app: Application, channel: Channel) => {
   const service = new VendorService();
   Utils.SubscribeMessage(channel, service);
-  app.post("/vendor/register", async (req:Request, res:Response, next:NextFunction) => {
-    try {
-      const data = await service.createVendor(req.body);
-     return successHandler(res, {
-      data,
-      statusCode:201,
-      message:"vendor created successfully"
-     })
-    } catch (error) {
-      next(error);
+  app.post(
+    "/vendor/register",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { data } = await service.createVendor(req.body);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "vendor created successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  });
+  );
   app.post(
     "/vendor/login",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.Login(req.body);
+        const { data } = await service.Login(req.body);
         return successHandler(res, {
           data,
-          statusCode:201,
-          message:"vendor login successfully"
-         })
+          statusCode: 201,
+          message: "vendor login successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -37,16 +45,15 @@ export default (app: Application, channel: Channel) => {
   );
   app.post(
     "/vendor/verify",
-  
 
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.VerifyOTP(req.body);
+        const { data } = await service.VerifyOTP(req.body);
         return successHandler(res, {
           data,
-          statusCode:201,
-          message:"vendor verified successfully"
-         })
+          statusCode: 201,
+          message: "vendor verified successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -57,12 +64,12 @@ export default (app: Application, channel: Channel) => {
     GeneralAuth,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getVendor(req.params.id);
+        const { data } = await service.getVendor(req.params.id);
         return successHandler(res, {
           data,
-          statusCode:200,
-          message:"vendor returned successfully"
-         })
+          statusCode: 200,
+          message: "vendor returned successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -76,9 +83,9 @@ export default (app: Application, channel: Channel) => {
         const data = await service.getVendors();
         return successHandler(res, {
           data,
-          statusCode:200,
-          message:"vendor returned successfully"
-         })
+          statusCode: 200,
+          message: "vendor returned successfully",
+        });
       } catch (error) {
         next(error);
       }
@@ -89,30 +96,46 @@ export default (app: Application, channel: Channel) => {
     VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.deleteVendor(req.user);
+        const { data } = await service.deleteVendor(req.user);
         return successHandler(res, {
           data,
-          statusCode:200,
-          message:"vendor deleted successfully"
-         })
+          statusCode: 200,
+          message: "vendor deleted successfully",
+        });
       } catch (error) {
         next(error);
       }
     }
   );
-  app.post("/vendor/resendOTP", async (req:Request, res:Response, next:NextFunction) => {
-    try {
-      const data = await service.resendOtp(req.body.phone);
-      return successHandler(res, {
-        data,
-        statusCode:200,
-        message:"OTP sent successfully"
-       })
-      
-    } catch (error) {
-      next(error)
-      
+  app.post(
+    "/vendor/resendOTP",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { data } = await service.resendOtp(req.body.phone);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "OTP sent successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-    
-  })
+  );
+  app.get(
+    "/vendor/dashboard/statistics",
+    VendorAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.VendorDashboard(req.user);
+        return successHandler(res, {
+          data,
+          message: "vendor dashboard returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

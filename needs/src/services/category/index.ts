@@ -4,7 +4,7 @@ import {
   CategoryModel,
   ModuleModel,
   Category,
-  ProductModel,
+ 
 } from "../../database";
 
 import { Utils } from "../../utils";
@@ -77,7 +77,7 @@ export class CategoryService {
     }
 
     const data = await this.repository.update({ id }, value);
-    return Utils.FormatData(data);
+    return Utils.FormatData(data[1][0].dataValues);
   }
   async deleteCategory(id: string) {
     const exist = await this.repository.Find({ id });
@@ -88,9 +88,11 @@ export class CategoryService {
     return Utils.FormatData(data);
   }
   async searchCategory(search: string) {
+    console.log(search)
     return await CategoryModel.findAll({
-      where: { name: { [Op.like]: `%${search}%` } },
-      include: ProductModel,
+      where: { name: { [Op.iLike]: `%${search}%` } },
+      include:ModuleModel
+     
     });
   }
 }

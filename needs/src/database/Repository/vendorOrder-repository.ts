@@ -14,6 +14,6 @@ export class VendorOrderRepository {
     return VendorOrderModel.findAll({ where: input });
   }
   async update(input: Record<string, string>, update: any) {
-    return VendorOrderModel.update(update, { where: input });
+    return VendorOrderModel.update(update, { where: input, returning: true, });
   }
 }

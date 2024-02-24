@@ -14,15 +14,19 @@ import {
   OrderStatus,
   VendorModel,
   Wallet,
+  DeliveryModel,
+  DeliveryProfileModel,
+  DeliveryProfile,
+  DeliveryProfileRepository,
+  VendorProfile,
   Delivery,
-  DeliveryModel
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
   InitializeValidation,
   OrderValidationSchema,
   option,
-  OrderValidation
+  OrderValidation,
 } from "./validation";
 import { WalletService, TransactionService } from "../";
 import { v4 as uuid } from "uuid";
@@ -31,6 +35,8 @@ import { Utils } from "../../utils";
 import { PaymentService } from "../";
 import axios from "axios";
 import { PAYSTACK_API } from "../../config/constant";
+import * as geolib from "geolib";
+import { VendorProfileModel } from "../../database/model/vendor-profile";
 
 export class OrderService {
   private repository: OrderRepository;
@@ -39,6 +45,7 @@ export class OrderService {
   private cart: CartRepository;
   private productRepo: ProductRepository;
   private vendorRepo: VendorRepository;
+  private deliveryProfile: DeliveryProfileRepository;
   constructor() {
     this.vendorRepo = new VendorRepository();
     this.repository = new OrderRepository();
@@ -46,6 +53,7 @@ export class OrderService {
     this.transaction = new TransactionService();
     this.cart = new CartRepository();
     this.productRepo = new ProductRepository();
+    this.deliveryProfile = new DeliveryProfileRepository();
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -65,11 +73,12 @@ export class OrderService {
     }
 
     // Fetch vendor details
-    const vendor = await VendorModel.findByPk(input.vendorId) as unknown as Vendor
+    const vendor = (await VendorModel.findByPk(
+      input.vendorId
+    )) as unknown as Vendor;
     if (!vendor) {
       throw new BadRequestError("Vendor does not exist", "");
     }
-  
 
     // Initialize variables
     let totalPrice: number = 0;
@@ -122,7 +131,7 @@ export class OrderService {
 
     // Perform payment
     if (input.paymentType === PaymentType.WALLET) {
-     const wallet =  await this.processWalletPayment(totalPrice, ownerId);
+      const wallet = await this.processWalletPayment(totalPrice, ownerId);
       transaction = {
         userId: ownerId,
         amount: totalPrice,
@@ -209,167 +218,6 @@ export class OrderService {
     );
   }
 
-  // async createOrder(input: Order, ownerId: string) {
-  //   const { error, value } = OrderValidationSchema.validate(input, option);
-  //   if (error) {
-  //     throw new ValidationError(error.details[0].message, "");
-  //   }
-  //   const cart = await this.cart.getOpenCart({
-  //     id: input.cartId,
-  //     ownerId,
-  //     status: CartStatus.OPEN,
-  //   });
-
-  //   if (!cart) {
-  //     throw new BadRequestError("cart does not exist", "");
-  //   }
-  //   const newCart = this.mapCartModelToCart(cart);
-
-  //   let newProduct: Product[] = [];
-  //   let totalPrice: number = 0;
-  //   const vendor = (await VendorModel.findByPk(
-  //     input.vendorId
-  //   )) as unknown as Vendor;
-
-  //   if (!vendor) {
-  //     throw new BadRequestError("vendor does not exist", "");
-  //   }
-
-  //   for (const cart of newCart.products) {
-  //     const product = (await this.productRepo.getProduct({
-  //       id: cart.id,
-  //       ownerId: input.vendorId,
-  //     })) as unknown as Product;
-  //     if (!product) {
-  //       throw new BadRequestError(
-  //         "this product is not associated with this vendor",
-  //         ""
-  //       );
-  //     }
-  //     const FormatData = this.formatProduct(product);
-  //     if (FormatData.available === Availability.OUT_OF_STOCK) {
-  //       throw new BadRequestError("this product is out of stock", "");
-  //     }
-  //     if (cart.quantity > FormatData.quantity) {
-  //       throw new BadRequestError(
-  //         `the quantity exceeds the limit of the product`,
-  //         ``
-  //       );
-  //     }
-  //     const price = cart.quantity * FormatData.price;
-  //     if (Number(price) !== cart.amount) {
-  //       throw new BadRequestError(
-  //         "this product amount and quantity do not match",
-  //         `${cart.amount}, ${cart.quantity}`
-  //       );
-  //     }
-  //     totalPrice += price;
-
-  //     FormatData.quantity = FormatData.quantity - cart.quantity;
-  //     if (FormatData.quantity === 0) {
-  //       product.available = Availability.OUT_OF_STOCK;
-  //     }
-  //     console.log(FormatData);
-  //     newProduct.push(FormatData);
-  //   }
-  //   if (totalPrice !== newCart.totalAmount) {
-  //     throw new BadRequestError(
-  //       `total amount expected ${totalPrice} total price gotten ${newCart.totalAmount}`,
-  //       ""
-  //     );
-  //   }
-
-  //   let transaction = {} as Transaction;
-  //   let order = {} as Order;
-
-  //   if (input.paymentType === PaymentType.WALLET) {
-  //     const wallet = (await this.wallet.debitWallet(
-  //       totalPrice,
-  //       ownerId
-  //     )) as unknown as Wallet;
-  //     const newWallet = this.WalletModel(wallet);
-
-      // transaction = {
-      //   userId: ownerId,
-      //   amount: totalPrice,
-      //   type: "debit",
-      //   referenceId: newWallet.id,
-      //   id: uuid(),
-      //   description: `you made order from ${vendor.firstName} ${
-      //     vendor.lastName
-      //   } store  on ${new Date().toLocaleDateString("en-GB")}.`,
-      //   product: newCart.products,
-      // };
-      // order = {
-      //   id: uuid(),
-      //   referenceId: newWallet.id,
-      //   cartId: input.cartId,
-      //   userId: ownerId,
-      //   vendorId: input.vendorId,
-      //   totalAmount: totalPrice,
-      //   paymentType: input.paymentType,
-      //   orderStatus: OrderStatus.PENDING,
-      // };
-  //   } else if (input.paymentType === PaymentType.PAYSTACK) {
-  //     const payment = new PaymentService();
-  //     const res = await payment.verifyTransaction(input.referenceId!);
-
-  //     if (res.status === "success") {
-  //       if (res.amount + 6800 !== totalPrice) {
-  //         throw new BadRequestError(
-  //           `expected amount to be ${totalPrice} but got ${res.amount}`,
-  //           ""
-  //         );
-  //       }
-  //     }
-  //     order = {
-  //       id: uuid(),
-  //       referenceId: input.referenceId,
-  //       cartId: input.cartId,
-  //       userId: ownerId,
-  //       vendorId: input.vendorId,
-  //       totalAmount: totalPrice,
-  //       paymentType: input.paymentType,
-  //       orderStatus: OrderStatus.PENDING,
-  //     };
-  //     transaction = {
-  //       userId: ownerId,
-  //       amount: totalPrice,
-  //       type: "debit",
-  //       referenceId: input.referenceId,
-  //       id: uuid(),
-  //       description: `you made order from ${vendor.firstName} ${
-  //         vendor.lastName
-  //       } store  on ${new Date().toLocaleDateString("en-GB")}.`,
-  //       product: newCart.products,
-  //     };
-  //   }
-  //   const updates = newProduct.map(
-  //     async (product) =>
-  //       await this.productRepo.update(
-  //         { id: product.id },
-  //         {
-  //           quantity: product.quantity,
-  //           available:
-  //             product.quantity === 0
-  //               ? Availability.OUT_OF_STOCK
-  //               : Availability.IN_STOCK,
-  //         }
-  //       )
-  //   );
-
-  //   // Wait for all update operations to complete
-  //   await Promise.all(updates);
-
-  //   await this.transaction.createTransaction(transaction);
-  //   await this.repository.create(order);
-  //   await this.cart.updateCart(
-  //     { status: CartStatus.CLOSED },
-  //     { id: input.cartId, ownerId }
-  //   );
-  //   io.emit("newOrder", { order, vendor: input.vendorId });
-  //   return "order was successful";
-  // }
   private mapCartModelToCart = (cartModel: any): Cart => {
     return {
       id: cartModel.dataValues.id,
@@ -398,10 +246,9 @@ export class OrderService {
 
     return Utils.FormatData(order);
   }
-  async getUserOrder (userId:string){
-    const order =  await this.repository.FindAll({userId})
-    return order
-
+  async getUserOrder(userId: string) {
+    const order = await this.repository.FindAll({ userId });
+    return order;
   }
   async getAllMyOrders(vendorId: string) {
     return await this.repository.FindAll({ vendorId });
@@ -427,33 +274,50 @@ export class OrderService {
     );
     return response.data;
   }
-  async processOrder(
-    vendorId: string,
-    id:string
-   
-  ) {
-  
+  async processOrder(vendorId: string, id: string) {
     const order = (await this.repository.Find({
       vendorId,
-      id
-
+      id,
     })) as unknown as Order;
     if (!order) {
       throw new BadRequestError("order not found", "");
     }
     const payload = {
       orderStatus: OrderStatus.PROCESSING,
-    
     };
     await this.repository.updateOrder(payload, order.id);
+    const deliveries = (await DeliveryProfileModel.findAll({
+      include: DeliveryModel,
+    })) as unknown as DeliveryProfile[];
+    const vendorProfile = (await VendorProfileModel.findOne({
+      where: { vendorId },
+    })) as unknown as VendorProfile;
+    let deliveryMan: DeliveryProfile[] = [];
+
     io.emit("orderUpdate", { order, user: order.userId });
+    deliveries.map((delivery: DeliveryProfile) => {
+      const valid = geolib.isPointWithinRadius(
+        { latitude: delivery.latitude, longitude: delivery.longitude },
+        { latitude: delivery.latitude, longitude: delivery.longitude },
+        10000
+      );
+
+      valid && deliveryMan.push(delivery);
+    });
+    if (deliveryMan.length > 0) {
+      deliveryMan.map((delivery) => {
+        io.emit("order request", { order, delivery: delivery.deliveryManId });
+      });
+     
+    }
+   
+
     return "order updated successfully";
   }
-  async CancelOrder (vendorId:string, id:string){
+  async CancelOrder(vendorId: string, id: string) {
     const order = (await this.repository.Find({
       vendorId,
-      id
-
+      id,
     })) as unknown as Order;
     if (!order) {
       throw new BadRequestError("order not found", "");
@@ -462,10 +326,13 @@ export class OrderService {
       orderStatus: OrderStatus.CANCELLED,
     };
     await this.repository.updateOrder(payload, order.id);
-    io.emit("orderUpdate", { order:"your order has been cancelled", user: order.userId });
+    const delivery = await DeliveryProfileModel.findAll({});
+
+    io.emit("orderUpdate", {
+      order: "your order has been cancelled",
+      user: order.userId,
+    });
     return "order updated successfully";
-
-
   }
   private formatProduct(productData: any): Product {
     return {
@@ -503,5 +370,51 @@ export class OrderService {
       ownerId: productData.dataValues.ownerId,
       numRating: productData.dataValues.numRating,
     };
+  }
+  async acceptOrder(id: string, orderId: string) {
+    const delivery = (await DeliveryModel.findByPk(id)) as unknown as Delivery;
+
+    const order = (await this.repository.Find({
+      id: orderId,
+      orderStatus: OrderStatus.PROCESSING,
+    })) as unknown as Order;
+    if (!order) {
+      throw new BadRequestError(
+        "This order has been assigned to another vendor",
+        ""
+      );
+    }
+
+    const update = await this.repository.updateOrder(
+      { orderStatus: OrderStatus.IN_TRANSIT },
+      orderId
+    );
+    io.emit("orderUpdate", { order: update, user: order.userId });
+
+    return update;
+  }
+
+  async returnOrder(orderId: string) {
+    const order = (await this.repository.Find({
+      id: orderId,
+    })) as unknown as Order;
+    if (!order) {
+      throw new BadRequestError("this order does not exist", "");
+    }
+
+    const orderUpdate = await this.repository.updateOrder(
+      { orderStatus: OrderStatus.RETURNED },
+      orderId
+    );
+
+    io.emit("returnOrder", { order: orderUpdate, vendor: order.vendorId });
+  }
+  async TrackUserOrders(userId: string) {
+    const orders = await this.repository.FindAll({ userId });
+    return orders;
+  }
+  async TrackUserOrder(userId: string, id:string) {
+    const order = await this.repository.Find({ userId, id });
+    return order;
   }
 }

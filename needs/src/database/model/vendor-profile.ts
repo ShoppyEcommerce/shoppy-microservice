@@ -5,7 +5,6 @@ import { VendorModel } from "./vendor";
 
 export interface VendorProfile {
   id: string;
-
   image: string;
   logo: string;
   latitude: number;
@@ -14,6 +13,9 @@ export interface VendorProfile {
   createdAt?: Date;
   updatedAt?: Date;
   vendorId: string;
+  bankName: string;
+  accountNumber: number;
+  accountHolder: string;
 }
 export class VendorProfileModel extends Model<VendorProfile> {}
 VendorProfileModel.init(
@@ -56,6 +58,18 @@ VendorProfileModel.init(
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    bankName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    accountHolder: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    accountNumber: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
     },
   },
   {

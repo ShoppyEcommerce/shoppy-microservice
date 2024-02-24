@@ -23,4 +23,19 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
+  app.get("/rating/product/:id", async(req:Request, res:Response, next:NextFunction)=>{
+    try {
+      const data =  await service.getAllRating(req.params.id)
+      return successHandler(res, {
+        data,
+        message:"ratings returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+    
+  })
 };

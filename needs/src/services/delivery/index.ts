@@ -134,8 +134,9 @@ export class DeliveryService {
     delete (delivery as any).password;
     return delivery;
   }
-  getDeliveriesMan() {
-    return DeliveryModel.findAll({ where: { isVerified: true } });
+  async getDeliveriesMan() {
+    return  await DeliveryModel.findAll({ where: { isVerified: true } });
   }
+
   
 }
