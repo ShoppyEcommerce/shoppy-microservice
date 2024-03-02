@@ -8,6 +8,8 @@ import {
   PaymentRepository,
   TransactionRepository,
   Wallet,
+  Type,
+  PaymentType,
 } from "../../database";
 import { PaymentService } from "..";
 
@@ -62,7 +64,9 @@ export class VendorWalletService {
       merchant: "wallet",
       status: PaymentStatus.SUCCESS,
       referenceId: wallet.id,
-      paymentType: "debit",
+      paymentType: PaymentType.USER_WALLET,
+      type:Type.DEBIT
+
     };
     (await this.payment.create(payment)) as unknown as Payment;
     return wallet;
@@ -85,7 +89,8 @@ export class VendorWalletService {
       userId,
       referenceId: ref,
       status: res.status,
-      paymentType: "credit",
+      paymentType: PaymentType.USER_WALLET,
+      type:Type.CREDIT
     };
     await payment.createPayment(payload);
 
@@ -118,7 +123,7 @@ export class VendorWalletService {
    
     };
     
-    await this.Transaction.create(payload);
+    //await this.Transaction.create(payload);
     // await payment.createPayment(payload);
     await this.repository.update(userId, update);
     return "wallet credited successfully";

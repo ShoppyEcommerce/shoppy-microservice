@@ -1,4 +1,4 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import { DeliveryService } from "../services";
 import {
@@ -8,7 +8,7 @@ import {
   successHandler,
 } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application) => {
   const service = new DeliveryService();
   app.post(
     "/delivery/register",

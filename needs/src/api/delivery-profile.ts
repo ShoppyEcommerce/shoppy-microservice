@@ -1,10 +1,10 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import { DeliveryProfileService } from "../services";
 import { DeliveryAuth, successHandler } from "./middleware";
 
 
-export default (app:Application, channel:Channel) =>{
+export default (app:Application, ) =>{
 const service =  new DeliveryProfileService()
 app.post("/delivery/profile", DeliveryAuth, async(req:Request| any, res:Response, next:NextFunction) =>{
     try {

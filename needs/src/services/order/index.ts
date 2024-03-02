@@ -11,6 +11,7 @@ import {
   VendorRepository,
   Vendor,
   Transaction,
+  TransactionType,
   OrderStatus,
   VendorModel,
   Wallet,
@@ -20,6 +21,10 @@ import {
   DeliveryProfileRepository,
   VendorProfile,
   Delivery,
+  PaymentRepository,
+  PaymentStatus,
+  Type,
+  Payment,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -28,6 +33,7 @@ import {
   option,
   OrderValidation,
 } from "./validation";
+import { Op } from "sequelize";
 import { WalletService, TransactionService } from "../";
 import { v4 as uuid } from "uuid";
 import { io } from "../../config/socket";
@@ -46,6 +52,7 @@ export class OrderService {
   private productRepo: ProductRepository;
   private vendorRepo: VendorRepository;
   private deliveryProfile: DeliveryProfileRepository;
+  private payment: PaymentRepository;
   constructor() {
     this.vendorRepo = new VendorRepository();
     this.repository = new OrderRepository();
@@ -54,6 +61,7 @@ export class OrderService {
     this.cart = new CartRepository();
     this.productRepo = new ProductRepository();
     this.deliveryProfile = new DeliveryProfileRepository();
+    this.payment = new PaymentRepository();
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -62,7 +70,7 @@ export class OrderService {
       throw new ValidationError(error.details[0].message, "");
     }
 
-    // Check if cart exists
+    // // Check if cart exists
     const cart = await this.cart.getOpenCart({
       id: input.cartId,
       ownerId,
@@ -72,7 +80,7 @@ export class OrderService {
       throw new BadRequestError("Cart does not exist", "");
     }
 
-    // Fetch vendor details
+    // // Fetch vendor details
     const vendor = (await VendorModel.findByPk(
       input.vendorId
     )) as unknown as Vendor;
@@ -80,21 +88,24 @@ export class OrderService {
       throw new BadRequestError("Vendor does not exist", "");
     }
 
-    // Initialize variables
+    // // Initialize variables
     let totalPrice: number = 0;
     let newProduct: Product[] = [];
     let transaction: Transaction = {} as Transaction;
+    let payment: Payment = {} as Payment;
     let order: Order = {} as Order;
     const newCart: Cart = this.mapCartModelToCart(cart);
 
-    // Process products in the cart
+
+    // // Process products in the cart
     for (const cartItem of newCart.products) {
-      const product = await this.productRepo.getProduct({
+      const product = (await this.productRepo.getProduct({
         id: cartItem.id,
         ownerId: input.vendorId,
-      });
+      })) as unknown as Product;
 
-      // Validate product existence
+  
+
       if (!product) {
         throw new BadRequestError(
           "This product is not associated with this vendor",
@@ -102,20 +113,19 @@ export class OrderService {
         );
       }
       const FormatData = this.formatProduct(product);
+     
 
-      // Calculate total price
-      const price = cartItem.quantity * FormatData.price;
+      const price = cartItem.Qty * FormatData.price;
       if (price !== cartItem.amount) {
         throw new BadRequestError(
           "Product amount and quantity do not match",
-          `${cartItem.amount}, ${cartItem.quantity}`
+          `${cartItem.amount}, ${cartItem.Qty}`
         );
       }
       totalPrice += price;
 
-      // Update product quantity
-      FormatData.quantity -= cartItem.quantity;
-      if (FormatData.quantity === 0) {
+      FormatData.totalStock -= cartItem.Qty;
+      if (FormatData.totalStock === 0) {
         FormatData.available = Availability.OUT_OF_STOCK;
       }
       newProduct.push(FormatData);
@@ -130,18 +140,31 @@ export class OrderService {
     }
 
     // Perform payment
-    if (input.paymentType === PaymentType.WALLET) {
+    if (input.paymentType === PaymentType.USER_WALLET) {
       const wallet = await this.processWalletPayment(totalPrice, ownerId);
+      console.log(wallet);
+
+      payment = {
+        id: uuid(),
+        status: PaymentStatus.SUCCESS,
+        merchant: "wallet",
+        amount: totalPrice,
+        userId: ownerId,
+        referenceId: wallet.id,
+        paymentType: PaymentType.USER_WALLET,
+        type: Type.DEBIT,
+      };
+
       transaction = {
         userId: ownerId,
         amount: totalPrice,
-        type: "debit",
+        type: TransactionType.PURCHASE,
         referenceId: wallet.id,
         id: uuid(),
+        paymentId: "",
         description: `you made order from ${vendor.firstName} ${
           vendor.lastName
         } store  on ${new Date().toLocaleDateString("en-GB")}.`,
-        product: newCart.products,
       };
       order = {
         id: uuid(),
@@ -152,46 +175,125 @@ export class OrderService {
         totalAmount: totalPrice,
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
+        transactionId: "",
       };
-    } else if (input.paymentType === PaymentType.PAYSTACK) {
-      await this.processPaystackPayment(
-        input.referenceId!,
-        totalPrice,
-        ownerId
-      );
-    } else {
-      throw new BadRequestError("invalid payment type", "");
     }
+    //else if (input.paymentType === PaymentType.BANK_TRANSFER) {
+    //   const res = await this.processPaystackPayment(
+    //     input.referenceId!,
+    //     totalPrice,
+    //     ownerId
+    //   );
+    //   payment = {
+    //     id: uuid(),
+    //     status: PaymentStatus.SUCCESS,
+    //     merchant: "paystack",
+    //     amount: totalPrice,
+    //     userId: ownerId,
+    //     referenceId: input.referenceId,
+    //     paymentType: PaymentType.BANK_TRANSFER,
+    //     type: Type.DEBIT,
+    //   };
+    //   transaction = {
+    //     userId: ownerId,
+    //     amount: totalPrice,
+    //     type: TransactionType.PURCHASE,
+    //     referenceId: input.referenceId,
+    //     paymentId: "",
+    //     id: uuid(),
+    //     description: `you made order from ${vendor.firstName} ${
+    //       vendor.lastName
+    //     } store  on ${new Date().toLocaleDateString("en-GB")}.`,
+    //   };
+    //   order = {
+    //     id: uuid(),
+    //     referenceId: input.referenceId,
+    //     cartId: input.cartId,
+    //     userId: ownerId,
+    //     vendorId: input.vendorId,
+    //     totalAmount: totalPrice,
+    //     paymentType: input.paymentType,
+    //     orderStatus: OrderStatus.PENDING,
+    //     transactionId: "",
+    //   };
+    // } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
+    //   payment = {
+    //     id: uuid(),
+    //     status: PaymentStatus.PENDING,
+    //     merchant: "paystack",
+    //     amount: totalPrice,
+    //     userId: ownerId,
+    //     referenceId: input.referenceId,
+    //     paymentType: PaymentType.CASH_ON_DELIVERY,
+    //     type: Type.DEBIT,
+    //   };
+    //   transaction = {
+    //     userId: ownerId,
+    //     amount: totalPrice,
+    //     type: TransactionType.PURCHASE,
+    //     referenceId: ownerId,
+    //     id: uuid(),
+    //     description: `you made order from ${vendor.firstName} ${
+    //       vendor.lastName
+    //     } store  on ${new Date().toLocaleDateString("en-GB")}.`,
+    //     paymentId: "",
+    //   };
+    //   order = {
+    //     id: uuid(),
+    //     referenceId: ownerId,
+    //     cartId: input.cartId,
+    //     userId: ownerId,
+    //     vendorId: input.vendorId,
+    //     totalAmount: totalPrice,
+    //     paymentType: input.paymentType,
+    //     orderStatus: OrderStatus.PENDING,
+    //     transactionId: "",
+    //   };
+    // } else {
+    //   throw new BadRequestError("invalid payment type", "");
+    // }
 
-    // Update product quantities
+    
+    // // Update product quantities
     await Promise.all(
       newProduct.map((product) => this.updateProductQuantity(product))
-    );
+      );
+      console.log(transaction, order, payment)
 
+    const payed = (await this.payment.create(payment)) as unknown as Payment;
+    console.log(payed)
+
+    transaction.paymentId = payed.id;
     // Create transaction
-    await this.transaction.createTransaction(transaction);
+    const transact = (await this.transaction.createTransaction(
+      transaction
+    )) as unknown as Transaction;
+    console.log(transact)
+    order.transactionId = transact.id;
 
-    // Create order
+    // // Create order
     await this.repository.create(order);
 
-    // Update cart status
+    // // Update cart status
     await this.cart.updateCart(
       { status: CartStatus.CLOSED },
       { id: input.cartId, ownerId }
     );
 
-    // Emit event for new order
+    // // Emit event for new order
     io.emit("newOrder", { order, vendor: input.vendorId });
 
     return "Order was successful";
   }
 
   private async processWalletPayment(totalPrice: number, ownerId: string) {
+;
     const wallet = (await this.wallet.debitWallet(
       totalPrice,
       ownerId
     )) as Wallet;
-    return this.WalletModel(wallet);
+  
+    return wallet
     // Process wallet payment and create transaction
   }
 
@@ -202,6 +304,18 @@ export class OrderService {
   ) {
     const payment = new PaymentService();
     const res = await payment.verifyTransaction(referenceId);
+
+    if (res.status === "success") {
+      if (res.amount !== totalPrice) {
+        throw new BadRequestError(
+          `invalid total price expected ${totalPrice} but got ${res.amount}`,
+          ""
+        );
+      }
+      return res;
+    } else {
+      throw new BadRequestError("Invalid transaction", "");
+    }
     // Process Paystack payment and verify transaction
   }
 
@@ -209,9 +323,9 @@ export class OrderService {
     return this.productRepo.update(
       { id: product.id },
       {
-        quantity: product.quantity,
+        totalStock: product.totalStock,
         available:
-          product.quantity === 0
+          product.totalStock === 0
             ? Availability.OUT_OF_STOCK
             : Availability.IN_STOCK,
       }
@@ -223,8 +337,8 @@ export class OrderService {
       id: cartModel.dataValues.id,
       products: cartModel.dataValues.products.map((product: any) => ({
         id: product.id,
-        name: product.name,
-        quantity: product.quantity,
+        itemName: product.itemName,
+        Qty: product.Qty,
         amount: product.amount,
       })),
       vendor: cartModel.dataValues.vendor,
@@ -277,13 +391,14 @@ export class OrderService {
   async processOrder(vendorId: string, id: string) {
     const order = (await this.repository.Find({
       vendorId,
+      orderStatus: OrderStatus.PENDING,
       id,
     })) as unknown as Order;
     if (!order) {
       throw new BadRequestError("order not found", "");
     }
     const payload = {
-      orderStatus: OrderStatus.PROCESSING,
+      orderStatus: OrderStatus.CONFIRMED,
     };
     await this.repository.updateOrder(payload, order.id);
     const deliveries = (await DeliveryProfileModel.findAll({
@@ -308,9 +423,7 @@ export class OrderService {
       deliveryMan.map((delivery) => {
         io.emit("order request", { order, delivery: delivery.deliveryManId });
       });
-     
     }
-   
 
     return "order updated successfully";
   }
@@ -323,7 +436,7 @@ export class OrderService {
       throw new BadRequestError("order not found", "");
     }
     const payload = {
-      orderStatus: OrderStatus.CANCELLED,
+      orderStatus: OrderStatus.CANCELED,
     };
     await this.repository.updateOrder(payload, order.id);
     const delivery = await DeliveryProfileModel.findAll({});
@@ -334,49 +447,56 @@ export class OrderService {
     });
     return "order updated successfully";
   }
-  private formatProduct(productData: any): Product {
+  private formatProduct(productData: any) {
     return {
       id: productData.dataValues.id,
+
       category: {
-        id: productData.dataValues.category.id,
-        name: productData.dataValues.category.name,
-        image: productData.dataValues.category.image,
-        active: productData.dataValues.category.active,
-        moduleId: productData.dataValues.category.moduleId,
-        createdAt: new Date(productData.dataValues.category.createdAt),
-        updatedAt: new Date(productData.dataValues.category.updatedAt),
-        ModuleModel: {
-          id: productData.dataValues.category.ModuleModel.id,
-          name: productData.dataValues.category.ModuleModel.name,
-          active: productData.dataValues.category.ModuleModel.active,
-          image: productData.dataValues.category.ModuleModel.image,
-          createdAt: new Date(
-            productData.dataValues.category.ModuleModel.createdAt
-          ),
-          updatedAt: new Date(
-            productData.dataValues.category.ModuleModel.updatedAt
-          ),
-        },
+        id: productData.dataValues.CategoryModel.dataValues.id,
+        name: productData.dataValues.CategoryModel.dataValues.name,
+        image: productData.dataValues.CategoryModel.dataValues.image,
       },
-      name: productData.dataValues.name,
+      module: {
+        id: productData.dataValues.ModuleModel.dataValues.id,
+        name: productData.dataValues.ModuleModel.dataValues.name,
+        image: productData.dataValues.ModuleModel.dataValues.image,
+      },
+      itemName: productData.dataValues.itemName,
       categoryId: productData.dataValues.categoryId,
       moduleId: productData.dataValues.moduleId,
       price: parseFloat(productData.dataValues.price), // Convert to number
-      quantity: productData.dataValues.quantity,
-      images: productData.dataValues.images,
-      description: productData.dataValues.description,
+      totalStock: productData.dataValues.totalStock,
+      ItemImages: productData.dataValues.ItemImages,
+      Description: productData.dataValues.Description,
       rating: productData.dataValues.rating,
       available: productData.dataValues.available as Availability, // Assuming `available` is of type Availability
       ownerId: productData.dataValues.ownerId,
       numRating: productData.dataValues.numRating,
+      Attribute: productData.dataValues.Attribute,
+      unit: productData.dataValues.unit,
+      Vat: productData.dataValues.Vat,
     };
+  }
+  async receivedOrder(id: string, userId: string) {
+    // const order = await this.repository.Find({
+    //   orderStatus: OrderStatus.,
+    //   userId,
+    // });
+    // if (!order) {
+    //   throw new BadRequestError("order not found", "");
+    // }
+    // const update = await this.repository.updateOrder(
+    //   { orderStatus: OrderStatus.RECEIVED },
+    //   id
+    // );
+    // return update[1][0].dataValues;
   }
   async acceptOrder(id: string, orderId: string) {
     const delivery = (await DeliveryModel.findByPk(id)) as unknown as Delivery;
 
     const order = (await this.repository.Find({
       id: orderId,
-      orderStatus: OrderStatus.PROCESSING,
+      orderStatus: OrderStatus.CONFIRMED,
     })) as unknown as Order;
     if (!order) {
       throw new BadRequestError(
@@ -386,17 +506,35 @@ export class OrderService {
     }
 
     const update = await this.repository.updateOrder(
-      { orderStatus: OrderStatus.IN_TRANSIT },
+      { orderStatus: OrderStatus.OUT_FOR_DELIVERY, deliveryMan: id },
       orderId
     );
     io.emit("orderUpdate", { order: update, user: order.userId });
 
-    return update;
+    return update[1][0].dataValues;
+  }
+  async DeliveredOrder(id: string, deliveryMan: string) {
+    const order = await this.repository.Find({
+      id,
+      orderStatus: OrderStatus.OUT_FOR_DELIVERY,
+      deliveryMan,
+    });
+    if (!order) {
+      throw new BadRequestError("order not found", "");
+    }
+
+    const update = await this.repository.updateOrder(
+      { orderStatus: OrderStatus.CONFIRMED },
+      id
+    );
+    return update[1][0].dataValues;
   }
 
-  async returnOrder(orderId: string) {
+  async returnOrder(orderId: string, userId: string) {
     const order = (await this.repository.Find({
       id: orderId,
+      orderStatus: OrderStatus.OUT_FOR_DELIVERY,
+      userId,
     })) as unknown as Order;
     if (!order) {
       throw new BadRequestError("this order does not exist", "");
@@ -413,7 +551,7 @@ export class OrderService {
     const orders = await this.repository.FindAll({ userId });
     return orders;
   }
-  async TrackUserOrder(userId: string, id:string) {
+  async TrackUserOrder(userId: string, id: string) {
     const order = await this.repository.Find({ userId, id });
     return order;
   }

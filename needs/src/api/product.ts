@@ -1,10 +1,10 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import { ProductService } from "../services";
 import { v4 as uuid } from "uuid";
 import { VendorAuth, successHandler } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application,) => {
   const service = new ProductService();
   app.post(
     "/product",

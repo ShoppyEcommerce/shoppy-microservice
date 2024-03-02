@@ -8,17 +8,20 @@ import {
   PaymentRepository,
   TransactionRepository,
   Wallet,
+  PaymentType,
+  Type,
 } from "../../database";
 import { PaymentService } from "..";
+import { TransactionType } from "../../database/model/transaction";
 
 export class WalletService {
   private repository: WalletRepository;
   private payment: PaymentRepository;
-  private Transaction:TransactionRepository
+  private Transaction: TransactionRepository;
   constructor() {
     this.repository = new WalletRepository();
     this.payment = new PaymentRepository();
-    this.Transaction =  new TransactionRepository()
+    this.Transaction = new TransactionRepository();
   }
   async createWallet(ownerId: string) {
     const info = {
@@ -46,7 +49,7 @@ export class WalletService {
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
     }
-   
+
     if (wallet?.balance === undefined || wallet.balance < amount) {
       throw new BadRequestError("Insufficient balance", "");
     }
@@ -54,18 +57,9 @@ export class WalletService {
       balance: wallet.balance - amount,
       debit: (wallet?.debit ?? 0) + amount,
     };
-    await this.repository.update(userId, update);
-    const payment = {
-      id: uuid(),
-      userId,
-      amount,
-      merchant: "wallet",
-      status: PaymentStatus.SUCCESS,
-      referenceId: wallet.id,
-      paymentType: "debit",
-    };
-    (await this.payment.create(payment)) as unknown as Payment;
-    return wallet;
+   const updated =  await this.repository.update(userId, update);
+   return updated[1][0].dataValues
+   
   }
   async creditWallet(ref: string, userId: string) {
     const wallet = (await this.repository.walletBalance({
@@ -77,26 +71,16 @@ export class WalletService {
     //verify referenceId
     const payment = new PaymentService();
     const res = await payment.verifyTransaction(ref);
-    //save payment
-    const payload = {
-      id: uuid(),
-      merchant: "paystack",
-      amount: res.amount,
-      userId,
-      referenceId: ref,
-      status: res.status,
-      paymentType: "credit",
-    };
-    await payment.createPayment(payload);
+  
 
     const update = {
       balance: (wallet?.balance ?? 0) + res.amount,
       credit: (wallet?.credit ?? 0) + res.amount,
     };
-    await this.repository.update(userId, update);
-    return "wallet credited successfully";
+   const updated =  await this.repository.update(userId, update);
+    return  {...updated[1][0].dataValues, amount:res.amount}
   }
-  async creditWithReferal(amount:number, userId:string){
+  async creditWithReferal(amount: number, userId: string) {
     const wallet = (await this.repository.walletBalance({
       ownerId: userId,
     })) as unknown as Wallet;
@@ -107,17 +91,32 @@ export class WalletService {
       balance: (wallet?.balance ?? 0) + amount,
       credit: (wallet?.credit ?? 0) + amount,
     };
+     const info = {
+      id: uuid(),
+      merchant: "wallet",
+      amount: amount,
+      userId,
+      referenceId: wallet.id,
+      status: PaymentStatus.SUCCESS,
+      paymentType: PaymentType.USER_WALLET,
+      type: Type.CREDIT,
+    };
+ 
+  
+  
+    const payment = new PaymentService();
+   const pay =  await payment.createPayment(info) as unknown as Payment
     const payload = {
       id: uuid(),
       merchant: "wallet",
       amount: amount,
       userId,
       referenceId: await Utils.generatePaymentReference(userId),
-      description:"Referal bonus",
-      type:"credit"
-   
+      description: "Referal bonus",
+      type: TransactionType.CREDIT_WALLET,
+      paymentId:pay.id
     };
-    
+
     await this.Transaction.create(payload);
     // await payment.createPayment(payload);
     await this.repository.update(userId, update);

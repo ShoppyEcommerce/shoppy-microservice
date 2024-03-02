@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "nodemon ./src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "db:migration": "sequelize migration:generate --name",
+    "pending:migration": "sequelize db:migrate",
+    "revert:migration": "sequelize db:migrate:undo",
+    "init:migration": "sequelize init"
   },
   "dependencies": {
     "@types/multer": "^1.4.11",

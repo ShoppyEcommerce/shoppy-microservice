@@ -2,6 +2,8 @@ import {
   CartModel,
   Order,
   OrderModel,
+  PaymentModel,
+  TransactionHistoryModel,
   UserModel,
   VendorModel,
   VendorProfileModel,
@@ -31,6 +33,12 @@ export class OrderRepository {
             model:VendorProfileModel,
             attributes:["location"]
           }]
+        },
+        {
+          model:TransactionHistoryModel,
+          include:[{
+            model:PaymentModel
+          }]
         }
       ],
     });
@@ -54,6 +62,12 @@ export class OrderRepository {
           include:[{
             model:VendorProfileModel,
             attributes:["location"]
+          }]
+        },
+        {
+          model:TransactionHistoryModel,
+          include:[{
+            model:PaymentModel
           }]
         }
       ],

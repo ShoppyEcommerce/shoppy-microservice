@@ -13,9 +13,10 @@ export interface VendorProfile {
   createdAt?: Date;
   updatedAt?: Date;
   vendorId: string;
-  bankName: string;
-  accountNumber: number;
-  accountHolder: string;
+  bankName?: string;
+  accountNumber?: number;
+  accountHolder?: string;
+  recipient?: string;
 }
 export class VendorProfileModel extends Model<VendorProfile> {}
 VendorProfileModel.init(
@@ -61,15 +62,19 @@ VendorProfileModel.init(
     },
     bankName: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     accountHolder: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     accountNumber: {
       type: DataTypes.BIGINT,
-      allowNull: false,
+      allowNull: true,
+    },
+    recipient: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

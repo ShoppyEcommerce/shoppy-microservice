@@ -1,7 +1,5 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { VendorService } from "../services";
-
-import { Channel } from "amqplib";
 import { Utils } from "../utils/index";
 import {
   AuthMiddleware,
@@ -10,9 +8,9 @@ import {
   successHandler,
 } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application) => {
   const service = new VendorService();
-  Utils.SubscribeMessage(channel, service);
+
   app.post(
     "/vendor/register",
     async (req: Request, res: Response, next: NextFunction) => {
@@ -138,4 +136,18 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
+  app.get("/vendor/not/verified", AuthMiddleware.Authenticate(["admin"]), async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+      const data =  await service.getUnVerified()
+      return successHandler(res,{
+        data,
+        message:"vendor returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
 };

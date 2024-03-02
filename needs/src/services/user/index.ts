@@ -71,24 +71,36 @@ export class UserService {
 
     const userData = await this.userRepository.createUser(value);
     const user = await this.transformUser(userData.dataValues);
+const send =  process.env.SEND_SMS === "true" ? true : false;
+console.log(send)
+    if ( value.role === "user") {
+       const info = Utils.generateRandomNumber();
 
-    const info = Utils.generateRandomNumber();
-    const sms = await sendSMS(info.OTP, value.phone);
-    if (sms && sms.status === 400) {
-      throw new BadRequestError(sms.message, "");
+       if(send){
+         const sms = await sendSMS(info.OTP, value.phone);
+         if (sms && sms.status === 400) {
+           throw new BadRequestError(sms.message, "");
+         }
+       }
+
+      const update = await UserModel.update(
+        { OTP: info.OTP, OTPExpiration: info.time },
+        { where: { id: user.id } }
+      );
+      const wallet = new WalletService();
+      if (referalUser.ownerId) {
+        await wallet.creditWithReferal(100, referalUser.ownerId);
+      }
+      return Utils.FormatData(
+        `A 6 digit OTP has been sent to your phone number -${info.OTP}`
+      );
+    } else {
+      const update = await UserModel.update(
+        { isverified: true },
+        { where: { id: user.id } }
+      );
+      return Utils.FormatData(user);
     }
-
-    const update = await UserModel.update(
-      { OTP: info.OTP, OTPExpiration: info.time },
-      { where: { id: user.id } }
-    );
-
-    const wallet = new WalletService();
-    if (referalUser.ownerId) {
-      await wallet.creditWithReferal(100, referalUser.ownerId);
-    }
-
-    return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
   async Login(input: { phone: string }) {
     const { error, value } = loginUserSchema.validate(input, option);

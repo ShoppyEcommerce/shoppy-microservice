@@ -22,9 +22,9 @@ export const VendorAuth = async (
     if(!user.OTPVerification){
       throw new UnAuthorized("pls verify your account with the OTP", "")
     }
-    if(!user.isVerified){
-      throw new UnAuthorized("pls wait for admin to verify your account", "")
-    }
+    // if(!user.isVerified){
+    //   throw new UnAuthorized("pls wait for admin to verify your account", "")
+    // }
     req.user = verify.id;
 
     next();

@@ -1,4 +1,4 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import {
   AuthMiddleware,
@@ -9,9 +9,9 @@ import {
 import { OrderService } from "../services";
 import { Utils } from "../utils";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application, ) => {
   const service = new OrderService();
-  Utils.SubscribeMessage(channel, service);
+ 
   app.post(
     "/order",
     AuthMiddleware.Authenticate(["user"]),
@@ -125,33 +125,101 @@ export default (app: Application, channel: Channel) => {
       }
     }
   );
-  app.get("/order/track/user/:id", AuthMiddleware.Authenticate(["user"]), async(req:Request | any, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.TrackUserOrder(req.user, req.params.id)
-      return successHandler(res,{
-        data,
-        message:"user order returned successfully",
-        statusCode:200
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  app.get(
+    "/order/track/user/:id",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.TrackUserOrder(req.user, req.params.id);
+        return successHandler(res, {
+          data,
+          message: "user order returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
-  app.get("/order/track/user", AuthMiddleware.Authenticate(["user"]), async(req:Request | any, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.TrackUserOrders(req.user, )
-      return successHandler(res,{
-        data,
-        message:"user order returned successfully",
-        statusCode:200
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  );
+  app.get(
+    "/order/track/user",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.TrackUserOrders(req.user);
+        return successHandler(res, {
+          data,
+          message: "user order returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
-  app.get("/order/vendor/dashboard")
+  );
+  app.patch(
+    "/order/delivery/:id",
+    DeliveryAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.acceptOrder(req.user, req.params.id);
+        return successHandler(res, {
+          data,
+          message: "order updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/order/user/:id",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.receivedOrder(req.params.id, req.user);
+        return successHandler(res, {
+          data,
+          message: "order updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/order/user/return/:id",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.returnOrder(req.params.id, req.user);
+
+        return successHandler(res, {
+          data,
+          message: "order updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/order/delivery-order/:id",
+    DeliveryAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.DeliveredOrder(req.params.id, req.user);
+        return successHandler(res, {
+          data,
+          message: "order updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

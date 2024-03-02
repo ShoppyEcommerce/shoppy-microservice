@@ -9,6 +9,15 @@ export interface Profile {
   longitude: number;
   userId: string;
   location: string;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
+  deliveryAddress?: Array<string>;
+  recipient?: string;
+  city?:string;
+  state?:string;
+  country?:string
+
 }
 
 export class ProfileModel extends Model<Profile> {}
@@ -35,12 +44,43 @@ const profileSchema = {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  recipient: { type: DataTypes.STRING,
+     allowNull: true },
 
   userId: {
     type: DataTypes.UUID,
     allowNull: false,
     onDelete: "CASCADE",
   },
+  bankName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  accountName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  accountNumber: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  deliveryAddress: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: true,
+  },
+  city:{
+    type:DataTypes.STRING,
+    allowNull:true
+  },
+  state:{
+    type:DataTypes.STRING,
+    allowNull:true
+  },country:{
+    type:DataTypes.STRING,
+    allowNull:true
+
+  }
+  
 };
 ProfileModel.init(profileSchema, {
   sequelize: databaseConnection,

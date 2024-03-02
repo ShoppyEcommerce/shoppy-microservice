@@ -13,7 +13,10 @@ export class VendorRepository {
     });
   }
   async findAll() {
-    return await VendorModel.findAll({ include: VendorProfileModel });
+    return await VendorModel.findAll({ attributes:["id","firstName","lastName","email","phone"], include: VendorProfileModel });
+  }
+  async findUnVerified(){
+    return await VendorModel.findAll({where: {isVerified: false}, include: VendorProfileModel});
   }
   async getVendor(id: string) {
     return await VendorModel.findOne({ where: { id } });

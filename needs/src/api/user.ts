@@ -1,10 +1,10 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { UserService, WalletService } from "../services";
-import { Channel } from "amqplib";
+
 import { v4 as uuid } from "uuid";
 import { successHandler, AuthMiddleware } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application,) => {
   const service = new UserService();
   app.post(
     "/register",

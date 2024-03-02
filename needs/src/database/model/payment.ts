@@ -1,6 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
 import { UserModel } from "./user";
+import { PaymentType } from "./order";
+import { TransactionHistoryModel } from "./transaction";
 
 export interface Payment {
   id: string;
@@ -11,8 +13,8 @@ export interface Payment {
   status: PaymentStatus;
   createdAt?: Date;
   updatedAt?: Date;
-  paymentType:string
-
+  paymentType: PaymentType;
+  type: Type;
 }
 //paymentStatus
 export enum PaymentStatus {
@@ -20,6 +22,11 @@ export enum PaymentStatus {
   SUCCESS = "success",
   FAILED = "failed",
 }
+export enum Type {
+  CREDIT = "Credit",
+  DEBIT = "Debit",
+}
+
 //paymentModel
 export class PaymentModel extends Model<Payment> implements Payment {
   id!: string;
@@ -30,7 +37,8 @@ export class PaymentModel extends Model<Payment> implements Payment {
   status!: PaymentStatus;
   createdAt!: Date;
   updatedAt!: Date;
-  paymentType!:string
+  paymentType!: PaymentType;
+  type!:Type
 }
 //paymentSchema
 const paymentSchema = {
@@ -39,6 +47,7 @@ const paymentSchema = {
     allowNull: false,
     primaryKey: true,
   },
+
   merchant: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -55,7 +64,16 @@ const paymentSchema = {
     type: DataTypes.UUID,
     allowNull: false,
   },
-  paymentType:{type:DataTypes.STRING, allowNull: false},
+  paymentType: {
+    type: DataTypes.ENUM(...Object.values(PaymentType)),
+
+    allowNull: false,
+  },
+  type: {
+    type: DataTypes.ENUM(...Object.values(Type)),
+    allowNull: false,
+  },
+
   status: {
     type: DataTypes.ENUM,
     values: [
@@ -74,3 +92,9 @@ PaymentModel.init(paymentSchema, {
 //payment relationship with user model
 UserModel.hasMany(PaymentModel, { foreignKey: "userId" });
 PaymentModel.belongsTo(UserModel, { foreignKey: "userId" });
+TransactionHistoryModel.belongsTo(PaymentModel, {
+  foreignKey: "paymentId",
+});
+PaymentModel.belongsTo(TransactionHistoryModel, {
+  foreignKey: "paymentId",
+});

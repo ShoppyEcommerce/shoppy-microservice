@@ -1,5 +1,5 @@
 import { Application, json } from "express";
-import cors from "cors";// Import Socket.IO Server
+import cors from "cors"; // Import Socket.IO Server
 import { Utils } from "./utils";
 import {
   Category,
@@ -18,7 +18,9 @@ import {
   Rating,
   Cart,
   Payment,
-  Wallet
+  Wallet,
+  Service,
+  SubVendor,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -33,22 +35,24 @@ export default async (app: Application) => {
   appEvents(app);
 
   const channel = await Utils.CreateChannel();
-  User(app, channel);
-  Media(app, channel);
-  Module(app, channel);
-  Category(app, channel);
-  Vendor(app, channel);
-  Product(app, channel);
-  Delivery(app, channel);
-  VendorProfile(app, channel);
-  Profile(app, channel);
-  Order(app, channel);
-  Like(app, channel);
-  Conversation(app, channel);
-  Rating(app, channel)
-  Cart(app, channel)
-  Payment(app,channel)
-  Wallet(app, channel)
+  User(app);
+  Media(app);
+  Module(app);
+  Category(app);
+  Vendor(app);
+  Product(app);
+  Delivery(app);
+  VendorProfile(app);
+  Profile(app);
+  Order(app);
+  Like(app);
+  Conversation(app);
+  Rating(app);
+  Cart(app);
+  Payment(app);
+  Wallet(app);
+  Service(app);
+  SubVendor(app)
 
   // Return the http server to be used by index.ts
   return httpServer;

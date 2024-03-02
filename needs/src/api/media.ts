@@ -1,10 +1,10 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { upload, uploads } from "../lib/multer";
 import { MediaService } from "../services";
-import { Channel } from "amqplib";
+
 import { successHandler, GeneralAuth } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application,) => {
   const service = new MediaService();
   app.post(
     "/image",
@@ -12,8 +12,8 @@ export default (app: Application, channel: Channel) => {
     upload.single("images"),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log(req.file);
-        const data = await service.uploadSingle(req.file);
+       
+        const {data} = await service.uploadSingle(req.file);
         return successHandler(res, {
           data,
           message: "image uploaded successfuly",

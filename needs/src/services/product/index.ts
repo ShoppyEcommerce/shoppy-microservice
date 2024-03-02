@@ -48,7 +48,7 @@ export class ProductService {
     this.vendorProfile = new VendorProfileRepository();
     this.vendorRepo = new VendorRepository();
   }
-  async createProduct(input: IProduct, user: string) {
+  async createProduct(input: Product, user: string) {
     const { error, value } = ProductSchema.validate(input, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
@@ -71,8 +71,8 @@ export class ProductService {
     if (!profile) {
       throw new BadRequestError("pls create a profile first", "Bad Request");
     }
-    value.name =  Utils.Capitalizeword(value.name);
-    const exist =  await this.repository.getProduct({name: value.name, ownerId: user});
+    value.itemName =  Utils.Capitalizeword(value.itemName);
+    const exist =  await this.repository.getProduct({itemName: value.itemName, ownerId: user});
     if (exist) {
       throw new BadRequestError("This product already exist for this vendor", "");
     }
@@ -80,7 +80,7 @@ export class ProductService {
     value.category = category;
     value.moduleId = category.moduleId;
     value.ownerId = user;
-    value.name = Utils.Capitalizeword(value.name);
+    
     const product = await this.repository.create(value);
     return Utils.FormatData(product);
   }
@@ -113,7 +113,7 @@ export class ProductService {
       throw new BadRequestError("This product does not exist", "");
     }
     const product = await this.repository.update({ id }, value);
-    return Utils.FormatData(product);
+    return Utils.FormatData(product[1][0].dataValues);
   }
   async deleteProduct(id: string) {
     const exist = await this.repository.getProduct({ id });
@@ -168,9 +168,9 @@ export class ProductService {
   }
   async searchProductsAndVendors(
     input: string
-  ): Promise<{ products: ProductModel[]; vendors: VendorModel[] }> {
+  ) {
     const products = await ProductModel.findAll({
-      where: { name: { [Op.like]: `%${input}%` } },
+      where: { itemName: { [Op.like]: `%${input}%` } },
     });
     const vendors = await VendorModel.findAll({
       where: {

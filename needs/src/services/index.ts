@@ -17,3 +17,6 @@ export { ConversationService } from "./conversation";
 export { CartService } from "./cart";
 export { DeliveryProfileService } from "./deliveryProfile";
 export { VendorWalletService } from "./vendor-wallet";
+export { ServiceService } from "./service";
+export { ParcelService } from "./parcel";
+export { SubVendorService } from "./subVendor";

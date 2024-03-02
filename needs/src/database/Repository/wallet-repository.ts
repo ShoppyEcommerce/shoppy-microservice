@@ -10,6 +10,9 @@ export class WalletRepository {
     return WalletModel.findOne({ where: input });
   }
   async update(ownerId: string, update: any) {
-    await WalletModel.update(update, { where: { ownerId } });
+    return await WalletModel.update(update, {
+      where: { ownerId },
+      returning: true,
+    });
   }
 }

@@ -1,10 +1,10 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import { RatingService } from "../services";
 
 import { AuthMiddleware, successHandler } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application) => {
   const service = new RatingService();
 
   app.post(

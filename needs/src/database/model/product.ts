@@ -1,40 +1,61 @@
 import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
 import { VendorModel } from "./vendor";
+import { CategoryModel } from "./category";
+import { ModuleModel } from "./module";
+//  item name
+//  description
+//  price
+//  discount
+//  discountType
+//  category
+//  Tag
+//  attribute
+//  total stock,
+//  unit
+//  image
 
 export interface Product {
   id: string;
-  name: string;
+  itemName: string;
   categoryId: string;
-  category: Category;
+
   moduleId: string;
   price: number;
-  quantity: number;
-  images: Array<string>;
-  description: string;
+  totalStock:number;
+  ItemImages: Array<string>;
+  Description: string;
   rating?: number;
   available: Availability;
   ownerId: string;
   numRating?: number;
+ 
+  Attribute:Array<string>;
+  unit:string;
+  Tag?:string
+  discountType?:string;
+  discount?:number;
+  Vat:number;
+
 }
-export interface Category {
-  id: string;
-  name: string;
-  active: boolean;
-  image: string;
-  moduleId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  ModuleModel: ModuleModel;
-}
-export interface ModuleModel {
-  id: string;
-  name: string;
-  active: boolean;
-  image: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// export interface Category {
+//   id: string;
+//   name: string;
+//   active: boolean;
+//   image: string;
+//   moduleId: string;
+//   createdAt: Date;
+//   updatedAt: Date;
+//   ModuleModel: ModuleModel;
+// }
+// export interface ModuleModel {
+//   id: string;
+//   name: string;
+//   active: boolean;
+//   image: string;
+//   createdAt: Date;
+//   updatedAt: Date;
+// }
 
 export enum Availability {
   IN_STOCK = "In Stock",
@@ -50,16 +71,34 @@ ProductModel.init(
       primaryKey: true,
       allowNull: false,
     },
+    unit:{
+      type:DataTypes.STRING,
+      allowNull:false
+    },
+    Vat:{
+      type:DataTypes.FLOAT,
+      allowNull:false
+
+    },
     categoryId: { type: DataTypes.UUID },
     ownerId: { type: DataTypes.UUID, onDelete: "CASCADE" },
-    name: {
+    itemName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    category: {
-      type: DataTypes.JSONB,
-      allowNull: false,
+    discount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
     },
+    discountType: {
+      type: DataTypes.ENUM("Percentage", "Fixed"),
+      allowNull: true,
+    },
+    Attribute:{
+      type:DataTypes.ARRAY(DataTypes.STRING),
+      allowNull:false
+    },
+   
     moduleId: {
       type: DataTypes.UUID,
     },
@@ -68,8 +107,8 @@ ProductModel.init(
       allowNull: false,
     },
 
-    quantity: { type: DataTypes.INTEGER, allowNull: false },
-    images: { type: DataTypes.ARRAY(DataTypes.STRING) },
+    totalStock: { type: DataTypes.INTEGER, allowNull: false },
+    ItemImages: { type: DataTypes.ARRAY(DataTypes.STRING) },
     available: {
       type: DataTypes.ENUM("In Stock", "Out Of Stock"),
       defaultValue: Availability.IN_STOCK,
@@ -84,7 +123,7 @@ ProductModel.init(
       defaultValue: 0,
       allowNull: true,
     },
-    description: {
+    Description: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
@@ -95,3 +134,9 @@ ProductModel.init(
 VendorModel.hasMany(ProductModel, { foreignKey: "ownerId" });
 //relationship between module and product
 ProductModel.belongsTo(VendorModel, { foreignKey: "ownerId" });
+CategoryModel.hasMany(ProductModel, { foreignKey: "categoryId" });
+ProductModel.belongsTo(CategoryModel, { foreignKey: "categoryId" });
+ModuleModel.hasMany(ProductModel, { foreignKey: "moduleId" });
+ProductModel.belongsTo(ModuleModel, { foreignKey: "moduleId" })
+
+

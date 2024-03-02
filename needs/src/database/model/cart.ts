@@ -1,22 +1,24 @@
 import { databaseConnection } from "../connection";
 import { DataTypes, Model } from "sequelize";
-import { Product } from "./product";
+
 import { VendorModel } from "./vendor";
 import { UserModel } from "./user";
 import { OrderModel } from "./order";
 
 export interface Cart {
   id: string;
-  products: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-    amount: number;
-  }>;
+  products: Product[]
   vendor: string;
   totalAmount: number;
   status: CartStatus;
   ownerId: string;
+}
+interface Product{
+  id: string;
+  itemName: string;
+  Qty: number;
+  amount: number;
+
 }
 export enum CartStatus {
   OPEN = "open",

@@ -1,8 +1,8 @@
-import { ProfileRepository } from "../../database/Repository";
-import { Profile } from "../../database/model/profile";
+import { ProfileRepository, Profile } from "../../database";
+
 import { Utils } from "../../utils";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
-import { UpdateProfileSchema, option, profileSchema } from "./validation";
+import { UpdateBankDetails, UpdateProfileSchema, option, profileSchema } from "./validation";
 import { v4 as uuid } from "uuid";
 
 export class ProfileService {
@@ -27,25 +27,73 @@ export class ProfileService {
     }
     return Utils.FormatData(profile);
   }
-  async updateProfile(id: string, update: any) {
+  async updateProfile(userId: string, update: any) {
     const { error, value } = UpdateProfileSchema.validate(update, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const exist = await this.repository.getProfile({ id });
+    const exist = await this.repository.getProfile({ userId }) as unknown as Profile
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
     }
 
-    const profile = await this.repository.update(id, value);
-    return Utils.FormatData(profile);
+    const profile = await this.repository.update(exist.id, value);
+    return Utils.FormatData(profile[1][0].dataValues);
   }
-  async deleteProfile(id: string) {
-    const exist = await this.repository.getProfile({ id });
+  async deleteProfile(userId: string) {
+    const exist = await this.repository.getProfile({ userId }) as unknown as Profile
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
     }
-    const profile = await this.repository.delete({ id });
+    const profile = await this.repository.delete({ id:exist.id });
     return Utils.FormatData(profile);
+  }
+  async updateBankDetails(input: Partial<Profile>, userId: string) {
+    const {error} =  UpdateBankDetails.validate(input, option)
+    if(error){
+      throw new BadRequestError(error.details[0].message,"")
+    }
+    const profile = (await this.repository.getProfile({
+      userId,
+    })) as unknown as Profile;
+    if (!profile) {
+      throw new BadRequestError("profile not found", "");
+    }
+    const update = await this.repository.update(profile.id, input);
+
+    return update[1][0].dataValues;
+  }
+  async addDeliveryAddress(address: string, userId: string) {
+    const profile = (await this.repository.getProfile({
+      userId,
+    })) as unknown as Profile;
+    if (!profile) {
+      throw new BadRequestError("profile not found", "");
+    }
+
+    // Ensure deliveryAddress is initialized as an array or an empty array if undefined
+    const deliveryAddress = profile.deliveryAddress ?? [];
+
+    // Update deliveryAddress field
+    const update = await this.repository.update(profile.id, {
+      deliveryAddress: [...deliveryAddress, address],
+    });
+    return update[1][0].dataValues;
+  }
+  async removeDelivery(address: string, userId: string) {
+    const profile = (await this.repository.getProfile({
+      userId,
+    })) as unknown as Profile;
+    if (!profile) {
+      throw new BadRequestError("profile not found", "");
+    }
+
+    const newAddress = profile.deliveryAddress?.filter(
+      (prof) => prof.trim() !== address.trim()
+    );
+    const update = await this.repository.update(profile.id, {
+      deliveryAddress: newAddress,
+    });
+    return update[1][0].dataValues;
   }
 }

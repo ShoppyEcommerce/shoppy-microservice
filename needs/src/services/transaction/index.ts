@@ -6,6 +6,6 @@ export class TransactionService {
     this.repository = new TransactionRepository();
   }
   async createTransaction(input: Transaction) {
-    await this.repository.create(input);
+   return  await this.repository.create(input);
   }
 }

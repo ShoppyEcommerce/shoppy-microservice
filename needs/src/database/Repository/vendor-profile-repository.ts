@@ -5,10 +5,24 @@ export class VendorProfileRepository {
     return VendorProfileModel.create(input);
   }
   async findOne(input: Record<string, string>) {
-    return VendorProfileModel.findOne({ where: input, include: [VendorModel] });
+    return VendorProfileModel.findOne({ where: input, include: [{
+      model: VendorModel,
+  
+      attributes:["id",
+    "firstName","lastName","email","phone"]
+
+    
+    }] });
   }
   async findAll() {
-    return VendorProfileModel.findAll({ include: [VendorModel] });
+    return VendorProfileModel.findAll({ include: [{
+      model: VendorModel,
+  
+      attributes:["id",
+    "firstName","lastName","email","phone"]
+
+    
+    }] });
   }
   async update(input: { id: string }, update: any) {
     return  await VendorProfileModel.update(update, { where: input, returning: true });

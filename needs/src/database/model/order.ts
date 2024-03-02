@@ -3,6 +3,8 @@ import { Model, DataTypes } from "sequelize";
 import { UserModel } from "./user";
 import { DeliveryModel } from "./delivery";
 import { VendorModel } from "./vendor";
+import order from "../../api/order";
+import { TransactionHistoryModel } from "./transaction";
 
 export interface Order {
   id: string;
@@ -16,6 +18,9 @@ export interface Order {
   orderStatus: OrderStatus;
   deliveryMan?: string;
   deliveryFee?: number;
+  discount?: number;
+  VatTax?: number;
+  transactionId: string;
 }
 interface Product {
   id: string;
@@ -27,17 +32,20 @@ interface Product {
   totalPrice: number;
 }
 export enum PaymentType {
-  PAYSTACK = "paystack",
-  WALLET = "wallet",
-  PAY_ON_DELIVERY = "pay_on_delivery",
+  BANK_TRANSFER = "Bank Transfer",
+  CASH_ON_DELIVERY = "Cash On Delivery",
+  USER_WALLET = "User Wallet",
 }
 export enum OrderStatus {
-  PENDING = "pending",
-  PROCESSING = "processing",
-  IN_TRANSIT = "in_transit",
-  CANCELLED = "canceled",
-  DELIVERED = "delivered",
+  PENDING = "Pending",
+
+  CANCELED = "Canceled",
+
   RETURNED = "returned",
+
+  CONFIRMED = "Confirmed",
+  OUT_FOR_DELIVERY = "Out for Delivery",
+  COMPLETED = "Completed",
 }
 
 export class OrderModel extends Model<Order> {}
@@ -65,28 +73,19 @@ const OrderSchema = {
     allowNull: false,
   },
   paymentType: {
-    type: DataTypes.ENUM,
-    values: [
-      PaymentType.PAYSTACK,
-      PaymentType.PAY_ON_DELIVERY,
-      PaymentType.WALLET,
-    ],
+    type: DataTypes.ENUM(...Object.values(PaymentType)),
     allowNull: false,
   },
   totalAmount: {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
+  transactionId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+  },
   orderStatus: {
-    type: DataTypes.ENUM,
-    values: [
-      OrderStatus.PENDING,
-      OrderStatus.IN_TRANSIT,
-      OrderStatus.CANCELLED,
-      OrderStatus.DELIVERED,
-      OrderStatus.PROCESSING,
-      OrderStatus.RETURNED,
-    ],
+    type: DataTypes.ENUM(...Object.values(OrderStatus)),
     allowNull: false,
     defaultValue: OrderStatus.PENDING,
   },
@@ -102,6 +101,14 @@ const OrderSchema = {
     type: DataTypes.FLOAT,
     allowNull: true,
   },
+  discount: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  vatTax: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 };
 OrderModel.init(OrderSchema, {
   sequelize: databaseConnection,
@@ -114,3 +121,12 @@ OrderModel.belongsTo(DeliveryModel, { foreignKey: "deliveryMan" });
 DeliveryModel.hasMany(OrderModel, { foreignKey: "deliveryMan" });
 OrderModel.belongsTo(VendorModel, { foreignKey: "vendorId" });
 VendorModel.hasMany(OrderModel, { foreignKey: "vendorId" });
+TransactionHistoryModel.belongsTo(OrderModel, { foreignKey: "transactionId" });
+OrderModel.belongsTo(TransactionHistoryModel, { foreignKey: "transactionId" });
+
+//end point
+// - create endpoint to get today order
+// - endpoint to get this week order
+// -endpoint to get this month order
+// -to get all order based on status
+// - get lastes order

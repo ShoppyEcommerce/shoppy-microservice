@@ -15,3 +15,5 @@ export { default as Conversation } from "./conversation";
 export { default as Rating } from "./rating";
 export { default as Payment } from "./payment";
 export { default as Wallet} from "./wallet"
+export {default as Service} from "./service"
+export  {default as SubVendor} from "./subVendor"

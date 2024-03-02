@@ -5,6 +5,8 @@ import {
   OrderRepository,
   Order,
   OrderStatus,
+  VendorWalletRepository,
+  Wallet,
 } from "../../database";
 import { v4 as uuid } from "uuid";
 import {
@@ -22,9 +24,11 @@ import { VendorWalletService } from "..";
 export class VendorService {
   private vendorRepository: VendorRepository;
   private orderRepo: OrderRepository;
+  private vendorWallet: VendorWalletRepository;
   constructor() {
     this.vendorRepository = new VendorRepository();
     this.orderRepo = new OrderRepository();
+    this.vendorWallet = new VendorWalletRepository();
   }
   async createVendor(input: Vendor) {
     const { error, value } = registerVendorSchema.validate(input, option);
@@ -46,18 +50,21 @@ export class VendorService {
     value.confirmPassword = await Utils.HashPassword(value.confirmPassword);
     const vendor = await this.vendorRepository.createVendor(value);
     const code = Utils.generateRandomNumber();
-    // const sms = await sendSMS(code.OTP, value.phone);
-    // console.log(sms);
-    // if (sms && sms.status === 400) {
-    //   throw new BadRequestError(sms.message, "");
-    // }
+    const send = process.env.SEND_SMS === "true" ? true : false;
+    if (send) {
+      const sms = await sendSMS(code.OTP, value.phone);
+      console.log(sms);
+      if (sms && sms.status === 400) {
+        throw new BadRequestError(sms.message, "");
+      }
+    }
     await VendorModel.update(
       { OTP: code.OTP, OTPExpirationDate: code.time },
       { where: { id: vendor.id } }
     );
     await new VendorWalletService().createWallet(value.id);
 
-    return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
+    return Utils.FormatData(`A 6 digit OTP has been sent to your phone number ${code.OTP}`);
   }
   async Login(input: { phone: string; password: string }) {
     const { error, value } = loginVendorSchema.validate(input, option);
@@ -171,6 +178,9 @@ export class VendorService {
   async getVendors() {
     return await this.vendorRepository.findAll();
   }
+  async getUnVerified() {
+    return await this.vendorRepository.findUnVerified();
+  }
   async deleteVendor(id: string) {
     const vendor = await this.vendorRepository.getVendor(id);
     if (!vendor) {
@@ -202,9 +212,12 @@ export class VendorService {
     const orders = (await this.orderRepo.FindAll({
       vendorId,
     })) as unknown as Order[];
+    const wallet = (await this.vendorWallet.walletBalance({
+      ownerId: vendorId,
+    })) as unknown as Wallet;
 
     const cancel: Order[] = orders.filter(
-      (order) => order.orderStatus === OrderStatus.CANCELLED
+      (order) => order.orderStatus === OrderStatus.CANCELED
     );
     const sales = orders.reduce((curr, acc) => curr + acc.totalAmount, 0);
     const pending = orders.filter(
@@ -214,7 +227,7 @@ export class VendorService {
       (order) => order.orderStatus === OrderStatus.RETURNED
     );
     const progress = orders
-      .filter((order) => order.orderStatus === OrderStatus.PROCESSING)
+      .filter((order) => order.orderStatus === OrderStatus.CONFIRMED)
       .reduce((cur, acc) => cur + acc.totalAmount, 0);
     const cancelAmount = cancel.reduce((cur, acc) => cur + acc.totalAmount, 0);
 
@@ -226,6 +239,7 @@ export class VendorService {
       orders,
       cancel,
       returned,
+      wallet: wallet.balance,
     };
   }
 }

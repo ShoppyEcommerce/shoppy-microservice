@@ -1,5 +1,5 @@
-import { UserModel } from "../model";
-import { Profile, ProfileModel } from "../model/profile";
+import { UserModel, Profile, ProfileModel } from "../model";
+
 
 export class ProfileRepository {
   async create(input: Profile) {
@@ -9,13 +9,18 @@ export class ProfileRepository {
   async getProfile(input: Record<string, string>) {
     const profile = await ProfileModel.findOne({
       where: input,
-      include: [UserModel],
+      include: [
+        {
+          model:UserModel,
+          attributes:["id","firstName","lastName","email","phone"]
+        }
+      ],
     });
     return profile;
   }
   async update(id: string, update: any) {
     const profile = await ProfileModel.update(update, { where: { id }, returning: true, });
-    console.log(profile);
+    
     return profile;
   }
   async delete(input: { id: string }) {

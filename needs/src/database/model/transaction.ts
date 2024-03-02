@@ -6,16 +6,22 @@ export interface Transaction {
   id: string;
   userId: string;
   amount: number;
-  type: string;
+  type: TransactionType;
   referenceId: string;
   description: string;
   createdAt?: Date;
   updatedAt?: Date;
-  product?: product[];
+  paymentId: string;
+}
+
+export enum TransactionType {
+  PURCHASE = "Purchase",
+  CREDIT_WALLET = "Credit Wallet",
+  FUND_BANK_ACCOUNT = "Fund Bank Account",
 }
 interface product {
   id: string;
-  name: string
+  name: string;
   quantity: number;
   amount: number;
 }
@@ -30,13 +36,12 @@ export class TransactionHistoryModel
   id!: string;
   userId!: string;
   amount!: number;
-  type!: string;
+  type!: TransactionType;
   referenceId!: string;
   createdAt!: Date;
   updatedAt!: Date;
   description!: string;
-  product!: product[];
-  public static readonly TYPES = ["debit", "credit"];
+  paymentId!: string;
 }
 
 TransactionHistoryModel.init(
@@ -50,12 +55,16 @@ TransactionHistoryModel.init(
       type: DataTypes.UUID,
       allowNull: false,
     },
+    paymentId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
     amount: {
       type: DataTypes.FLOAT,
       allowNull: false,
     },
     type: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM(...Object.values(TransactionType)),
       allowNull: false,
     },
     referenceId: {
@@ -72,10 +81,6 @@ TransactionHistoryModel.init(
     },
     updatedAt: {
       type: DataTypes.DATE,
-      allowNull: true,
-    },
-    product: {
-      type: DataTypes.JSONB,
       allowNull: true,
     },
   },

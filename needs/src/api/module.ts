@@ -1,12 +1,12 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import { ModuleService } from "../services";
 import { Utils } from "../utils";
 import { successHandler , AuthMiddleware} from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application,) => {
   const service = new ModuleService();
-  Utils.SubscribeMessage(channel, service);
+  // Utils.SubscribeMessage(channel, service);
   app.post(
     "/module",
     AuthMiddleware.Authenticate(["admin"]),

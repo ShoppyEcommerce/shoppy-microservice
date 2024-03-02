@@ -1,12 +1,11 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { VendorProfileService } from "../services";
-import { Channel } from "amqplib";
 import { Utils } from "../utils/index";
 import { VendorAuth, successHandler } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application) => {
   const service = new VendorProfileService();
-  Utils.SubscribeMessage(channel, service);
+
   app.post(
     "/profile/vendor/create",
     VendorAuth,

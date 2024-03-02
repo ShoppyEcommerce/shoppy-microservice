@@ -22,7 +22,7 @@ export const option = {
 
 export const OrderValidation = Joi.object().keys({
   status: Joi.string()
-    .valid(OrderStatus.CANCELLED, OrderStatus.PROCESSING)
+    .valid(OrderStatus.CANCELED, OrderStatus.CONFIRMED)
     .required(),
   reason: Joi.string().optional(),
 });

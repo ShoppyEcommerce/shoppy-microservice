@@ -1,9 +1,9 @@
-import { Channel } from "amqplib";
+
 import { Application, NextFunction, Request, Response } from "express";
 import { LikeService } from "../services";
 import { VendorAuth, AuthMiddleware, successHandler } from "./middleware";
 
-export default (app: Application, channel: Channel) => {
+export default (app: Application) => {
   const service = new LikeService();
   app.post(
     "/like",

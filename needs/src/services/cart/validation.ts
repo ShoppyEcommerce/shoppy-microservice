@@ -2,11 +2,11 @@ import Joi from "joi";
 
 export const CartValidationSchema = Joi.object().keys({
   vendor: Joi.string().required(),
-  products: Joi.array()
-    .items({
+  products: Joi.object()
+    .keys({
       id: Joi.string().required(),
-      name: Joi.string().required(),
-      quantity: Joi.number().required(),
+      itemName: Joi.string().required(),
+      Qty: Joi.number().required(),
       amount: Joi.number().required(),
     })
     .required(), // Make the entire products array required
