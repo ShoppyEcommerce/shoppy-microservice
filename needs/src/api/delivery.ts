@@ -36,6 +36,21 @@ export default (app: Application) => {
       }
     }
   );
+  app.post("/delivery/verify-Otp", async (req:Request, res:Response, next:NextFunction)=>{
+    try {
+      const {data} =  await service.VerifyOTP(req.body)
+      return successHandler(res, {
+        data,
+        message:"otp verified successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+
+  })
   app.get(
     "/delivery/:id",
     GeneralAuth,

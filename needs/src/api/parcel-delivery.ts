@@ -1,34 +1,35 @@
 import { Application, NextFunction, Request, Response } from "express";
-import { DeliveryProfileService } from "../services";
-import { DeliveryAuth, successHandler } from "./middleware";
+import { ParcelDeliveryService } from "../services";
+import { AuthMiddleware, GeneralAuth, successHandler } from "./middleware";
 
 export default (app: Application) => {
-  const service = new DeliveryProfileService();
+  const service = new ParcelDeliveryService();
+
   app.post(
-    "/profile/delivery/create",
-    DeliveryAuth,
+    "/parcel-delivery",
+    AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.create(req.body, req.user);
         return successHandler(res, {
           data,
-          message: "delivery man profile created successfully",
           statusCode: 201,
+          message: "parcel delivery created successfully",
         });
-      } catch (error) {
-        next(error);
+      } catch (err) {
+        next(err);
       }
     }
   );
   app.get(
-    "/delivery/profile",
-    DeliveryAuth,
+    "/parcel-delivery",
+    AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getDeliveryProfile(req.user);
+        const data = await service.getAllParcelDelivery(req.user);
         return successHandler(res, {
           data,
-          message: "profile returned successfully",
+          message: "parcel delivery returned",
           statusCode: 200,
         });
       } catch (error) {
@@ -36,15 +37,18 @@ export default (app: Application) => {
       }
     }
   );
-  app.patch(
-    "/delivery/update",
-    DeliveryAuth,
+  app.get(
+    "/parcel-delivery/:parcelDeliveryId",
+    AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.update(req.body, req.user);
+        const data = await service.getParcelDelivery({
+          ownerId: req.user,
+          id: req.params.parcelDeliveryId,
+        });
         return successHandler(res, {
           data,
-          message: "profile updated successfully",
+          message: "parcel delivery returned",
           statusCode: 200,
         });
       } catch (error) {

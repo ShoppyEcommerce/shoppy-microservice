@@ -9,7 +9,8 @@ export const profileSchema = Joi.object().keys({
   bankName: Joi.string().optional(),
   accountHolder: Joi.string().optional(),
   accountNumber: Joi.string().length(10).optional(),
-  recipient:Joi.string().optional()
+  recipient:Joi.string().optional(),
+  processingTime:Joi.string().optional()
 });
 export const UpdateprofileSchema = Joi.object().keys({
   image: Joi.string().optional(),
@@ -17,6 +18,8 @@ export const UpdateprofileSchema = Joi.object().keys({
   longitude: Joi.number().optional(),
   logo: Joi.string().optional(),
   location: Joi.string().optional(),
+  processingTime:Joi.string().optional()
+  
 });
 export const UpdateBankDetails = Joi.object().keys({
   bankName: Joi.string().required(),

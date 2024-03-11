@@ -1,5 +1,5 @@
 import { databaseConnection } from "../connection";
-import { Model, DataTypes } from "sequelize";
+import { Model, DataTypes, Sequelize } from "sequelize";
 import { UserModel } from "./user";
 import { VendorModel } from "./vendor";
 
@@ -9,14 +9,15 @@ export interface VendorProfile {
   logo: string;
   latitude: number;
   longitude: number;
-  location: string;
+  location: any;
   createdAt?: Date;
   updatedAt?: Date;
   vendorId: string;
   bankName?: string;
   accountNumber?: number;
-  accountHolder?: string;
+  accountName?: string;
   recipient?: string;
+  processingTime?:string
 }
 export class VendorProfileModel extends Model<VendorProfile> {}
 VendorProfileModel.init(
@@ -50,11 +51,15 @@ VendorProfileModel.init(
     },
     location: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    processingTime:{
+      type:DataTypes.STRING,
+      allowNull:true
     },
     updatedAt: {
       type: DataTypes.DATE,
@@ -64,12 +69,12 @@ VendorProfileModel.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    accountHolder: {
+    accountName: {
       type: DataTypes.STRING,
       allowNull: true,
     },
     accountNumber: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.FLOAT,
       allowNull: true,
     },
     recipient: {

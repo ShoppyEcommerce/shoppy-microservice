@@ -19,4 +19,7 @@ export { DeliveryProfileService } from "./deliveryProfile";
 export { VendorWalletService } from "./vendor-wallet";
 export { ServiceService } from "./service";
 export { ParcelService } from "./parcel";
+export { ParcelDeliveryService } from "./parcel-delivery";
 export { SubVendorService } from "./subVendor";
+export { VendorPaymentService } from "./vendor-payment";
+export { AdminWalletService } from "./admin-wallet";

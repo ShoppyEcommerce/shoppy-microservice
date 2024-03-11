@@ -16,6 +16,7 @@ export const DeliveryProfileValidation = Joi.object().keys({
     .valid(...modeOfIdentificationValues)
     .required(),
   identityNumber: Joi.string().required(),
+  location:Joi.string().required()
 });
 export const UpdateDeliveryProfileValidation = Joi.object().keys({
   profilePicture: Joi.string().optional(),
@@ -23,6 +24,7 @@ export const UpdateDeliveryProfileValidation = Joi.object().keys({
   plateNumber: Joi.string().optional(),
   latitude: Joi.number().optional(),
   longitude: Joi.number().optional(),
+  location:Joi.string().optional()
 });
 export const option = {
   abortEarly: false,

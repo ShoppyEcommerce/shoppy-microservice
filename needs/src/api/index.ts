@@ -1,4 +1,5 @@
 export { default as User } from "./user";
+
 export { default as appEvents } from "./app-event";
 export { default as Media } from "./media";
 export { default as Module } from "./module";
@@ -16,4 +17,9 @@ export { default as Rating } from "./rating";
 export { default as Payment } from "./payment";
 export { default as Wallet} from "./wallet"
 export {default as Service} from "./service"
+export {default as VendorWallet} from "./vendor-wallet"
 export  {default as SubVendor} from "./subVendor"
+export {default as VendorPayment  } from "./vendor-payment"
+export  {default  as Parcel} from "./parcel"
+export  {default as ParcelDelivery} from "./parcel-delivery"
+export  {default as DeliveryProfile} from "./delivery-profile"

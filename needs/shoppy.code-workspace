@@ -1,15 +1,16 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		},
-		{
-			"path": "../../../Documents/E-commerce_microservice_backend"
-		}
-	],
-	"settings": {
-		"files.autoSave": "afterDelay",
-		"git.ignoreLimitWarning": true,
-		"DockerRun.DisableDockerrc": true
-	}
+  "folders": [
+    {
+      "path": ".."
+    },
+    {
+      "path": "../../../Documents/E-commerce_microservice_backend"
+    }
+  ],
+  "settings": {
+    "files.autoSave": "afterDelay",
+    "git.ignoreLimitWarning": true,
+    "DockerRun.DisableDockerrc": true,
+    "cSpell.words": ["transferrecipient"]
+  }
 }

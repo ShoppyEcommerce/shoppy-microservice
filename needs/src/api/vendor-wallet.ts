@@ -1,19 +1,20 @@
 import { Application, NextFunction, Request, Response } from "express";
-import { WalletService, PaymentService } from "../services";
-import { AuthMiddleware, successHandler } from "./middleware";
+import { WalletService, VendorWalletService, PaymentService,  VendorPaymentService } from "../services";
+import { AuthMiddleware, VendorAuth, successHandler } from "./middleware";
 import { v4 as uuid } from "uuid";
 import { PaymentStatus, PaymentType, Type } from "../database";
 
 export default (app: Application) => {
-  const service = new WalletService();
-  const payment = new PaymentService();
+  const service = new VendorWalletService();
+  const payment = new VendorPaymentService();
 
   app.post(
-    "/wallet/credit",
-    AuthMiddleware.Authenticate(["user"]),
+    "/vendor/wallet/credit",
+  VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.creditWallet(req.body.ref, req.user);
+        console.log(req.user)
         await payment.createPayment({
           id: uuid(),
           merchant: "paystack",
@@ -35,11 +36,11 @@ export default (app: Application) => {
     }
   );
   app.post(
-    "/wallet/set-pin",
-    AuthMiddleware.Authenticate(["user"]),
+    "/vendor/wallet/set-pin",
+    VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.createPin(req.body, req.user);
+        const data = await service.createWalletPin(req.body, req.user);
         return successHandler(res, {
           data,
           message: "pin created successfully",
@@ -50,7 +51,7 @@ export default (app: Application) => {
       }
     }
   );
-  app.patch("/wallet/change-pin", AuthMiddleware.Authenticate(["user"]), async (req: Request | any, res: Response, next: NextFunction) => {
+  app.patch("/vendor/wallet/change-pin",  VendorAuth, async (req: Request | any, res: Response, next: NextFunction) => {
     try {
       const data = await service.changePin(req.body, req.user);
       return successHandler(res, {

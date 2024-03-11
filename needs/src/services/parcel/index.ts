@@ -32,9 +32,16 @@ export class ParcelService {
     return await ParcelModel.findAll({
       where: {
         name: {
-          [Op.iLike]: `%${input}`,
+          [Op.iLike]: `%${input}%`,
         },
       },
     });
+  }
+  async getParcel (id:string){
+    const parcel =  await this.repository.find({id})
+    if(!parcel){
+      throw new BadRequestError("parcel not found","")
+    }
+    return parcel
   }
 }

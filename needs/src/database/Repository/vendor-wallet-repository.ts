@@ -10,6 +10,9 @@ export class VendorWalletRepository {
     return VendorWalletModel.findOne({ where: input });
   }
   async update(ownerId: string, update: any) {
-    await VendorWalletModel.update(update, { where: { ownerId } });
+    return await VendorWalletModel.update(update, {
+      where: { ownerId },
+      returning: true,
+    });
   }
 }

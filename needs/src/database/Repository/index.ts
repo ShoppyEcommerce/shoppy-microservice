@@ -21,3 +21,6 @@ export { ServiceRepository } from "./service-repository";
 export { SubVendorRepository } from "./subVendor-repository";
 export { ParcelRepository } from "./parcel-repository";
 export { ParcelDeliveryRepository } from "./parcel-delivery-repository";
+export {VendorPaymentRepository} from "./vendor-payment-repository"
+export  { AdminWalletRepository} from "./admin-wallet-repository"
+export  {AdminPaymentRepository} from "./admin-payment-repository"

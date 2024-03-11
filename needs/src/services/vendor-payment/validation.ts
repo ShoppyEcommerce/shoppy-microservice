@@ -31,7 +31,7 @@ export const option = {
 };
 export const CreateRecipientValidation = Joi.object().keys({
   type: Joi.string().required(),
-  account_number: Joi.string().required(),
+  account_number: Joi.number().required(),
   bank_code: Joi.string().required(),
   currency: Joi.string().required(),
   name:Joi.string().required()
@@ -39,4 +39,10 @@ export const CreateRecipientValidation = Joi.object().keys({
 export const TransferValidation = Joi.object().keys({
   pin:PasswordComplexity(phoneComplexity).required(),
   amount:Joi.number().required()
+})
+
+export const verifyAccountValidation = Joi.object().keys({
+  account_number: Joi.number().required(),
+  bank_code: Joi.number().required(),
+ 
 })

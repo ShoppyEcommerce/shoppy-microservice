@@ -10,6 +10,7 @@ export interface Wallet {
   updatedAt?: Date;
   debit?: number;
   credit?: number;
+  pin?: number;
 }
 
 export class VendorWalletModel extends Model<Wallet> {}
@@ -28,6 +29,10 @@ const walletSchema = {
   balance: {
     type: DataTypes.FLOAT,
     defaultValue: 0,
+    allowNull: true,
+  },
+  pin: {
+    type: DataTypes.INTEGER,
     allowNull: true,
   },
   debit: {

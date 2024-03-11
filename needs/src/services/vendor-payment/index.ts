@@ -5,8 +5,12 @@ import {
   WalletRepository,
   ProfileRepository,
   Profile,
+  VendorProfile,
   Wallet,
   WalletModel,
+  VendorPaymentRepository,
+  VendorProfileRepository,
+  VendorWalletModel,
 } from "../../database";
 import {
   BadRequestError,
@@ -19,11 +23,13 @@ import {
   option,
   CreateRecipientValidation,
   TransferValidation,
+  verifyAccountValidation,
 } from "./validation";
 
 import { PAYSTACK_API } from "../../config/constant";
 
 import { WalletService } from "../wallet";
+import { VendorWalletService } from "../vendor-wallet";
 import axios, { AxiosError } from "axios";
 
 import { Utils } from "../../utils";
@@ -42,14 +48,14 @@ interface VerifyResponse {
   message: string;
 }
 
-export class PaymentService {
-  private repository: PaymentRepository;
-  private profileRepo: ProfileRepository;
-  private wallet: WalletRepository;
+export class VendorPaymentService {
+  private repository: VendorPaymentRepository;
+  private profileRepo: VendorProfileRepository;
+  private wallet: VendorWalletService;
   constructor() {
-    this.profileRepo = new ProfileRepository();
-    this.repository = new PaymentRepository();
-    this.wallet = new WalletRepository();
+    this.profileRepo = new VendorProfileRepository();
+    this.repository = new VendorPaymentRepository();
+    this.wallet = new VendorWalletService();
   }
   async createPayment(input: Payment) {
     const { error } = PaymentValidation.validate(input, option);
@@ -111,24 +117,14 @@ export class PaymentService {
     return response;
   }
   async getBank() {
-
-    try {
-      const bankList = await axios.get(`${PAYSTACK_API}/bank`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        },
-      });
-      console.log(bankList);
-      return bankList.data.data;
-      
-    } catch (error) {
-    const err =  error as AxiosError
-    const newError =  err?.response?.data as {message:string}
-
-    throw new BadRequestError(newError.message,"")
-      
-    }
+    const bankList = await axios.get(`${PAYSTACK_API}/bank`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      },
+    });
+    console.log(bankList);
+    return bankList.data.data;
   }
   async createRecipient(
     input: {
@@ -145,38 +141,33 @@ export class PaymentService {
       throw new ValidationError(error.details[0].message, "");
     }
 
-      try {
-        const recipient = await axios.post(
-          `${PAYSTACK_API}/transferrecipient`,
-          input,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            },
-          }
-        );
-     
-        const user = (await this.profileRepo.getProfile({
-          userId,
-        })) as unknown as Profile;
-    
-        user.recipient = recipient.data.data.recipient_code;
-        await this.profileRepo.update(user.id, {
-          recipient: recipient.data.data.recipient_code,
-          bankName: recipient.data.data.details.bank_name,
-          accountNumber: recipient.data.data.details.account_number,
-          accountName: recipient.data.data.details.account_name,
-        });
-        return "recipient saved successfully";
-        
-      } catch (err) {
-        const error =  err as AxiosError
-        const newError =  error?.response?.data   as {message:string}
-        throw new BadRequestError(newError.message,"")
+    const recipient = await axios.post(
+      `${PAYSTACK_API}/transferrecipient`,
+      input,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
+    const user = (await this.profileRepo.findOne({
+      vendorId:userId,
+    })) as unknown as VendorProfile;
+    console.log(recipient.data.data)
+
+    user.recipient = recipient.data.data.recipient_code;
+    await this.profileRepo.update(
+      { id: user.id },
+      {
+        recipient: recipient.data.data.recipient_code,
+        bankName: recipient.data.data.details.bank_name,
+        accountNumber: recipient.data.data.details.account_number,
+        accountName:recipient.data.data.details.account_name
         
       }
-   
+    );
+    return "recipient saved successfully";
   }
   async transferToUser(
     input: { amount: number; pin: string },
@@ -187,19 +178,19 @@ export class PaymentService {
       throw new ValidationError(error.details[0].message, "");
     }
 
-    const wallet = (await this.wallet.walletBalance({
-      ownerId,
-    })) as unknown as Wallet;
+    const wallet = (await this.wallet.getWalletBalance(
+      ownerId
+    )) as unknown as Wallet;
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
     }
-    if(!wallet.pin){
-      throw new BadRequestError(" pl create a pin to withdraw from wallet", "")
+    if (!wallet.pin) {
+      throw new BadRequestError(" pl create a pin to withdraw from wallet", "");
     }
-    const user = (await this.profileRepo.getProfile({
+    const user = (await this.profileRepo.findOne({
       userId: ownerId,
     })) as unknown as Profile;
-    
+
     if (!user) {
       throw new BadRequestError("pls create a profile", "");
     }
@@ -211,7 +202,7 @@ export class PaymentService {
     }
     const verifyPin = await Utils.ComparePassword(input.pin, wallet.pin!);
 
-    console.log(verifyPin)
+    console.log(verifyPin);
 
     if (!verifyPin) {
       throw new BadRequestError("incorrect pin", "");
@@ -235,11 +226,11 @@ export class PaymentService {
       return data.data;
     } catch (err) {
       setTimeout(async () => {
-        const newWallet = (await this.wallet.walletBalance({
-          ownerId,
-        })) as unknown as Wallet;
+        const newWallet = (await this.wallet.getWalletBalance(
+          ownerId
+        )) as unknown as Wallet;
 
-        await WalletModel.update(
+        await VendorWalletModel.update(
           {
             balance: (newWallet?.balance as number) + input.amount,
             debit: (newWallet.debit as number) - input.amount,
@@ -255,6 +246,29 @@ export class PaymentService {
           "An error occurred during Paystack transfer pls try again",
         ""
       );
+    }
+  }
+
+  async verifyAccount(input: { account_number: any; bank_code: any }) {
+    const { error } = verifyAccountValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    try {
+      const response = await axios.get(
+        `${PAYSTACK_API}/bank/resolve?account_number=${input.account_number}&bank_code=${input.bank_code}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError;
+      const customErr = err?.response?.data as { message: string };
+      throw new BadRequestError(customErr.message, "");
     }
   }
 }

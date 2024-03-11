@@ -25,6 +25,8 @@ import {
   PaymentStatus,
   Type,
   Payment,
+  AdminType,
+  AdminPaymentStatus,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -34,15 +36,21 @@ import {
   OrderValidation,
 } from "./validation";
 import { Op } from "sequelize";
-import { WalletService, TransactionService } from "../";
+import { WalletService, TransactionService, AdminWalletService } from "../";
 import { v4 as uuid } from "uuid";
 import { io } from "../../config/socket";
 import { Utils } from "../../utils";
 import { PaymentService } from "../";
 import axios from "axios";
-import { PAYSTACK_API } from "../../config/constant";
+import {
+  DeliveryOrder,
+  PAYSTACK_API,
+  UserOrder,
+  VendorOrder,
+} from "../../config/constant";
 import * as geolib from "geolib";
 import { VendorProfileModel } from "../../database/model/vendor-profile";
+import { AdminPaymentService } from "../admin-payment";
 
 export class OrderService {
   private repository: OrderRepository;
@@ -96,15 +104,12 @@ export class OrderService {
     let order: Order = {} as Order;
     const newCart: Cart = this.mapCartModelToCart(cart);
 
-
     // // Process products in the cart
     for (const cartItem of newCart.products) {
       const product = (await this.productRepo.getProduct({
         id: cartItem.id,
         ownerId: input.vendorId,
       })) as unknown as Product;
-
-  
 
       if (!product) {
         throw new BadRequestError(
@@ -113,7 +118,6 @@ export class OrderService {
         );
       }
       const FormatData = this.formatProduct(product);
-     
 
       const price = cartItem.Qty * FormatData.price;
       if (price !== cartItem.amount) {
@@ -130,7 +134,7 @@ export class OrderService {
       }
       newProduct.push(FormatData);
     }
-
+    //discount
     // Validate total price
     if (totalPrice !== newCart.totalAmount) {
       throw new BadRequestError(
@@ -177,123 +181,130 @@ export class OrderService {
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
       };
+    } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
+      const res = await this.processPaystackPayment(
+        input.referenceId,
+        totalPrice,
+        ownerId
+      );
+      payment = {
+        id: uuid(),
+        status: PaymentStatus.SUCCESS,
+        merchant: "paystack",
+        amount: totalPrice,
+        userId: ownerId,
+        referenceId: input.referenceId,
+        paymentType: PaymentType.BANK_TRANSFER,
+        type: Type.DEBIT,
+      };
+      transaction = {
+        userId: ownerId,
+        amount: totalPrice,
+        type: TransactionType.PURCHASE,
+        referenceId: input.referenceId,
+        paymentId: "",
+        id: uuid(),
+        description: `you made order from ${vendor.firstName} ${
+          vendor.lastName
+        } store  on ${new Date().toLocaleDateString("en-GB")}.`,
+      };
+      order = {
+        id: uuid(),
+        referenceId: input.referenceId,
+        cartId: input.cartId,
+        userId: ownerId,
+        vendorId: input.vendorId,
+        totalAmount: totalPrice,
+        paymentType: input.paymentType,
+        orderStatus: OrderStatus.PENDING,
+        transactionId: "",
+      };
+    } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
+      payment = {
+        id: uuid(),
+        status: PaymentStatus.PENDING,
+        merchant: "",
+        amount: totalPrice,
+        userId: ownerId,
+        referenceId: ownerId,
+        paymentType: PaymentType.CASH_ON_DELIVERY,
+        type: Type.DEBIT,
+      };
+      transaction = {
+        userId: ownerId,
+        amount: totalPrice,
+        type: TransactionType.PURCHASE,
+        referenceId: ownerId,
+        id: uuid(),
+        description: `you made order from ${vendor.firstName} ${
+          vendor.lastName
+        } store  on ${new Date().toLocaleDateString("en-GB")}.`,
+        paymentId: "",
+      };
+      order = {
+        id: uuid(),
+        referenceId: ownerId,
+        cartId: input.cartId,
+        userId: ownerId,
+        vendorId: input.vendorId,
+        totalAmount: totalPrice,
+        paymentType: input.paymentType,
+        orderStatus: OrderStatus.PENDING,
+        transactionId: "",
+      };
+    } else {
+      throw new BadRequestError("invalid payment type", "");
     }
-    //else if (input.paymentType === PaymentType.BANK_TRANSFER) {
-    //   const res = await this.processPaystackPayment(
-    //     input.referenceId!,
-    //     totalPrice,
-    //     ownerId
-    //   );
-    //   payment = {
-    //     id: uuid(),
-    //     status: PaymentStatus.SUCCESS,
-    //     merchant: "paystack",
-    //     amount: totalPrice,
-    //     userId: ownerId,
-    //     referenceId: input.referenceId,
-    //     paymentType: PaymentType.BANK_TRANSFER,
-    //     type: Type.DEBIT,
-    //   };
-    //   transaction = {
-    //     userId: ownerId,
-    //     amount: totalPrice,
-    //     type: TransactionType.PURCHASE,
-    //     referenceId: input.referenceId,
-    //     paymentId: "",
-    //     id: uuid(),
-    //     description: `you made order from ${vendor.firstName} ${
-    //       vendor.lastName
-    //     } store  on ${new Date().toLocaleDateString("en-GB")}.`,
-    //   };
-    //   order = {
-    //     id: uuid(),
-    //     referenceId: input.referenceId,
-    //     cartId: input.cartId,
-    //     userId: ownerId,
-    //     vendorId: input.vendorId,
-    //     totalAmount: totalPrice,
-    //     paymentType: input.paymentType,
-    //     orderStatus: OrderStatus.PENDING,
-    //     transactionId: "",
-    //   };
-    // } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
-    //   payment = {
-    //     id: uuid(),
-    //     status: PaymentStatus.PENDING,
-    //     merchant: "paystack",
-    //     amount: totalPrice,
-    //     userId: ownerId,
-    //     referenceId: input.referenceId,
-    //     paymentType: PaymentType.CASH_ON_DELIVERY,
-    //     type: Type.DEBIT,
-    //   };
-    //   transaction = {
-    //     userId: ownerId,
-    //     amount: totalPrice,
-    //     type: TransactionType.PURCHASE,
-    //     referenceId: ownerId,
-    //     id: uuid(),
-    //     description: `you made order from ${vendor.firstName} ${
-    //       vendor.lastName
-    //     } store  on ${new Date().toLocaleDateString("en-GB")}.`,
-    //     paymentId: "",
-    //   };
-    //   order = {
-    //     id: uuid(),
-    //     referenceId: ownerId,
-    //     cartId: input.cartId,
-    //     userId: ownerId,
-    //     vendorId: input.vendorId,
-    //     totalAmount: totalPrice,
-    //     paymentType: input.paymentType,
-    //     orderStatus: OrderStatus.PENDING,
-    //     transactionId: "",
-    //   };
-    // } else {
-    //   throw new BadRequestError("invalid payment type", "");
-    // }
 
-    
     // // Update product quantities
     await Promise.all(
       newProduct.map((product) => this.updateProductQuantity(product))
-      );
-      console.log(transaction, order, payment)
+    );
+    console.log(transaction, order, payment);
 
     const payed = (await this.payment.create(payment)) as unknown as Payment;
-    console.log(payed)
+    console.log(payed);
 
     transaction.paymentId = payed.id;
     // Create transaction
     const transact = (await this.transaction.createTransaction(
       transaction
     )) as unknown as Transaction;
-    console.log(transact)
+
     order.transactionId = transact.id;
 
     // // Create order
-    await this.repository.create(order);
+    const Order = await this.repository.create(order);
 
     // // Update cart status
     await this.cart.updateCart(
       { status: CartStatus.CLOSED },
       { id: input.cartId, ownerId }
     );
+    if (input.paymentType !== PaymentType.CASH_ON_DELIVERY) {
+      await new AdminPaymentService().create({
+        orderId: Order.dataValues.id,
+        type: AdminType.CREDIT,
+        id: uuid(),
+        status: AdminPaymentStatus.SUCCESS,
+        amount: totalPrice,
+      });
+      await new AdminWalletService().creditWallet(totalPrice);
+    }
 
     // // Emit event for new order
-    io.emit("newOrder", { order, vendor: input.vendorId });
+    io.emit(VendorOrder, { order, vendor: input.vendorId });
 
     return "Order was successful";
   }
 
   private async processWalletPayment(totalPrice: number, ownerId: string) {
-;
     const wallet = (await this.wallet.debitWallet(
       totalPrice,
       ownerId
     )) as Wallet;
-  
-    return wallet
+
+    return wallet;
     // Process wallet payment and create transaction
   }
 
@@ -409,7 +420,7 @@ export class OrderService {
     })) as unknown as VendorProfile;
     let deliveryMan: DeliveryProfile[] = [];
 
-    io.emit("orderUpdate", { order, user: order.userId });
+    io.emit(UserOrder, { order, user: order.userId });
     deliveries.map((delivery: DeliveryProfile) => {
       const valid = geolib.isPointWithinRadius(
         { latitude: delivery.latitude, longitude: delivery.longitude },
@@ -421,7 +432,7 @@ export class OrderService {
     });
     if (deliveryMan.length > 0) {
       deliveryMan.map((delivery) => {
-        io.emit("order request", { order, delivery: delivery.deliveryManId });
+        io.emit(DeliveryOrder, { order, delivery: delivery.deliveryManId });
       });
     }
 
@@ -441,10 +452,11 @@ export class OrderService {
     await this.repository.updateOrder(payload, order.id);
     const delivery = await DeliveryProfileModel.findAll({});
 
-    io.emit("orderUpdate", {
+    io.emit(UserOrder, {
       order: "your order has been cancelled",
       user: order.userId,
     });
+    //user get his money back
     return "order updated successfully";
   }
   private formatProduct(productData: any) {
@@ -509,7 +521,7 @@ export class OrderService {
       { orderStatus: OrderStatus.OUT_FOR_DELIVERY, deliveryMan: id },
       orderId
     );
-    io.emit("orderUpdate", { order: update, user: order.userId });
+    io.emit(UserOrder, { order: update, user: order.userId });
 
     return update[1][0].dataValues;
   }
@@ -545,7 +557,7 @@ export class OrderService {
       orderId
     );
 
-    io.emit("returnOrder", { order: orderUpdate, vendor: order.vendorId });
+    io.emit(VendorOrder, { order: orderUpdate, vendor: order.vendorId });
   }
   async TrackUserOrders(userId: string) {
     const orders = await this.repository.FindAll({ userId });

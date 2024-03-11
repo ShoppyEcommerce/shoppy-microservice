@@ -10,6 +10,16 @@ export class DeliveryProfileRepository {
       include: DeliveryModel,
     });
   }
+  async FindAll() {
+    return await DeliveryProfileModel.findAll({
+      include: [
+        {
+          model: DeliveryModel,
+          attributes: ["id", "firstName", "lastName", "email", "phone"],
+        },
+      ],
+    });
+  }
   async update(id: string, input: Partial<DeliveryProfile>) {
     return await DeliveryProfileModel.update(input, {
       where: input,

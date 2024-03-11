@@ -4,6 +4,7 @@ import express, { NextFunction, Request, Response } from "express";
 import { databaseConnection } from "./database";
 import ExpressApp from "./app";
 import { errorHandler } from "./utils/ErrorHandler/error";
+import { AdminWalletService } from "./services";
 
 const startServer = async () => {
   const app = express();
@@ -13,14 +14,12 @@ const startServer = async () => {
     .then(() => console.log("database connected"))
     .catch((err) => console.log(err));
   const httpServer = await ExpressApp(app);
+  await new AdminWalletService().createWallet();
 
   app.use(
     errorHandler
-    // (error: Error | any, req: Request, res: Response, next: NextFunction) => {
-    //   const statusCode = error.statusCode || 500;
-    //   const data = error.data || error.message;
-    //   res.status(statusCode).json(data);
-    // }
+   
+  
   );
   httpServer
     .listen(process.env.PORT, () => {

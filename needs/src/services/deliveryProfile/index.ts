@@ -25,6 +25,7 @@ export class DeliveryProfileService {
       throw new BadRequestError("you already have a profile", "");
     }
     value.id = uuid();
+    value.deliveryManId =  deliveryManId
     const delivery = await this.repository.create(value);
     return Utils.FormatData(delivery);
   }

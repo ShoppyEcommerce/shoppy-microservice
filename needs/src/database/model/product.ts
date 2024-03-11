@@ -80,7 +80,7 @@ ProductModel.init(
       allowNull:false
 
     },
-    categoryId: { type: DataTypes.UUID },
+    categoryId: { type: DataTypes.UUID, onDelete:"CASCADE" },
     ownerId: { type: DataTypes.UUID, onDelete: "CASCADE" },
     itemName: {
       type: DataTypes.STRING,

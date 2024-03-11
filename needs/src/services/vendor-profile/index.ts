@@ -30,7 +30,9 @@ export class VendorProfileService {
     input.id = uuid();
     input.vendorId = vendor;
 
-    return await this.repository.create(input);
+    return await this.repository.create({
+      ...input,
+    });
   }
   async getVendorProfile(vendorId: string) {
     console.log(vendorId);
@@ -54,8 +56,8 @@ export class VendorProfileService {
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");
     }
-    const updated =  await this.repository.update({ id: profile.id }, input);
-    return updated[1][0].dataValues
+    const updated = await this.repository.update({ id: profile.id }, input);
+    return updated[1][0].dataValues;
   }
   async deleteVendorProfile(vendorId: string) {
     const profile = (await this.repository.findOne({

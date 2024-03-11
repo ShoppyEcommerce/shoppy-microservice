@@ -18,6 +18,7 @@ export enum TransactionType {
   PURCHASE = "Purchase",
   CREDIT_WALLET = "Credit Wallet",
   FUND_BANK_ACCOUNT = "Fund Bank Account",
+  CASH_ON_DELIVERY="Cash On Delivery"
 }
 interface product {
   id: string;

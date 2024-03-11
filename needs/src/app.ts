@@ -21,6 +21,11 @@ import {
   Wallet,
   Service,
   SubVendor,
+  VendorWallet,
+  VendorPayment,
+  Parcel,
+  ParcelDelivery,
+  DeliveryProfile,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -53,6 +58,11 @@ export default async (app: Application) => {
   Wallet(app);
   Service(app);
   SubVendor(app)
+  VendorWallet(app)
+  VendorPayment(app)
+  Parcel(app)
+  ParcelDelivery(app)
+  DeliveryProfile(app)
 
   // Return the http server to be used by index.ts
   return httpServer;

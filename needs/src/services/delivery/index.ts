@@ -43,11 +43,11 @@ export class DeliveryService {
     // if (sms && sms.status === 400) {
     //   throw new BadRequestError(sms.message, "");
     // }
-    await DeliveryModel.update(
+   const delv =  await DeliveryModel.update(
       { OTP: info.OTP, OTPExpiration: info.time },
-      { where: { id: delivery.id } }
+      { where: { id: delivery.id }, returning:true }
     );
-    return Utils.FormatData(delivery) as unknown as Delivery;
+    return Utils.FormatData(delv[1][0].dataValues);
   }
   async Login(input: { phone: string; password: string }) {
     const { error, value } = loginVendorSchema.validate(input, option);

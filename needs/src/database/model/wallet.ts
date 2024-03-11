@@ -10,6 +10,7 @@ export interface Wallet {
   updatedAt?: Date;
   debit?: number;
   credit?: number;
+  pin?:string;
 }
 
 export class WalletModel extends Model<Wallet> {}
@@ -19,6 +20,12 @@ const walletSchema = {
     type: DataTypes.UUID,
     allowNull: false,
     primaryKey: true,
+  },
+  pin:{
+    type:DataTypes.STRING,
+    allowNull:true
+
+
   },
   ownerId: {
     type: DataTypes.UUID,
