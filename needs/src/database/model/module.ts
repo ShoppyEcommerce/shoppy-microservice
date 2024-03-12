@@ -8,6 +8,7 @@ export interface Module {
     name:string;
     active:boolean
     image:string
+    caption:string
 
 
 }
@@ -32,6 +33,10 @@ ModuleModel.init({
         defaultValue:true
       },
       image:{
+        type:DataTypes.STRING,
+        allowNull:false
+      },
+      caption:{
         type:DataTypes.STRING,
         allowNull:false
       }
