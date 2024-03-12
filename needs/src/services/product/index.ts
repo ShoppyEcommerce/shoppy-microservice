@@ -24,6 +24,8 @@ import {
   CategoryRepository,
   VendorProfileRepository,
   VendorRepository,
+  ModuleModel,
+  CategoryModel,
 } from "../../database";
 import { Op } from "sequelize";
 
@@ -71,16 +73,22 @@ export class ProductService {
     if (!profile) {
       throw new BadRequestError("pls create a profile first", "Bad Request");
     }
-    value.itemName =  Utils.Capitalizeword(value.itemName);
-    const exist =  await this.repository.getProduct({itemName: value.itemName, ownerId: user});
+    value.itemName = Utils.Capitalizeword(value.itemName);
+    const exist = await this.repository.getProduct({
+      itemName: value.itemName,
+      ownerId: user,
+    });
     if (exist) {
-      throw new BadRequestError("This product already exist for this vendor", "");
+      throw new BadRequestError(
+        "This product already exist for this vendor",
+        ""
+      );
     }
 
     value.category = category;
     value.moduleId = category.moduleId;
     value.ownerId = user;
-    
+
     const product = await this.repository.create(value);
     return Utils.FormatData(product);
   }
@@ -100,8 +108,28 @@ export class ProductService {
     return Utils.FormatData(product);
   }
   async getProductModule(id: string) {
-    const product = await this.repository.getProductModule(id);
-    return Utils.FormatData(product);
+    const model = (await ModuleModel.findByPk(id, {
+      include: {
+        model: CategoryModel,
+        include: [
+          {
+            model: ProductModel,
+            include: [
+              {
+                model: VendorModel,
+              },
+            ],
+          },
+        ],
+      },
+    })) as unknown as any;
+    const vendor = model.dataValues.CategoryModels.flatMap((category: any) =>
+      category.ProductModels.flatMap((product: any) => product.VendorModel)
+    ) as unknown as Vendor[]
+    const uniqueData = [...new Set(vendor.map(obj => JSON.stringify(obj, null)))].map(jsonString => JSON.parse(jsonString));
+
+    console.log(vendor);
+    return Utils.FormatData(uniqueData);
   }
   async updateProduct(id: string, update: any) {
     const { error, value } = UpdateProductSchema.validate(update, option);
@@ -159,16 +187,14 @@ export class ProductService {
           this.getVendorsProducts(vendor)
         );
 
-        const close =  await Promise.all(product);
-        return close
+        const close = await Promise.all(product);
+        return close;
       }
     } catch (error) {
       throw new BadRequestError(error as string, "");
     }
   }
-  async searchProductsAndVendors(
-    input: string
-  ) {
+  async searchProductsAndVendors(input: string) {
     const products = await ProductModel.findAll({
       where: { itemName: { [Op.like]: `%${input}%` } },
     });
