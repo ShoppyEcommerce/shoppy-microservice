@@ -39,7 +39,7 @@ export class RatingService {
     const newRating = totalRating / newNumRatings;
     product.rating = newRating;
     product.numRating = newNumRatings;
-    console.log(product, totalRating, newNumRatings);
+
     const update = {
       rating: newRating,
       numRating: newNumRatings,

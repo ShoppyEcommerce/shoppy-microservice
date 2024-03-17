@@ -21,6 +21,7 @@ export interface Order {
   discount?: number;
   VatTax?: number;
   transactionId: string;
+  trackingCode:number
 }
 interface Product {
   id: string;
@@ -63,7 +64,10 @@ const OrderSchema = {
     type: DataTypes.UUID,
     allowNull: false,
   },
-
+  trackingCode:{
+    type:DataTypes.FLOAT,
+    allowNull:false
+  },
   vendorId: {
     type: DataTypes.UUID,
     allowNull: false,

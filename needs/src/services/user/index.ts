@@ -3,6 +3,8 @@ import {
   registerUserSchema,
   loginUserSchema,
   verifyOTPSchema,
+  ResetPasswordValidation,
+  ChangePasswordValidation,
 } from "./validation";
 import {
   UserRepository,
@@ -71,17 +73,17 @@ export class UserService {
 
     const userData = await this.userRepository.createUser(value);
     const user = await this.transformUser(userData.dataValues);
-const send =  process.env.SEND_SMS === "true" ? true : false;
-console.log(send)
-    if ( value.role === "user") {
-       const info = Utils.generateRandomNumber();
+    const send = process.env.SEND_SMS === "true" ? true : false;
 
-       if(send){
-         const sms = await sendSMS(info.OTP, value.phone);
-         if (sms && sms.status === 400) {
-           throw new BadRequestError(sms.message, "");
-         }
-       }
+    if (value.role === "user") {
+      const info = Utils.generateRandomNumber();
+
+      if (send) {
+        const sms = await sendSMS(info.OTP, value.phone);
+        if (sms && sms.status === 400) {
+          throw new BadRequestError(sms.message, "");
+        }
+      }
 
       const update = await UserModel.update(
         { OTP: info.OTP, OTPExpiration: info.time },
@@ -209,6 +211,85 @@ console.log(send)
       balance: rawData.WalletModel.dataValues.balance,
       id: rawData.WalletModel.dataValues.id,
     };
+  }
+  async ResetOtpPasssword(input: { email: string }) {
+    const user = await this.userRepository.Find({ email: input.email });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    const info = Utils.generateRandomNumber();
+    const send = process.env.SEND_SMS === "true" ? true : false;
+    if (send) {
+      const sms = await sendSMS(info.OTP, exist.phone);
+      if (sms && sms.status === 400) {
+        throw new BadRequestError(sms.message, "");
+      }
+    }
+    await UserModel.update(
+      { OTP: info.OTP, OTPExpiration: info.time },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData(
+      `A 6 digit OTP has been sent to your phone number ${info.OTP}`
+    );
+  }
+  async ResetPassword(input: { email: string; OTP: number; password: string }) {
+    const { error } = ResetPasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+
+    const user = await this.userRepository.Find({ email: input.email });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    if (Number(exist.OTP) !== Number(input.OTP)) {
+      throw new BadRequestError("invalid Otp", "");
+    }
+    const currentTimestamp = Date.now();
+    const expirationTime = 5 * 60 * 1000;
+    if (
+      user &&
+      currentTimestamp - Number(exist.OTPExpiration) > expirationTime
+    ) {
+      throw new BadRequestError("OTP has expired", "Bad Request");
+    }
+    const hash = await Utils.HashPassword(input.password);
+    await UserModel.update(
+      { OTP: null, OTPExpiration: null, password: hash },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData("password reset successfully");
+  }
+  async changePassword(
+    input: {
+      email: string;
+      oldPassword: string;
+      newPassword: string;
+    },
+    userId: string
+  ) {
+    const { error } = ChangePasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const user = (await this.userRepository.Find({
+      email: input.email,
+      id: userId,
+    })) as unknown as User;
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const compare =   await Utils.ComparePassword(input.oldPassword, user.password);
+    if (!compare) {
+      throw new BadRequestError("invalid password", "");
+    }
+    const hash = await Utils.HashPassword(input.newPassword);
+
+    await UserModel.update({ password: hash }, { where: { id: user.id } });
+    return "password changed successfully"
   }
   async transformUser(userData: any): Promise<User> {
     const user: User = {

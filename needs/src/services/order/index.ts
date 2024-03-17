@@ -35,6 +35,7 @@ import {
   option,
   OrderValidation,
 } from "./validation";
+import { userSocketMap } from "../../config/socket";
 import { Op } from "sequelize";
 import { WalletService, TransactionService, AdminWalletService } from "../";
 import { v4 as uuid } from "uuid";
@@ -143,10 +144,10 @@ export class OrderService {
       );
     }
 
+    const trackingCode = Utils.generateTrackingCode();
     // Perform payment
     if (input.paymentType === PaymentType.USER_WALLET) {
       const wallet = await this.processWalletPayment(totalPrice, ownerId);
-      console.log(wallet);
 
       payment = {
         id: uuid(),
@@ -180,6 +181,7 @@ export class OrderService {
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
+        trackingCode,
       };
     } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
       const res = await this.processPaystackPayment(
@@ -218,6 +220,7 @@ export class OrderService {
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
+        trackingCode,
       };
     } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
       payment = {
@@ -251,6 +254,7 @@ export class OrderService {
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
+        trackingCode,
       };
     } else {
       throw new BadRequestError("invalid payment type", "");
@@ -260,10 +264,8 @@ export class OrderService {
     await Promise.all(
       newProduct.map((product) => this.updateProductQuantity(product))
     );
-    console.log(transaction, order, payment);
 
     const payed = (await this.payment.create(payment)) as unknown as Payment;
-    console.log(payed);
 
     transaction.paymentId = payed.id;
     // Create transaction
@@ -291,9 +293,15 @@ export class OrderService {
       });
       await new AdminWalletService().creditWallet(totalPrice);
     }
+    console.log(Order);
+    const socketId = userSocketMap.get(input.vendorId);
+    console.log(socketId)
+    if (socketId) {
+      io.to(socketId).emit(VendorOrder, { message: "you have a new order" });
+    }
 
     // // Emit event for new order
-    io.emit(VendorOrder, { order, vendor: input.vendorId });
+    // io.emit(VendorOrder, { message:"you have a new Order", vendor: input.vendorId });
 
     return "Order was successful";
   }

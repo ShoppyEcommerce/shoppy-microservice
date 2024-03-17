@@ -24,7 +24,7 @@ export class AuthMiddleware {
           id: verify.id,
         })) as unknown as User;
         if (!user) {
-          throw new UnAuthorized("user with this token not found", "");
+          throw new UnAuthorized("unAuthorized pls kindly login", "");
         }
         if (!user.isverified) {
           throw new UnAuthorized("This user has not been verified", "");

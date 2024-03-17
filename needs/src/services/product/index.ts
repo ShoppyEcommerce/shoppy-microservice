@@ -26,6 +26,7 @@ import {
   VendorRepository,
   ModuleModel,
   CategoryModel,
+  VendorProfileModel,
 } from "../../database";
 import { Op } from "sequelize";
 
@@ -107,7 +108,12 @@ export class ProductService {
     const product = await this.repository.getProductCategory(id);
     return Utils.FormatData(product);
   }
-  async getProductModule(id: string) {
+  async getProductModule(id:string){
+    const product =  await this.repository.getProductModule(id)
+    return Utils.FormatData(product)
+
+  }
+  async getVendorModule(id: string) {
     const model = (await ModuleModel.findByPk(id, {
       include: {
         model: CategoryModel,
@@ -117,6 +123,11 @@ export class ProductService {
             include: [
               {
                 model: VendorModel,
+                include: [
+                  {
+                    model: VendorProfileModel,
+                  },
+                ],
               },
             ],
           },
@@ -125,18 +136,20 @@ export class ProductService {
     })) as unknown as any;
     const vendor = model.dataValues.CategoryModels.flatMap((category: any) =>
       category.ProductModels.flatMap((product: any) => product.VendorModel)
-    ) as unknown as Vendor[]
-    const uniqueData = [...new Set(vendor.map(obj => JSON.stringify(obj, null)))].map(jsonString => JSON.parse(jsonString));
+    );
+    const uniqueData = [
+      ...new Set(vendor.map((obj: any) => JSON.stringify(obj, null))),
+    ].map((jsonString: any) => JSON.parse(jsonString));
 
-    console.log(vendor);
+    
     return Utils.FormatData(uniqueData);
   }
-  async updateProduct(id: string, update: any) {
+  async updateProduct(id: string, ownerId:string, update: any) {
     const { error, value } = UpdateProductSchema.validate(update, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const exist = await this.repository.getProduct({ id });
+    const exist = await this.repository.getProduct({ id, ownerId });
     if (!exist) {
       throw new BadRequestError("This product does not exist", "");
     }

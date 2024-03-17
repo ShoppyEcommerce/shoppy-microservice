@@ -87,7 +87,7 @@ export class VendorWalletService {
       credit: (wallet?.credit ?? 0) + res.amount,
     };
     const updated = await this.repository.update(userId, update);
-    console.log(updated[1][0].dataValues)
+   
     return { ...updated[1][0].dataValues, amount: res.amount };
   }
   // async creditWallet(ref: string, userId: string) {

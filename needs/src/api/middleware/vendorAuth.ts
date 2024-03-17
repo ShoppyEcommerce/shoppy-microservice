@@ -17,7 +17,7 @@ export const VendorAuth = async (
     const verify = (await Utils.Decoded(token)) as JwtPayload;
     const user = await VendorModel.findOne({ where: { id: verify.id } }) as unknown as Vendor
     if (!user) {
-      throw new UnAuthorized("no vendor found for this token", "");
+      throw new UnAuthorized("unAuthorized pls kindly login", "");
     }
     if(!user.OTPVerification){
       throw new UnAuthorized("pls verify your account with the OTP", "")

@@ -4,9 +4,17 @@ import Jwt from "jsonwebtoken";
 import amqplib, { Channel } from "amqplib";
 import { BadRequestError, UnAuthorized } from "./ErrorHandler";
 import bcryptjs, { genSaltSync } from "bcryptjs";
+import {
+  User,
+  UserModel,
+  VendorModel,
+  ProfileModel,
+  VendorProfileModel,
+  DeliveryModel,
+  DeliveryProfileModel,
+} from "../database";
 export class Utils {
   static async Encoded(input: { id: string }) {
-    console.log(process.env.JWT_SECRET);
     try {
       return Jwt.sign(input, process.env.JWT_SECRET!);
     } catch (error) {
@@ -109,9 +117,65 @@ export class Utils {
     console.log(arrangenumber);
     return `${code}${arrangenumber}`;
   }
+  static generateTrackingCode() {
+    return Math.floor(100000 + Math.random() * 900000);
+  }
   static generateRandomNumber() {
     const time = Date.now();
     const OTP = Math.floor(100000 + Math.random() * 900000);
     return { OTP, time };
+  }
+  static async getModel(id: string) {
+    const user = (await UserModel.findByPk(id, {
+      include: {
+        model: ProfileModel,
+        attributes: ["location", "country", "state", "city", "image"],
+      },
+      attributes: {
+        exclude: ["password", "confirmPassword"],
+      },
+    })) as unknown as User;
+    if (user) {
+      return this.transformUser(user);
+    }
+    const vendor = await VendorModel.findByPk(id, {
+      include: {
+        model: VendorProfileModel,
+      },
+      attributes: {
+        exclude: ["password", "confirmPassword"],
+      },
+    });
+    if (vendor) {
+      return this.transformVendor(vendor);
+    }
+    const delivery = await DeliveryModel.findByPk(id, {
+      include: { model: DeliveryProfileModel },
+      attributes: { exclude: ["password", "confirmPassword"] },
+    });
+    if (delivery) {
+      return this.transformDelivery(delivery);
+    } else {
+      throw new BadRequestError("unAuthorized pls kindly login", "");
+    }
+  }
+
+  static transformUser(data: any) {
+    return {
+      id: data.dataValues.id,
+      profile: data.dataValues.ProfileModel.dataValues,
+    };
+  }
+  static transformVendor(data: any) {
+    return {
+      id: data.dataValues.id,
+      profile: data.dataValues.VendorProfileModel,
+    };
+  }
+  static transformDelivery(data: any) {
+    return {
+      id: data.dataValues.id,
+      profile: data.dataValues.DeliveryProfileModel,
+    };
   }
 }

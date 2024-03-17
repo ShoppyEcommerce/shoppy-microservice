@@ -14,7 +14,7 @@ export default (app: Application) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.creditWallet(req.body.ref, req.user);
-        console.log(req.user)
+        (req.user)
         await payment.createPayment({
           id: uuid(),
           merchant: "paystack",

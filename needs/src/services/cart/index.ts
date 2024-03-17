@@ -71,7 +71,6 @@ export class CartService {
   async updateCart(input: Cart, data: any) {
     const productToUpdate = data.products; // Assuming only one product is updated at a time
 
-    console.log(productToUpdate);
 
     // Find the index of the product in the input cart
     const index = input.products.findIndex(
@@ -86,7 +85,7 @@ export class CartService {
       // If the product doesn't exist in the cart, add it
       input.products.push(productToUpdate);
     }
-    console.log(input);
+  
 
     // // Perform any other necessary updates to the cart
 
@@ -95,7 +94,7 @@ export class CartService {
       (total, product) => total + product.amount,
       0
     );
-    // console.log(input);
+
 
     // Save the updated cart to the repository
     return await this.repository.updateCart(input, input);

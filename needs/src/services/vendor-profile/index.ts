@@ -35,7 +35,7 @@ export class VendorProfileService {
     });
   }
   async getVendorProfile(vendorId: string) {
-    console.log(vendorId);
+   
     const profile = await this.repository.findOne({ vendorId });
     if (!profile) {
       throw new BadRequestError("no vendor profile found", "");

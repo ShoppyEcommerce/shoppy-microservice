@@ -17,7 +17,7 @@ export const DeliveryAuth = async (
     const verify = (await Utils.Decoded(token)) as JwtPayload;
     const user = await DeliveryModel.findOne({ where: { id: verify.id } });
     if (!user) {
-      throw new UnAuthorized("no delivery man found for this token", "");
+      throw new UnAuthorized("unAuthorized pls kindly login", "");
     }
     req.user = verify.id;
 

@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 export const conversationValidation = Joi.object().keys({
-  members: Joi.array().items(Joi.string()).required(),
+ receiverId:Joi.string().required(),
 });
 
 export const option = {

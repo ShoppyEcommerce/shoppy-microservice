@@ -23,3 +23,4 @@ export { ParcelDeliveryService } from "./parcel-delivery";
 export { SubVendorService } from "./subVendor";
 export { VendorPaymentService } from "./vendor-payment";
 export { AdminWalletService } from "./admin-wallet";
+export  {MessageService} from "./message"

@@ -72,6 +72,20 @@ export default (app: Application) => {
       }
     }
   );
+  app.get("/product/vendor/module/:id", async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+      const {data} =  await service.getVendorModule(req.params.id)
+      return successHandler(res,{
+        data,
+        message:"vendor returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
   app.get(
     "/product/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
@@ -88,11 +102,27 @@ export default (app: Application) => {
       }
     }
   );
-  app.patch(
-    "/product/:id",
+  app.get(
+    "/product/vendor/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { data } = await service.updateProduct(req.params.id, req.body);
+        const { data } = await service.getProductModule(req.params.id);
+        return successHandler(res, {
+          data,
+          message: "vendor returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/product/:id",
+    VendorAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const { data } = await service.updateProduct(req.params.id, req.user, req.body);
         return successHandler(res, {
           data,
           message: "product updated successfully",
@@ -201,7 +231,7 @@ export default (app: Application) => {
     "/favorite/product/all",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log("favorite");
+      
         const data = await service.getFavorite();
         return successHandler(res, {
           data,

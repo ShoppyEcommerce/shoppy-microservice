@@ -119,7 +119,7 @@ export class PaymentService {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         },
       });
-      console.log(bankList);
+     
       return bankList.data.data;
       
     } catch (error) {
@@ -211,7 +211,7 @@ export class PaymentService {
     }
     const verifyPin = await Utils.ComparePassword(input.pin, wallet.pin!);
 
-    console.log(verifyPin)
+ 
 
     if (!verifyPin) {
       throw new BadRequestError("incorrect pin", "");

@@ -94,7 +94,7 @@ export class DeliveryService {
 
     const currentTimestamp = Date.now();
     const expirationTime = 5 * 60 * 1000;
-    console.log(currentTimestamp - Number(user.OTPExpiration), expirationTime);
+
     if (
       user &&
       currentTimestamp - Number(user.OTPExpiration) > expirationTime

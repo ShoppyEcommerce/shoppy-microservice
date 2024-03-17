@@ -11,7 +11,37 @@ import {
 
 export class OrderRepository {
   async create(input: Order) {
-    return OrderModel.create(input);
+    return OrderModel.create(input, {
+      include: [
+        {
+          model: UserModel,
+          attributes: ["firstName", "lastName", "phone"],
+        },
+        {
+          model: CartModel,
+
+          attributes: ["products", "totalAmount"],
+        },
+        {
+          model: VendorModel,
+          attributes: ["firstName", "lastName", "phone", "email"],
+          include: [
+            {
+              model: VendorProfileModel,
+              attributes: ["location"],
+            },
+          ],
+        },
+        {
+          model: TransactionHistoryModel,
+          include: [
+            {
+              model: PaymentModel,
+            },
+          ],
+        },
+      ],
+    });
   }
   async Find(input: Partial<Order>) {
     return OrderModel.findOne({
@@ -27,19 +57,23 @@ export class OrderRepository {
           attributes: ["products", "totalAmount"],
         },
         {
-          model:VendorModel,
-          attributes: ["firstName","lastName","phone","email"],
-          include:[{
-            model:VendorProfileModel,
-            attributes:["location"]
-          }]
+          model: VendorModel,
+          attributes: ["firstName", "lastName", "phone", "email"],
+          include: [
+            {
+              model: VendorProfileModel,
+              attributes: ["location"],
+            },
+          ],
         },
         {
-          model:TransactionHistoryModel,
-          include:[{
-            model:PaymentModel
-          }]
-        }
+          model: TransactionHistoryModel,
+          include: [
+            {
+              model: PaymentModel,
+            },
+          ],
+        },
       ],
     });
   }
@@ -57,19 +91,23 @@ export class OrderRepository {
           attributes: ["products", "totalAmount"],
         },
         {
-          model:VendorModel,
-          attributes: ["firstName","lastName","phone","email"],
-          include:[{
-            model:VendorProfileModel,
-            attributes:["location"]
-          }]
+          model: VendorModel,
+          attributes: ["firstName", "lastName", "phone", "email"],
+          include: [
+            {
+              model: VendorProfileModel,
+              attributes: ["location"],
+            },
+          ],
         },
         {
-          model:TransactionHistoryModel,
-          include:[{
-            model:PaymentModel
-          }]
-        }
+          model: TransactionHistoryModel,
+          include: [
+            {
+              model: PaymentModel,
+            },
+          ],
+        },
       ],
     });
   }

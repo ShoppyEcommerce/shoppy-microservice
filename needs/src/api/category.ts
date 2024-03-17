@@ -18,7 +18,7 @@ export default (app: Application) => {
           statusCode: 201,
         });
       } catch (error) {
-        console.log(error);
+       
         next(error);
       }
     }
@@ -107,7 +107,7 @@ export default (app: Application) => {
     "/search/category",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log(req.query.search)
+       
         const data = await service.searchCategory(req.query.search as string);
         return successHandler(res, {
           data,

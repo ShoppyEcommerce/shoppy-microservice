@@ -4,8 +4,9 @@ import { databaseConnection } from "../connection";
 export interface Message {
   id: string;
   conversationId: string;
-  senderId: string;
+  sender: string;
   text: string;
+  image?:string
 }
 
 export class MessageModel extends Model<Message> {}
@@ -21,7 +22,11 @@ MessageModel.init(
       type: DataTypes.UUID,
       allowNull: false,
     },
-    senderId: {
+    image:{
+      type:DataTypes.STRING,
+      allowNull:true
+    },
+    sender: {
       type: DataTypes.UUID,
       allowNull: false,
     },

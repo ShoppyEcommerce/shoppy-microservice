@@ -14,6 +14,8 @@ import {
   option,
   loginVendorSchema,
   VerifyOtpSchema,
+  ResetPasswordValidation,
+  ChangePasswordValidation,
 } from "./validation";
 
 import { Utils } from "../../utils";
@@ -53,7 +55,7 @@ export class VendorService {
     const send = process.env.SEND_SMS === "true" ? true : false;
     if (send) {
       const sms = await sendSMS(code.OTP, value.phone);
-      console.log(sms);
+    
       if (sms && sms.status === 400) {
         throw new BadRequestError(sms.message, "");
       }
@@ -84,7 +86,7 @@ export class VendorService {
     if (!vendor.OTPVerification) {
       throw new BadRequestError("Account not verified", "Bad request");
     }
-    const isValid = Utils.ComparePassword(value.password, vendor.password);
+    const isValid =  await Utils.ComparePassword(value.password, vendor.password);
     if (!isValid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
@@ -167,6 +169,85 @@ export class VendorService {
       { where: { id: vendor.id } }
     );
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
+  }
+  async ResetOtpPasssword(input: { email: string }) {
+    const user = await this.vendorRepository.Find({ email: input.email });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    const info = Utils.generateRandomNumber();
+    const send = process.env.SEND_SMS === "true" ? true : false;
+    if (send) {
+      const sms = await sendSMS(info.OTP, exist.phone);
+      if (sms && sms.status === 400) {
+        throw new BadRequestError(sms.message, "");
+      }
+    }
+    await VendorModel.update(
+      { OTP: info.OTP, OTPExpirationDate: info.time },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData(
+      `A 6 digit OTP has been sent to your phone number ${info.OTP}`
+    );
+  }
+  async ResetPassword(input: { email: string; OTP: number; password: string }) {
+    const { error } = ResetPasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+
+    const user = await this.vendorRepository.Find({ email: input.email });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    if (Number(exist.OTP) !== Number(input.OTP)) {
+      throw new BadRequestError("invalid Otp", "");
+    }
+    const currentTimestamp = Date.now();
+    const expirationTime = 5 * 60 * 1000;
+    if (
+      user &&
+      currentTimestamp - Number(exist.OTPExpirationDate) > expirationTime
+    ) {
+      throw new BadRequestError("OTP has expired", "Bad Request");
+    }
+    const hash = await Utils.HashPassword(input.password);
+    await VendorModel.update(
+      { OTP: null, OTPExpirationDate: null, password: hash },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData("password reset successfully");
+  }
+  async changePassword(
+    input: {
+      email: string;
+      oldPassword: string;
+      newPassword: string;
+    },
+    userId: string
+  ) {
+    const { error } = ChangePasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const user = (await this.vendorRepository.Find({
+      email: input.email,
+      id: userId,
+    })) as unknown as Vendor;
+    if (!user) {
+      throw new BadRequestError("vendor not found", "");
+    }
+    const compare =   await Utils.ComparePassword(input.oldPassword, user.password);
+    if (!compare) {
+      throw new BadRequestError("invalid password", "");
+    }
+    const hash = await Utils.HashPassword(input.newPassword);
+
+    await VendorModel.update({ password: hash }, { where: { id: user.id } });
+    return "password changed successfully"
   }
   async getVendor(id: string) {
     const vendor = await this.vendorRepository.getVendor(id);
