@@ -43,7 +43,7 @@ export class OrderRepository {
       ],
     });
   }
-  async Find(input: Partial<Order>) {
+  async Find(input: any) {
     return OrderModel.findOne({
       where: input,
       include: [
@@ -117,6 +117,42 @@ export class OrderRepository {
         id,
       },
       returning: true,
+    });
+  }
+  async latestOrder(input: Partial<Order>) {
+ 
+    return OrderModel.findOne({
+      where: input,
+      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: UserModel,
+          attributes: ["firstName", "lastName", "phone"],
+        },
+        {
+          model: CartModel,
+
+          attributes: ["products", "totalAmount"],
+        },
+        {
+          model: VendorModel,
+          attributes: ["firstName", "lastName", "phone", "email"],
+          include: [
+            {
+              model: VendorProfileModel,
+              attributes: ["location"],
+            },
+          ],
+        },
+        {
+          model: TransactionHistoryModel,
+          include: [
+            {
+              model: PaymentModel,
+            },
+          ],
+        },
+      ],
     });
   }
 }

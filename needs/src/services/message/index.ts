@@ -18,7 +18,7 @@ export class MessageService {
    
    
 
-    const message =  await this.repository.create(input);
+   return await this.repository.create(input);
     
 
   }

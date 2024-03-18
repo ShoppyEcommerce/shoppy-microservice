@@ -97,7 +97,7 @@ export default (app: Application, ) => {
     VendorAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.CancelOrder(req.user, req.params.id);
+        const data = await service.CancelOrder(req.user, req.params.id, req.body);
         return successHandler(res, {
           data,
           message: "order cancelled successfully",
@@ -158,11 +158,11 @@ export default (app: Application, ) => {
     }
   );
   app.patch(
-    "/order/delivery/:id",
+    "/order/delivery/confirm/:id",
     DeliveryAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.acceptOrder(req.user, req.params.id);
+        const data = await service.orderCompleted(req.user, req.params.id, req.body);
         return successHandler(res, {
           data,
           message: "order updated successfully",
@@ -206,20 +206,20 @@ export default (app: Application, ) => {
       }
     }
   );
-  app.patch(
-    "/order/delivery-order/:id",
-    DeliveryAuth,
-    async (req: Request | any, res: Response, next: NextFunction) => {
-      try {
-        const data = await service.DeliveredOrder(req.params.id, req.user);
-        return successHandler(res, {
-          data,
-          message: "order updated successfully",
-          statusCode: 200,
-        });
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
+  // app.patch(
+  //   "/order/delivery-order/:id",
+  //   DeliveryAuth,
+  //   async (req: Request | any, res: Response, next: NextFunction) => {
+  //     try {
+  //       const data = await service.DeliveredOrder(req.params.id, req.user);
+  //       return successHandler(res, {
+  //         data,
+  //         message: "order updated successfully",
+  //         statusCode: 200,
+  //       });
+  //     } catch (error) {
+  //       next(error);
+  //     }
+  //   }
+  // );
 };

@@ -1,11 +1,11 @@
 import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
 import { UserModel } from "./user";
-import {VendorModel} from "./vendor"
-import { PaymentType } from "./order";
+import { VendorModel } from "./vendor";
+import { OrderModel, PaymentType } from "./order";
 import { TransactionHistoryModel } from "./transaction";
 
-export interface Payment {
+export interface VendorPayment {
   id: string;
   merchant: string;
   amount: number;
@@ -16,6 +16,7 @@ export interface Payment {
   updatedAt?: Date;
   paymentType: PaymentType;
   type: Type;
+  order?: string;
 }
 //paymentStatus
 export enum PaymentStatus {
@@ -29,7 +30,7 @@ export enum Type {
 }
 
 //paymentModel
-export class VendorPaymentModel extends Model<Payment> implements Payment {
+export class VendorPaymentModel extends Model<VendorPayment> implements VendorPayment {
   id!: string;
   merchant!: string;
   amount!: number;
@@ -39,7 +40,7 @@ export class VendorPaymentModel extends Model<Payment> implements Payment {
   createdAt!: Date;
   updatedAt!: Date;
   paymentType!: PaymentType;
-  type!:Type
+  type!: Type;
 }
 //paymentSchema
 const paymentSchema = {
@@ -74,6 +75,10 @@ const paymentSchema = {
     type: DataTypes.ENUM(...Object.values(Type)),
     allowNull: false,
   },
+  order: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
 
   status: {
     type: DataTypes.ENUM,
@@ -93,4 +98,5 @@ VendorPaymentModel.init(paymentSchema, {
 //payment relationship with user model
 VendorModel.hasMany(VendorPaymentModel, { foreignKey: "userId" });
 VendorPaymentModel.belongsTo(VendorModel, { foreignKey: "userId" });
-
+OrderModel.belongsTo(VendorPaymentModel, { foreignKey: "order" });
+VendorPaymentModel.belongsTo(OrderModel, { foreignKey: "order" });

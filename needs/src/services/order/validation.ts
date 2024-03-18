@@ -11,6 +11,12 @@ export const InitializeValidation = Joi.object().keys({
   email: Joi.string().email().required(),
   amount: Joi.number().required(),
 });
+export const cancelOrderValidations = Joi.object().keys({
+  CancelOrderReason: Joi.string().optional(),
+});
+export const OrderCompletedValidation = Joi.object().keys({
+  trackingCode:Joi.number().required()
+})
 export const option = {
   abortEarly: false,
   errors: {
