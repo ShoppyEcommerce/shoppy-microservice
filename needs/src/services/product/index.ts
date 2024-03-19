@@ -107,6 +107,9 @@ export class ProductService {
     const product = await this.repository.getProductCategory(id);
     return Utils.FormatData(product);
   }
+  async getModuleVendor(id:string){
+
+  }
   async getProductModule(id: string) {
     const model = (await ModuleModel.findByPk(id, {
       include: {
