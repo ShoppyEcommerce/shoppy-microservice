@@ -136,18 +136,83 @@ export default (app: Application) => {
       }
     }
   );
-  app.get("/vendor/not/verified", AuthMiddleware.Authenticate(["admin"]), async(req:Request, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.getUnVerified()
-      return successHandler(res,{
-        data,
-        message:"vendor returned successfully",
-        statusCode:200
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  app.get(
+    "/vendor/latest-order",
+    VendorAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.latestOrder(req.user);
+        return successHandler(res, {
+          data,
+          message: "latest order returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
+  );
+  app.get(
+    "/vendor/not/verified",
+    AuthMiddleware.Authenticate(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getUnVerified();
+        return successHandler(res, {
+          data,
+          message: "vendor returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  app.put(
+    "/vendor/send/otp/password",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { data } = await service.ResetOtpPasssword(req.body);
+        return successHandler(res, {
+          data,
+          message: "reset Otp has been sent",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.put(
+    "/vendor/reset-password",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.ResetPassword(req.body);
+        return successHandler(res, {
+          data,
+          message: "password reset successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.put(
+    "/vendor/change-password",
+    VendorAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.changePassword(req.body, req.user);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "password change successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

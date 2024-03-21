@@ -2,7 +2,7 @@ import axios from "axios";
 import { BadRequestError } from "../utils/ErrorHandler";
 
 export const sendSMS = async (code: number, to: string) => {
-  console.log(`sending sms to ${to} with code ${code}`);
+
 
   const data = {
     api_key: process.env.API_KEY,
@@ -23,10 +23,10 @@ export const sendSMS = async (code: number, to: string) => {
   };
   let response = await axios(options)
     .then((response) => {
-      console.log(response.data);
+   
     })
     .catch((error) => {
-      console.log(error.response);
+   
 
       const data = {
         status: error.response.status,

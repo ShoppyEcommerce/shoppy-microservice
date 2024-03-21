@@ -26,6 +26,7 @@ import {
   Parcel,
   ParcelDelivery,
   DeliveryProfile,
+  Message,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -57,12 +58,13 @@ export default async (app: Application) => {
   Payment(app);
   Wallet(app);
   Service(app);
-  SubVendor(app)
-  VendorWallet(app)
-  VendorPayment(app)
-  Parcel(app)
-  ParcelDelivery(app)
-  DeliveryProfile(app)
+  SubVendor(app);
+  VendorWallet(app);
+  VendorPayment(app);
+  Parcel(app);
+  ParcelDelivery(app);
+  DeliveryProfile(app);
+  Message(app);
 
   // Return the http server to be used by index.ts
   return httpServer;

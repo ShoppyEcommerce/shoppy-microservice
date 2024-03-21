@@ -35,7 +35,7 @@ export class CategoryService {
     }
     value.id = uuid();
     const data = await this.repository.create(value);
-    console.log(value);
+   
 
     return Utils.FormatData(data);
   }
@@ -88,7 +88,7 @@ export class CategoryService {
     return Utils.FormatData(data);
   }
   async searchCategory(search: string) {
-    console.log(search)
+
     return await CategoryModel.findAll({
       where: { name: { [Op.iLike]: `%${search}%` } },
       include:ModuleModel

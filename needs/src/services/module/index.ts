@@ -21,7 +21,7 @@ export class ModuleService {
       throw new BadRequestError("This module already exist", "bad request");
     }
     const id = uuid();
-    console.log(input);
+   
 
     const data = await this.repository.createModule({ ...input, id });
 

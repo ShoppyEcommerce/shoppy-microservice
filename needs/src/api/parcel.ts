@@ -55,7 +55,7 @@ export default (app: Application) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const search = req.query.search as string;
-        console.log(search)
+       
         const data = await service.searchParcel(search);
         return successHandler(res, {
           data,

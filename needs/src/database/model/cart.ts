@@ -53,6 +53,7 @@ CartModel.init(
     ownerId: {
       type: DataTypes.UUID,
       allowNull: false,
+      onDelete:"CASCADE"
     },
   },
   { sequelize: databaseConnection, tableName: "cart" }

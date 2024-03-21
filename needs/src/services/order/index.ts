@@ -27,6 +27,12 @@ import {
   Payment,
   AdminType,
   AdminPaymentStatus,
+  WalletRepository,
+  AdminWalletRepository,
+  AdminPaymentRepository,
+  AdminWallet,
+  VendorWalletRepository,
+  VendorPaymentRepository,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -34,7 +40,10 @@ import {
   OrderValidationSchema,
   option,
   OrderValidation,
+  cancelOrderValidations,
+  OrderCompletedValidation,
 } from "./validation";
+import { userSocketMap } from "../../config/socket";
 import { Op } from "sequelize";
 import { WalletService, TransactionService, AdminWalletService } from "../";
 import { v4 as uuid } from "uuid";
@@ -61,6 +70,11 @@ export class OrderService {
   private vendorRepo: VendorRepository;
   private deliveryProfile: DeliveryProfileRepository;
   private payment: PaymentRepository;
+  private walletReo: WalletRepository;
+  private adminWallet: AdminWalletRepository;
+  private adminPayment: AdminPaymentRepository;
+  private vendorWalletRepository: VendorWalletRepository;
+  private vendorPaymentRepository: VendorPaymentRepository;
   constructor() {
     this.vendorRepo = new VendorRepository();
     this.repository = new OrderRepository();
@@ -70,6 +84,11 @@ export class OrderService {
     this.productRepo = new ProductRepository();
     this.deliveryProfile = new DeliveryProfileRepository();
     this.payment = new PaymentRepository();
+    this.walletReo = new WalletRepository();
+    this.adminWallet = new AdminWalletRepository();
+    this.adminPayment = new AdminPaymentRepository();
+    this.vendorWalletRepository = new VendorWalletRepository();
+    this.vendorPaymentRepository = new VendorPaymentRepository();
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -143,10 +162,10 @@ export class OrderService {
       );
     }
 
+    const trackingCode = Utils.generateTrackingCode();
     // Perform payment
     if (input.paymentType === PaymentType.USER_WALLET) {
       const wallet = await this.processWalletPayment(totalPrice, ownerId);
-      console.log(wallet);
 
       payment = {
         id: uuid(),
@@ -180,6 +199,7 @@ export class OrderService {
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
+        trackingCode,
       };
     } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
       const res = await this.processPaystackPayment(
@@ -218,6 +238,7 @@ export class OrderService {
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
+        trackingCode,
       };
     } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
       payment = {
@@ -251,6 +272,7 @@ export class OrderService {
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
+        trackingCode,
       };
     } else {
       throw new BadRequestError("invalid payment type", "");
@@ -260,10 +282,8 @@ export class OrderService {
     await Promise.all(
       newProduct.map((product) => this.updateProductQuantity(product))
     );
-    console.log(transaction, order, payment);
 
     const payed = (await this.payment.create(payment)) as unknown as Payment;
-    console.log(payed);
 
     transaction.paymentId = payed.id;
     // Create transaction
@@ -281,19 +301,37 @@ export class OrderService {
       { status: CartStatus.CLOSED },
       { id: input.cartId, ownerId }
     );
+    await this.vendorPaymentRepository.create({
+      id: uuid(),
+      order: Order.dataValues.id,
+      amount: Order.dataValues.totalAmount,
+      merchant: "",
+      referenceId: "",
+      status: PaymentStatus.PENDING,
+      type: Type.CREDIT,
+      paymentType: PaymentType.USER_WALLET,
+      userId: order.vendorId,
+    });
     if (input.paymentType !== PaymentType.CASH_ON_DELIVERY) {
-      await new AdminPaymentService().create({
-        orderId: Order.dataValues.id,
-        type: AdminType.CREDIT,
-        id: uuid(),
-        status: AdminPaymentStatus.SUCCESS,
-        amount: totalPrice,
-      });
-      await new AdminWalletService().creditWallet(totalPrice);
+      await this.CreditAdminWallet(Order.dataValues.id, totalPrice);
+      // await new AdminPaymentService().create({
+      //   orderId: Order.dataValues.id,
+      //   type: AdminType.CREDIT,
+      //   id: uuid(),
+      //   status: AdminPaymentStatus.SUCCESS,
+      //   amount: totalPrice,
+      // });
+      // await new AdminWalletService().creditWallet(totalPrice);
+    }
+    console.log(Order);
+    const socketId = userSocketMap.get(input.vendorId);
+    console.log(socketId);
+    if (socketId) {
+      io.to(socketId).emit(VendorOrder, { message: "you have a new order" });
     }
 
     // // Emit event for new order
-    io.emit(VendorOrder, { order, vendor: input.vendorId });
+    // io.emit(VendorOrder, { message:"you have a new Order", vendor: input.vendorId });
 
     return "Order was successful";
   }
@@ -432,30 +470,64 @@ export class OrderService {
     });
     if (deliveryMan.length > 0) {
       deliveryMan.map((delivery) => {
-        io.emit(DeliveryOrder, { order, delivery: delivery.deliveryManId });
+        const socketId = userSocketMap.get(delivery.deliveryManId);
+        if (socketId) {
+          io.to(socketId).emit(DeliveryOrder, {
+            message: "new order for pickup",
+          });
+        }
       });
+      return "order updated successfully";
+    } else {
+      return "no delivery man is in your vaccinity";
     }
-
-    return "order updated successfully";
   }
-  async CancelOrder(vendorId: string, id: string) {
+  async CancelOrder(vendorId: string, id: string, input: any) {
+    const { error } = cancelOrderValidations.validate(input, option);
+    if (error) {
+      throw new BadRequestError(error.details[0].message, "");
+    }
     const order = (await this.repository.Find({
       vendorId,
       id,
+      orderStatus: {
+        [Op.not]: OrderStatus.CONFIRMED,
+      },
     })) as unknown as Order;
     if (!order) {
       throw new BadRequestError("order not found", "");
     }
     const payload = {
       orderStatus: OrderStatus.CANCELED,
+      CancelOrderReason: input.CancelOrderReason,
     };
     await this.repository.updateOrder(payload, order.id);
     const delivery = await DeliveryProfileModel.findAll({});
 
-    io.emit(UserOrder, {
-      order: "your order has been cancelled",
-      user: order.userId,
-    });
+    const socketId = userSocketMap.get(order.userId);
+    if (socketId) {
+      io.to(socketId).emit(UserOrder, {
+        message: "your order has been cancelled",
+      });
+    }
+    const wallet = (await this.walletReo.walletBalance({
+      ownerId: order.userId,
+    })) as unknown as Wallet;
+    if (wallet) {
+      const credit = Number(wallet?.credit) + order.totalAmount,
+        balance = (wallet.balance as number) + order.totalAmount;
+      await this.walletReo.update(order.userId, { credit, balance });
+      await this.DebitAdminWallet(order.id, order.totalAmount);
+      await this.vendorPaymentRepository.update(
+        { order: order.id, userId: order.vendorId },
+        { status: PaymentStatus.FAILED }
+      );
+    }
+
+    // io.emit(UserOrder, {
+    //   order: "your order has been cancelled",
+    //   user: order.userId,
+    // });
     //user get his money back
     return "order updated successfully";
   }
@@ -521,24 +593,50 @@ export class OrderService {
       { orderStatus: OrderStatus.OUT_FOR_DELIVERY, deliveryMan: id },
       orderId
     );
-    io.emit(UserOrder, { order: update, user: order.userId });
 
     return update[1][0].dataValues;
   }
-  async DeliveredOrder(id: string, deliveryMan: string) {
-    const order = await this.repository.Find({
+  async orderCompleted(id: string, deliveryMan: string, input: any) {
+    const { error } = OrderCompletedValidation.validate(input, option);
+    if (error) {
+      throw new BadRequestError(error.details[0].message, "");
+    }
+    const order = (await this.repository.Find({
       id,
       orderStatus: OrderStatus.OUT_FOR_DELIVERY,
       deliveryMan,
-    });
+    })) as unknown as Order;
     if (!order) {
       throw new BadRequestError("order not found", "");
+    }
+    if (order.trackingCode !== input.trackingCode) {
+      throw new BadRequestError("invalid tracking code", "");
     }
 
     const update = await this.repository.updateOrder(
       { orderStatus: OrderStatus.CONFIRMED },
       id
     );
+    const vendorWallet = (await this.vendorWalletRepository.walletBalance({
+      ownerId: order.vendorId,
+    })) as unknown as Wallet;
+    if (vendorWallet) {
+      const credit = Number(vendorWallet.credit) + order.totalAmount,
+        balance = Number(vendorWallet.balance) + order.totalAmount;
+
+      await this.vendorWalletRepository.update(order.vendorId, {
+        balance,
+        credit,
+      });
+      await this.vendorPaymentRepository.update(
+        { order: order.id, userId: order.vendorId },
+        { status: PaymentStatus.SUCCESS }
+      );
+      if (order.paymentType !== PaymentType.CASH_ON_DELIVERY) {
+        await this.DebitAdminWallet(order.id, order.totalAmount);
+      }
+    }
+
     return update[1][0].dataValues;
   }
 
@@ -566,5 +664,26 @@ export class OrderService {
   async TrackUserOrder(userId: string, id: string) {
     const order = await this.repository.Find({ userId, id });
     return order;
+  }
+
+  async DebitAdminWallet(orderId: string, amount: number) {
+    await this.adminWallet.debitWallet(amount);
+    await this.adminPayment.create({
+      id: uuid(),
+      type: AdminType.DEBIT,
+      orderId: orderId,
+      status: AdminPaymentStatus.SUCCESS,
+      amount: amount,
+    });
+  }
+  async CreditAdminWallet(orderId: string, amount: number) {
+    await this.adminWallet.creditWallet(amount);
+    await this.adminPayment.create({
+      id: uuid(),
+      type: AdminType.CREDIT,
+      orderId: orderId,
+      status: AdminPaymentStatus.SUCCESS,
+      amount: amount,
+    });
   }
 }

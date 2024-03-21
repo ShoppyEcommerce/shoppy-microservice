@@ -32,7 +32,7 @@ export {
   ModeOfIdentification,
 } from "./deliveryProfile";
 export { VendorWalletModel } from "./vendor-wallet";
-export { VendorPaymentModel } from "./vendor-payment";
+export { VendorPaymentModel, VendorPayment } from "./vendor-payment";
 export { AdminWalletModel, AdminWallet } from "./admin-wallet";
 export { AdminPaymentModel, AdminPayment, AdminType, AdminPaymentStatus } from "./admin-payment";
 

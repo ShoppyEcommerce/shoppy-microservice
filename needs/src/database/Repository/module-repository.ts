@@ -5,7 +5,7 @@ import { Module, ModuleModel } from "../model";
 
 export class ModuleRepository {
     async createModule(input:Module) : Promise<Module> {
-      console.log(input)
+  
       const module =   await ModuleModel.create(input) as unknown as Module
       return module
 

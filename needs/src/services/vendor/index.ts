@@ -7,6 +7,10 @@ import {
   OrderStatus,
   VendorWalletRepository,
   Wallet,
+  VendorPaymentRepository,
+  PaymentType,
+  Type,
+  PaymentStatus,
 } from "../../database";
 import { v4 as uuid } from "uuid";
 import {
@@ -14,22 +18,28 @@ import {
   option,
   loginVendorSchema,
   VerifyOtpSchema,
+  ResetPasswordValidation,
+  ChangePasswordValidation,
 } from "./validation";
 
 import { Utils } from "../../utils";
 import { ValidationError, BadRequestError } from "../../utils/ErrorHandler";
 import { sendSMS } from "../../lib/sendSmS";
 import { VendorWalletService } from "..";
+import { Op } from "sequelize";
 
 export class VendorService {
   private vendorRepository: VendorRepository;
   private orderRepo: OrderRepository;
   private vendorWallet: VendorWalletRepository;
+  private vendorPaymentRepo: VendorPaymentRepository;
   constructor() {
     this.vendorRepository = new VendorRepository();
     this.orderRepo = new OrderRepository();
     this.vendorWallet = new VendorWalletRepository();
+    this.vendorPaymentRepo = new VendorPaymentRepository();
   }
+
   async createVendor(input: Vendor) {
     const { error, value } = registerVendorSchema.validate(input, option);
     if (error) {
@@ -53,7 +63,7 @@ export class VendorService {
     const send = process.env.SEND_SMS === "true" ? true : false;
     if (send) {
       const sms = await sendSMS(code.OTP, value.phone);
-      console.log(sms);
+
       if (sms && sms.status === 400) {
         throw new BadRequestError(sms.message, "");
       }
@@ -64,7 +74,9 @@ export class VendorService {
     );
     await new VendorWalletService().createWallet(value.id);
 
-    return Utils.FormatData(`A 6 digit OTP has been sent to your phone number ${code.OTP}`);
+    return Utils.FormatData(
+      `A 6 digit OTP has been sent to your phone number ${code.OTP}`
+    );
   }
   async Login(input: { phone: string; password: string }) {
     const { error, value } = loginVendorSchema.validate(input, option);
@@ -84,7 +96,10 @@ export class VendorService {
     if (!vendor.OTPVerification) {
       throw new BadRequestError("Account not verified", "Bad request");
     }
-    const isValid = Utils.ComparePassword(value.password, vendor.password);
+    const isValid = await Utils.ComparePassword(
+      value.password,
+      vendor.password
+    );
     if (!isValid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
@@ -168,6 +183,88 @@ export class VendorService {
     );
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
+  async ResetOtpPasssword(input: { email: string }) {
+    const user = await this.vendorRepository.Find({ email: input.email });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    const info = Utils.generateRandomNumber();
+    const send = process.env.SEND_SMS === "true" ? true : false;
+    if (send) {
+      const sms = await sendSMS(info.OTP, exist.phone);
+      if (sms && sms.status === 400) {
+        throw new BadRequestError(sms.message, "");
+      }
+    }
+    await VendorModel.update(
+      { OTP: info.OTP, OTPExpirationDate: info.time },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData(
+      `A 6 digit OTP has been sent to your phone number ${info.OTP}`
+    );
+  }
+  async ResetPassword(input: { email: string; OTP: number; password: string }) {
+    const { error } = ResetPasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+
+    const user = await this.vendorRepository.Find({ email: input.email });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    if (Number(exist.OTP) !== Number(input.OTP)) {
+      throw new BadRequestError("invalid Otp", "");
+    }
+    const currentTimestamp = Date.now();
+    const expirationTime = 5 * 60 * 1000;
+    if (
+      user &&
+      currentTimestamp - Number(exist.OTPExpirationDate) > expirationTime
+    ) {
+      throw new BadRequestError("OTP has expired", "Bad Request");
+    }
+    const hash = await Utils.HashPassword(input.password);
+    await VendorModel.update(
+      { OTP: null, OTPExpirationDate: null, password: hash },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData("password reset successfully");
+  }
+  async changePassword(
+    input: {
+      email: string;
+      oldPassword: string;
+      newPassword: string;
+    },
+    userId: string
+  ) {
+    const { error } = ChangePasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const user = (await this.vendorRepository.Find({
+      email: input.email,
+      id: userId,
+    })) as unknown as Vendor;
+    if (!user) {
+      throw new BadRequestError("vendor not found", "");
+    }
+    const compare = await Utils.ComparePassword(
+      input.oldPassword,
+      user.password
+    );
+    if (!compare) {
+      throw new BadRequestError("invalid password", "");
+    }
+    const hash = await Utils.HashPassword(input.newPassword);
+
+    await VendorModel.update({ password: hash }, { where: { id: user.id } });
+    return "password changed successfully";
+  }
   async getVendor(id: string) {
     const vendor = await this.vendorRepository.getVendor(id);
     if (!vendor) {
@@ -208,38 +305,85 @@ export class VendorService {
 
     return vendor;
   }
-  async VendorDashboard(vendorId: string) {
-    const orders = (await this.orderRepo.FindAll({
-      vendorId,
+  async VendorDashboard(userId: string) {
+    const today = new Date();
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1
+    );
+    const vendorSales = await this.vendorPaymentRepo.findAll({
+      userId,
+      type: Type.CREDIT,
+      status: PaymentStatus.SUCCESS,
+    });
+    const inProgressSales = await this.vendorPaymentRepo.findAll({
+      userId,
+      type: Type.CREDIT,
+      status: PaymentStatus.PENDING,
+    });
+    const wallet = await this.vendorWallet.walletBalance({ ownerId: userId });
+    const todayEarning = await this.vendorPaymentRepo.findAll({
+      type: Type.CREDIT,
+      status: PaymentStatus.SUCCESS,
+      createdAt: {
+        [Op.between]: [startOfToday, endOfToday],
+      },
+    });
+    const orderCompleted = (await this.orderRepo.FindAll({
+      vendorId: userId,
+      orderStatus: OrderStatus.COMPLETED,
     })) as unknown as Order[];
-    const wallet = (await this.vendorWallet.walletBalance({
-      ownerId: vendorId,
-    })) as unknown as Wallet;
-
-    const cancel: Order[] = orders.filter(
-      (order) => order.orderStatus === OrderStatus.CANCELED
-    );
-    const sales = orders.reduce((curr, acc) => curr + acc.totalAmount, 0);
-    const pending = orders.filter(
-      (order) => order.orderStatus === OrderStatus.PENDING
-    );
-    const returned = orders.filter(
-      (order) => order.orderStatus === OrderStatus.RETURNED
-    );
-    const progress = orders
-      .filter((order) => order.orderStatus === OrderStatus.CONFIRMED)
-      .reduce((cur, acc) => cur + acc.totalAmount, 0);
-    const cancelAmount = cancel.reduce((cur, acc) => cur + acc.totalAmount, 0);
-
+    const orderPending = await this.orderRepo.FindAll({
+      vendorId: userId,
+      orderStatus: OrderStatus.PENDING,
+    });
+    const orderCancelled = await this.orderRepo.FindAll({
+      vendorId: userId,
+      orderStatus: OrderStatus.CANCELED,
+    });
+    const orderReturned = await this.orderRepo.FindAll({
+      vendorId: userId,
+      orderStatus: OrderStatus.RETURNED,
+    });
     return {
-      sales,
-      inProgress: progress,
-      pending,
-      cancelAmount,
-      orders,
-      cancel,
-      returned,
-      wallet: wallet.balance,
+      vendorSales,
+      inProgressSales,
+      wallet,
+      todayEarning,
+      orderCompleted,
+      orderPending,
+      orderCancelled,
+      orderReturned,
     };
+    // const wallet = (await this.vendorWallet.walletBalance({
+    //   ownerId: vendorId,
+    // })) as unknown as Wallet;
+
+    // const cancel: Order[] = orders.filter(
+    //   (order) => order.orderStatus === OrderStatus.CANCELED
+    // );
+    // const sales = orders.reduce((curr, acc) => curr + acc.totalAmount, 0);
+    // const pending = orders.filter(
+    //   (order) => order.orderStatus === OrderStatus.PENDING
+    // );
+    // const returned = orders.filter(
+    //   (order) => order.orderStatus === OrderStatus.RETURNED
+    // );
+    // const progress = orders
+    //   .filter((order) => order.orderStatus === OrderStatus.CONFIRMED)
+    //   .reduce((cur, acc) => cur + acc.totalAmount, 0);
+    // const cancelAmount = cancel.reduce((cur, acc) => cur + acc.totalAmount, 0);
+  }
+  async latestOrder(vendorId: string) {
+    return await this.orderRepo.latestOrder({
+      vendorId,
+      orderStatus: OrderStatus.PENDING,
+    });
   }
 }

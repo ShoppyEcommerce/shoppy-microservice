@@ -123,7 +123,7 @@ export class VendorPaymentService {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
       },
     });
-    console.log(bankList);
+;
     return bankList.data.data;
   }
   async createRecipient(
@@ -154,7 +154,7 @@ export class VendorPaymentService {
     const user = (await this.profileRepo.findOne({
       vendorId:userId,
     })) as unknown as VendorProfile;
-    console.log(recipient.data.data)
+   
 
     user.recipient = recipient.data.data.recipient_code;
     await this.profileRepo.update(
@@ -202,7 +202,7 @@ export class VendorPaymentService {
     }
     const verifyPin = await Utils.ComparePassword(input.pin, wallet.pin!);
 
-    console.log(verifyPin);
+   
 
     if (!verifyPin) {
       throw new BadRequestError("incorrect pin", "");

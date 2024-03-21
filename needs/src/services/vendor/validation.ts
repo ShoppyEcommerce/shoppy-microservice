@@ -36,6 +36,16 @@ export const VerifyOtpSchema = Joi.object().keys({
   phone: Joi.string().required(),
   OTP: Joi.number().required(),
 });
+export const ResetPasswordValidation = Joi.object().keys({
+  OTP: Joi.number().required(),
+  email: Joi.string().trim().lowercase().email().required(),
+  password: PasswordComplexity(complexityOptions).required(),
+});
+export const ChangePasswordValidation = Joi.object().keys({
+  email: Joi.string().trim().lowercase().email().required(),
+  oldPassword:PasswordComplexity(complexityOptions).required(),
+  newPassword:PasswordComplexity(complexityOptions).required(),
+})
 export const option = {
     abortEarly: false,
     errors: {
