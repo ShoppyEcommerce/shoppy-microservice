@@ -7,11 +7,13 @@ import bcryptjs, { genSaltSync } from "bcryptjs";
 import {
   User,
   UserModel,
-  VendorModel,
+
   ProfileModel,
-  VendorProfileModel,
+
   DeliveryModel,
   DeliveryProfileModel,
+  ShopModel,
+  Shop
 } from "../database";
 export class Utils {
   static async Encoded(input: { id: string }) {
@@ -125,6 +127,11 @@ export class Utils {
     const OTP = Math.floor(100000 + Math.random() * 900000);
     return { OTP, time };
   }
+  static generateVerification() {
+    const time = Date.now();
+    const OTP = Math.floor(1000 + Math.random() * 9000);
+    return { OTP, time };
+  }
   static async getModel(id: string) {
     const user = (await UserModel.findByPk(id, {
       include: {
@@ -138,24 +145,19 @@ export class Utils {
     if (user) {
       return this.transformUser(user);
     }
-    const vendor = await VendorModel.findByPk(id, {
-      include: {
-        model: VendorProfileModel,
-      },
-      attributes: {
-        exclude: ["password", "confirmPassword"],
-      },
-    });
-    if (vendor) {
-      return this.transformVendor(vendor);
-    }
+   
     const delivery = await DeliveryModel.findByPk(id, {
       include: { model: DeliveryProfileModel },
       attributes: { exclude: ["password", "confirmPassword"] },
     });
     if (delivery) {
       return this.transformDelivery(delivery);
-    } else {
+    }
+      const shop =  await ShopModel.findByPk(id)
+      if(shop){
+        return this.transformShop(shop)
+      }
+    else {
       throw new BadRequestError("unAuthorized pls kindly login", "");
     }
   }
@@ -177,5 +179,11 @@ export class Utils {
       id: data.dataValues.id,
       profile: data.dataValues.DeliveryProfileModel,
     };
+  }
+  static transformShop(data:any){
+    return {
+      id:data.dataValues.id
+    }
+
   }
 }

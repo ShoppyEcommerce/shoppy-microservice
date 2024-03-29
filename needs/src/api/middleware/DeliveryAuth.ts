@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { UnAuthorized } from "../../utils/ErrorHandler";
 import { Utils } from "../../utils";
 import { JwtPayload } from "jsonwebtoken";
-import { DeliveryModel } from "../../database";
+import { Delivery, DeliveryModel } from "../../database";
 
 export const DeliveryAuth = async (
   req: Request | any,
@@ -15,9 +15,12 @@ export const DeliveryAuth = async (
       throw new UnAuthorized("No token provided", "");
     }
     const verify = (await Utils.Decoded(token)) as JwtPayload;
-    const user = await DeliveryModel.findOne({ where: { id: verify.id } });
+    const user = await DeliveryModel.findOne({ where: { id: verify.id } }) as unknown as Delivery
     if (!user) {
       throw new UnAuthorized("unAuthorized pls kindly login", "");
+    }
+    if(!user.OTPVerification){
+      throw new UnAuthorized("please verify your account","")
     }
     req.user = verify.id;
 

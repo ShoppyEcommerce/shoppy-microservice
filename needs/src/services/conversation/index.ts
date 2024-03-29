@@ -3,7 +3,7 @@ import {
   Conversation,
   ConversationSchema,
   UserModel,
-  VendorModel,
+  // VendorModel,
   DeliveryModel,
 } from "../../database";
 import { v4 as uuid } from "uuid";

@@ -17,18 +17,19 @@ import {
   Category,
   Product,
   ProductModel,
-  Vendor,
-  VendorModel,
-  VendorProfile,
+ 
   ProductRepository,
   CategoryRepository,
-  VendorProfileRepository,
-  VendorRepository,
+
   ModuleModel,
   CategoryModel,
-  VendorProfileModel,
+
+  ShopRepository,
+  Shop,
+  ShopModel,
+  databaseConnection,
 } from "../../database";
-import { Op } from "sequelize";
+import sequelize, { Op } from "sequelize";
 
 interface IProduct {
   categoryId: string;
@@ -43,13 +44,11 @@ interface IProduct {
 export class ProductService {
   private repository: ProductRepository;
   private categoryRepository: CategoryRepository;
-  private vendorProfile: VendorProfileRepository;
-  private vendorRepo: VendorRepository;
+  private shopRepository: ShopRepository;
   constructor() {
     this.repository = new ProductRepository();
     this.categoryRepository = new CategoryRepository();
-    this.vendorProfile = new VendorProfileRepository();
-    this.vendorRepo = new VendorRepository();
+    this.shopRepository = new ShopRepository();
   }
   async createProduct(input: Product, user: string) {
     const { error, value } = ProductSchema.validate(input, option);
@@ -62,35 +61,60 @@ export class ProductService {
     if (!category) {
       throw new BadRequestError("This category does not exist", "");
     }
-    const vendor = (await this.vendorRepo.Find({
-      id: user,
-    })) as unknown as Vendor;
-
-    if (!vendor.isVerified) {
+    // const vendor = (await this.vendorRepo.Find({
+    //   id: user,
+    // })) as unknown as Vendor;
+    const shop = await this.shopRepository.getShop(user);
+    console.log(shop);
+    if (!shop?.dataValues.isVerified) {
       throw new UnAuthorized("you are not verified", "");
     }
 
-    const profile = await this.vendorProfile.getVendorProfile(user);
-    if (!profile) {
-      throw new BadRequestError("pls create a profile first", "Bad Request");
-    }
+   
+
     value.itemName = Utils.Capitalizeword(value.itemName);
     const exist = await this.repository.getProduct({
       itemName: value.itemName,
-      ownerId: user,
+      shopId: user,
     });
     if (exist) {
-      throw new BadRequestError(
-        "This product already exist for this vendor",
-        ""
-      );
+      throw new BadRequestError("This product already exist for this shop", "");
     }
 
     value.category = category;
     value.moduleId = category.moduleId;
-    value.ownerId = user;
+    value.shopId = user;
 
     const product = await this.repository.create(value);
+    try {
+      const select = `SELECT * FROM shopmodule WHERE shop_id = '${user}' AND module_id = '${category.moduleId}' LIMIT 1`;
+      const shopModule = await databaseConnection.query(select, {});
+     
+
+      const shopModuleLength = Number(shopModule.length);
+      if (shopModule[0].length === 0) {
+        const query = `
+     INSERT INTO shopmodule (shop_id, module_id, "createdAt", "updatedAt")
+     VALUES (?, ?, NOW(), NOW())
+     `;
+
+        // Execute the SQL query
+        const [result]: [any, any] = await databaseConnection.query(query, {
+          replacements: [user, category.moduleId],
+        });
+        console.log(result)
+
+        // // Check if the insertion was successful
+        if (result && result.affectedRows > 0) {
+          console.log("Value inserted into shopModule table successfully.");
+        } else {
+          console.error("Error inserting value into shopModule table.");
+        }
+      }
+    } catch (error) {
+      console.error("Error inserting into shopModule table:", error);
+    }
+
     return Utils.FormatData(product);
   }
   async getProduct(id: string) {
@@ -113,41 +137,21 @@ export class ProductService {
     return Utils.FormatData(product);
   }
   async getVendorModule(id: string) {
-    const model = (await ModuleModel.findByPk(id, {
-      include: {
-        model: CategoryModel,
-        include: [
-          {
-            model: ProductModel,
-            include: [
-              {
-                model: VendorModel,
-                include: [
-                  {
-                    model: VendorProfileModel,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    })) as unknown as any;
-    const vendor = model.dataValues.CategoryModels.flatMap((category: any) =>
-      category.ProductModels.flatMap((product: any) => product.VendorModel)
-    );
-    const uniqueData = [
-      ...new Set(vendor.map((obj: any) => JSON.stringify(obj, null))),
-    ].map((jsonString: any) => JSON.parse(jsonString));
+    const query = `
+      SELECT * FROM  shopmodule   JOIN  shop ON shop.id = shopmodule.shop_id JOIN  module ON module.id = shopmodule.module_id WHERE  module_id= ? `;
+    const shopModule = await databaseConnection.query(query, {
+      replacements: [id],
+    });
 
-    return Utils.FormatData(uniqueData);
+
+    return Utils.FormatData(shopModule[0]);
   }
-  async updateProduct(id: string, ownerId: string, update: any) {
+  async updateProduct(id: string, shopId: string, update: any) {
     const { error, value } = UpdateProductSchema.validate(update, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const exist = await this.repository.getProduct({ id, ownerId });
+    const exist = await this.repository.getProduct({ id, shopId });
     if (!exist) {
       throw new BadRequestError("This product does not exist", "");
     }
@@ -163,7 +167,7 @@ export class ProductService {
     return Utils.FormatData(product);
   }
   async getVendorsProduct(id: string, user: string) {
-    const product = await this.repository.getProduct({ id, ownerId: user });
+    const product = await this.repository.getProduct({ id, shopId: user });
     if (!product) {
       throw new BadRequestError("product not found", "");
     }
@@ -180,21 +184,21 @@ export class ProductService {
         throw new ValidationError(error.details[0].message, "");
       }
       const profiles =
-        (await this.vendorProfile.findAll()) as unknown as VendorProfile[];
-      const vendors: string[] = [];
+        (await this.shopRepository.getAllShop()) as unknown as Shop[];
+      const shops: string[] = [];
       if (profiles.length > 0) {
-        profiles.map((profile: VendorProfile) => {
+        profiles.map((profile: Shop) => {
           const valid = geolib.isPointWithinRadius(
             { latitude: input.latitude, longitude: input.longitude },
-            { latitude: profile.latitude, longitude: profile.longitude },
+            { latitude: profile.shopDetails.latitude, longitude: profile.shopDetails.longitude },
             10000
           );
-          valid && vendors.push(profile.vendorId);
+          valid && shops.push(profile.id);
         });
-        if (vendors.length === 0) {
+        if (shops.length === 0) {
           return [];
         }
-        const product = vendors.map((vendor) =>
+        const product = shops.map((vendor) =>
           this.getVendorsProducts(vendor)
         );
 
@@ -209,16 +213,16 @@ export class ProductService {
     const products = await ProductModel.findAll({
       where: { itemName: { [Op.like]: `%${input}%` } },
     });
-    const vendors = await VendorModel.findAll({
-      where: {
-        [Op.or]: [
-          { firstName: { [Op.like]: `%${input}%` } },
-          { lastName: { [Op.like]: `%${input}%` } },
-        ],
-      },
-      include: ProductModel,
-    });
-    return { products, vendors };
+    // const vendors = await VendorModel.findAll({
+    //   where: {
+    //     [Op.or]: [
+    //       { firstName: { [Op.like]: `%${input}%` } },
+    //       { lastName: { [Op.like]: `%${input}%` } },
+    //     ],
+    //   },
+    //   include: ProductModel,
+    // });
+    return { products };
   }
   async RatingProduct(productId: string, rating: number) {
     const product = (await ProductModel.findByPk(

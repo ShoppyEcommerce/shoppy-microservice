@@ -1,4 +1,4 @@
-import { Delivery, DeliveryModel } from "../model/delivery";
+import { Delivery, DeliveryModel } from "../model/Delivery";
 
 export class DeliveryRepository {
   async create(input: Delivery): Promise<Delivery> {
@@ -7,7 +7,12 @@ export class DeliveryRepository {
   async Find(input: Record<string, string>) {
     return DeliveryModel.findOne({ where: input });
   }
-  async update(input: Partial<Delivery>, id: string) {
-    await DeliveryModel.update(input, { where: { id }, returning: true, });
+  async update(update: Partial<Delivery>, input: any) {
+  return  await DeliveryModel.update(update, { where: input, returning: true, });
+  }
+  async findAll(input: Partial<Delivery>) {
+    return await DeliveryModel.findAll({
+      where: input,
+    }) as unknown as Delivery[] | []
   }
 }

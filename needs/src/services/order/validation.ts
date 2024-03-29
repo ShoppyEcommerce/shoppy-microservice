@@ -6,6 +6,7 @@ export const OrderValidationSchema = Joi.object().keys({
   vendorId: Joi.string().required(),
   paymentType: Joi.string().required(),
   referenceId: Joi.string().optional(),
+  shopId:Joi.string().required()
 });
 export const InitializeValidation = Joi.object().keys({
   email: Joi.string().email().required(),

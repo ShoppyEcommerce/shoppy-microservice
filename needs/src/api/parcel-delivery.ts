@@ -1,6 +1,6 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { ParcelDeliveryService } from "../services";
-import { AuthMiddleware, GeneralAuth, successHandler } from "./middleware";
+import { AuthMiddleware, successHandler } from "./middleware";
 
 export default (app: Application) => {
   const service = new ParcelDeliveryService();

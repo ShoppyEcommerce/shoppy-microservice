@@ -8,18 +8,20 @@ import {
   Product,
   Availability,
   PaymentType,
-  VendorRepository,
-  Vendor,
+
+ 
+  ShopModel,
+
   Transaction,
   TransactionType,
   OrderStatus,
-  VendorModel,
+
   Wallet,
   DeliveryModel,
   DeliveryProfileModel,
   DeliveryProfile,
   DeliveryProfileRepository,
-  VendorProfile,
+
   Delivery,
   PaymentRepository,
   PaymentStatus,
@@ -31,8 +33,12 @@ import {
   AdminWalletRepository,
   AdminPaymentRepository,
   AdminWallet,
-  VendorWalletRepository,
-  VendorPaymentRepository,
+  
+  ShopPaymentRepository,
+  ShopWalletRepository,
+  ShopRepository,
+  Shop,
+  ShopWallet
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -58,8 +64,9 @@ import {
   VendorOrder,
 } from "../../config/constant";
 import * as geolib from "geolib";
-import { VendorProfileModel } from "../../database/model/vendor-profile";
+
 import { AdminPaymentService } from "../admin-payment";
+
 
 export class OrderService {
   private repository: OrderRepository;
@@ -67,16 +74,17 @@ export class OrderService {
   private transaction: TransactionService;
   private cart: CartRepository;
   private productRepo: ProductRepository;
-  private vendorRepo: VendorRepository;
+  private shopRepository: ShopRepository;
   private deliveryProfile: DeliveryProfileRepository;
   private payment: PaymentRepository;
   private walletReo: WalletRepository;
   private adminWallet: AdminWalletRepository;
   private adminPayment: AdminPaymentRepository;
-  private vendorWalletRepository: VendorWalletRepository;
-  private vendorPaymentRepository: VendorPaymentRepository;
+  private shopWalletRepository: ShopWalletRepository;
+  private shopPaymentRepository: ShopPaymentRepository;
+
   constructor() {
-    this.vendorRepo = new VendorRepository();
+    this.shopRepository = new ShopRepository();
     this.repository = new OrderRepository();
     this.wallet = new WalletService();
     this.transaction = new TransactionService();
@@ -87,8 +95,9 @@ export class OrderService {
     this.walletReo = new WalletRepository();
     this.adminWallet = new AdminWalletRepository();
     this.adminPayment = new AdminPaymentRepository();
-    this.vendorWalletRepository = new VendorWalletRepository();
-    this.vendorPaymentRepository = new VendorPaymentRepository();
+    this.shopWalletRepository = new ShopWalletRepository();
+    this.shopPaymentRepository = new ShopPaymentRepository();
+    this.shopRepository =  new ShopRepository()
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -106,13 +115,12 @@ export class OrderService {
     if (!cart) {
       throw new BadRequestError("Cart does not exist", "");
     }
-
+    
     // // Fetch vendor details
-    const vendor = (await VendorModel.findByPk(
-      input.vendorId
-    )) as unknown as Vendor;
-    if (!vendor) {
-      throw new BadRequestError("Vendor does not exist", "");
+ 
+    const shop =  await this.shopRepository.getShop(input.shopId) as unknown as Shop
+    if (!shop) {
+      throw new BadRequestError("shop does not exist", "");
     }
 
     // // Initialize variables
@@ -127,12 +135,12 @@ export class OrderService {
     for (const cartItem of newCart.products) {
       const product = (await this.productRepo.getProduct({
         id: cartItem.id,
-        ownerId: input.vendorId,
+        shopId: input.shopId,
       })) as unknown as Product;
 
       if (!product) {
         throw new BadRequestError(
-          "This product is not associated with this vendor",
+          "This product is not associated with this shop",
           ""
         );
       }
@@ -185,8 +193,7 @@ export class OrderService {
         referenceId: wallet.id,
         id: uuid(),
         paymentId: "",
-        description: `you made order from ${vendor.firstName} ${
-          vendor.lastName
+        description: `you made order from ${shop.shopDetails.storeName}
         } store  on ${new Date().toLocaleDateString("en-GB")}.`,
       };
       order = {
@@ -194,12 +201,12 @@ export class OrderService {
         referenceId: wallet.id,
         cartId: input.cartId,
         userId: ownerId,
-        vendorId: input.vendorId,
         totalAmount: totalPrice,
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
         trackingCode,
+        shopId:input.shopId
       };
     } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
       const res = await this.processPaystackPayment(
@@ -224,21 +231,20 @@ export class OrderService {
         referenceId: input.referenceId,
         paymentId: "",
         id: uuid(),
-        description: `you made order from ${vendor.firstName} ${
-          vendor.lastName
-        } store  on ${new Date().toLocaleDateString("en-GB")}.`,
+        description: `you made order from ${shop.shopDetails.storeName}
+      } store  on ${new Date().toLocaleDateString("en-GB")}.`,
       };
       order = {
         id: uuid(),
         referenceId: input.referenceId,
         cartId: input.cartId,
         userId: ownerId,
-        vendorId: input.vendorId,
         totalAmount: totalPrice,
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
         trackingCode,
+        shopId:input.shopId
       };
     } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
       payment = {
@@ -257,8 +263,7 @@ export class OrderService {
         type: TransactionType.PURCHASE,
         referenceId: ownerId,
         id: uuid(),
-        description: `you made order from ${vendor.firstName} ${
-          vendor.lastName
+        description: `you made order from ${shop.shopDetails.storeName}
         } store  on ${new Date().toLocaleDateString("en-GB")}.`,
         paymentId: "",
       };
@@ -266,13 +271,13 @@ export class OrderService {
         id: uuid(),
         referenceId: ownerId,
         cartId: input.cartId,
-        userId: ownerId,
-        vendorId: input.vendorId,
+        userId: ownerId,       
         totalAmount: totalPrice,
         paymentType: input.paymentType,
         orderStatus: OrderStatus.PENDING,
         transactionId: "",
         trackingCode,
+        shopId:input.shopId
       };
     } else {
       throw new BadRequestError("invalid payment type", "");
@@ -301,7 +306,7 @@ export class OrderService {
       { status: CartStatus.CLOSED },
       { id: input.cartId, ownerId }
     );
-    await this.vendorPaymentRepository.create({
+    await this.shopPaymentRepository.create({
       id: uuid(),
       order: Order.dataValues.id,
       amount: Order.dataValues.totalAmount,
@@ -310,21 +315,14 @@ export class OrderService {
       status: PaymentStatus.PENDING,
       type: Type.CREDIT,
       paymentType: PaymentType.USER_WALLET,
-      userId: order.vendorId,
+      shopId: order.shopId,
     });
     if (input.paymentType !== PaymentType.CASH_ON_DELIVERY) {
       await this.CreditAdminWallet(Order.dataValues.id, totalPrice);
-      // await new AdminPaymentService().create({
-      //   orderId: Order.dataValues.id,
-      //   type: AdminType.CREDIT,
-      //   id: uuid(),
-      //   status: AdminPaymentStatus.SUCCESS,
-      //   amount: totalPrice,
-      // });
-      // await new AdminWalletService().creditWallet(totalPrice);
+     
     }
     console.log(Order);
-    const socketId = userSocketMap.get(input.vendorId);
+    const socketId = userSocketMap.get(input.shopId);
     console.log(socketId);
     if (socketId) {
       io.to(socketId).emit(VendorOrder, { message: "you have a new order" });
@@ -390,10 +388,11 @@ export class OrderService {
         Qty: product.Qty,
         amount: product.amount,
       })),
-      vendor: cartModel.dataValues.vendor,
+    
       totalAmount: cartModel.dataValues.totalAmount,
       status: cartModel.dataValues.status as CartStatus, // Assuming status is of type CartStatus
       ownerId: cartModel.dataValues.ownerId,
+      shopId:cartModel.dataValues.shopId
     };
   };
   private WalletModel = (wallet: any) => {
@@ -413,8 +412,8 @@ export class OrderService {
     const order = await this.repository.FindAll({ userId });
     return order;
   }
-  async getAllMyOrders(vendorId: string) {
-    return await this.repository.FindAll({ vendorId });
+  async getAllMyOrders(shopId: string) {
+    return await this.repository.FindAll({ shopId });
   }
   async initializePaystackPayment(input: { email: string; amount: number }) {
     const { error } = InitializeValidation.validate(input, option);
@@ -437,9 +436,9 @@ export class OrderService {
     );
     return response.data;
   }
-  async processOrder(vendorId: string, id: string) {
+  async processOrder(shopId: string, id: string) {
     const order = (await this.repository.Find({
-      vendorId,
+      shopId,
       orderStatus: OrderStatus.PENDING,
       id,
     })) as unknown as Order;
@@ -453,16 +452,14 @@ export class OrderService {
     const deliveries = (await DeliveryProfileModel.findAll({
       include: DeliveryModel,
     })) as unknown as DeliveryProfile[];
-    const vendorProfile = (await VendorProfileModel.findOne({
-      where: { vendorId },
-    })) as unknown as VendorProfile;
+    const shop = (await this.shopRepository.getShop(shopId)) as unknown as Shop;
     let deliveryMan: DeliveryProfile[] = [];
 
     io.emit(UserOrder, { order, user: order.userId });
     deliveries.map((delivery: DeliveryProfile) => {
       const valid = geolib.isPointWithinRadius(
         { latitude: delivery.latitude, longitude: delivery.longitude },
-        { latitude: delivery.latitude, longitude: delivery.longitude },
+        { latitude: shop.shopDetails.latitude, longitude: shop.shopDetails.longitude },
         10000
       );
 
@@ -482,13 +479,13 @@ export class OrderService {
       return "no delivery man is in your vaccinity";
     }
   }
-  async CancelOrder(vendorId: string, id: string, input: any) {
+  async CancelOrder(shopId: string, id: string, input: any) {
     const { error } = cancelOrderValidations.validate(input, option);
     if (error) {
       throw new BadRequestError(error.details[0].message, "");
     }
     const order = (await this.repository.Find({
-      vendorId,
+      shopId,
       id,
       orderStatus: {
         [Op.not]: OrderStatus.CONFIRMED,
@@ -518,8 +515,8 @@ export class OrderService {
         balance = (wallet.balance as number) + order.totalAmount;
       await this.walletReo.update(order.userId, { credit, balance });
       await this.DebitAdminWallet(order.id, order.totalAmount);
-      await this.vendorPaymentRepository.update(
-        { order: order.id, userId: order.vendorId },
+      await this.shopPaymentRepository.update(
+        { order: order.id, shopId: order.shopId },
         { status: PaymentStatus.FAILED }
       );
     }
@@ -559,6 +556,7 @@ export class OrderService {
       Attribute: productData.dataValues.Attribute,
       unit: productData.dataValues.unit,
       Vat: productData.dataValues.Vat,
+      shopId: productData.dataValues.shopId,
     };
   }
   async receivedOrder(id: string, userId: string) {
@@ -617,19 +615,19 @@ export class OrderService {
       { orderStatus: OrderStatus.CONFIRMED },
       id
     );
-    const vendorWallet = (await this.vendorWalletRepository.walletBalance({
-      ownerId: order.vendorId,
-    })) as unknown as Wallet;
-    if (vendorWallet) {
-      const credit = Number(vendorWallet.credit) + order.totalAmount,
-        balance = Number(vendorWallet.balance) + order.totalAmount;
+    const shopWallet = (await this.shopWalletRepository.getWallet({
+      shoPiD: order.shopId,
+    })) as unknown as ShopWallet;
+    if (shopWallet) {
+      const credit = Number(shopWallet.credit) + order.totalAmount,
+        balance = Number(shopWallet.balance) + order.totalAmount;
 
-      await this.vendorWalletRepository.update(order.vendorId, {
+      await this.shopWalletRepository.update(order.shopId, {
         balance,
         credit,
       });
-      await this.vendorPaymentRepository.update(
-        { order: order.id, userId: order.vendorId },
+      await this.shopPaymentRepository.update(
+        { order: order.id, shopId: order.shopId },
         { status: PaymentStatus.SUCCESS }
       );
       if (order.paymentType !== PaymentType.CASH_ON_DELIVERY) {
@@ -655,7 +653,7 @@ export class OrderService {
       orderId
     );
 
-    io.emit(VendorOrder, { order: orderUpdate, vendor: order.vendorId });
+    io.emit(VendorOrder, { order: orderUpdate, vendor: order.shopId });
   }
   async TrackUserOrders(userId: string) {
     const orders = await this.repository.FindAll({ userId });

@@ -3,7 +3,7 @@ import { Application, NextFunction, Request, Response } from "express";
 import {
   AuthMiddleware,
   DeliveryAuth,
-  VendorAuth,
+  ShopAuth,
   successHandler,
 } from "./middleware";
 import { OrderService } from "../services";
@@ -30,7 +30,7 @@ export default (app: Application, ) => {
   );
   app.get(
     "/order/:id",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.getAllMyOrder(req.params.id, req.user);
@@ -46,7 +46,7 @@ export default (app: Application, ) => {
   );
   app.get(
     "/order",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.getAllMyOrders(req.user);
@@ -78,7 +78,7 @@ export default (app: Application, ) => {
   );
   app.patch(
     "/order/process/:id",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.processOrder(req.user, req.params.id);
@@ -94,7 +94,7 @@ export default (app: Application, ) => {
   );
   app.post(
     "/order/cancel/:id",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.CancelOrder(req.user, req.params.id, req.body);

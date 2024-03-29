@@ -1,4 +1,4 @@
-import { ServiceModel, Service, VendorModel, VendorProfileModel, CategoryModel } from "../model";
+import { ServiceModel, Service, ShopModel,  CategoryModel } from "../model";
 
 export class ServiceRepository {
   async create(input: Service) {
@@ -8,12 +8,8 @@ export class ServiceRepository {
 
     return await ServiceModel.findOne({where:input, include:[
         {
-            model:VendorModel,
-            attributes:["id", "firstName","lastName"],
-            include:[{
-                model:VendorProfileModel,
-                attributes:["id","longitude","latitude"]
-            }]
+            model:ShopModel,
+          
 
 
             
@@ -26,12 +22,8 @@ export class ServiceRepository {
   async findMany(){
     return await ServiceModel.findAll({include:[
         {
-            model:VendorModel,
-            attributes:["id", "firstName","lastName"],
-            include:[{
-                model:VendorProfileModel,
-                attributes:["id","longitude","latitude"]
-            }]
+            model:ShopModel,
+          
 
 
             

@@ -3,10 +3,9 @@ import {
   Order,
   OrderModel,
   PaymentModel,
+  ShopModel,
   TransactionHistoryModel,
   UserModel,
-  VendorModel,
-  VendorProfileModel,
 } from "../model";
 
 export class OrderRepository {
@@ -22,16 +21,8 @@ export class OrderRepository {
 
           attributes: ["products", "totalAmount"],
         },
-        {
-          model: VendorModel,
-          attributes: ["firstName", "lastName", "phone", "email"],
-          include: [
-            {
-              model: VendorProfileModel,
-              attributes: ["location"],
-            },
-          ],
-        },
+        { model: ShopModel },
+
         {
           model: TransactionHistoryModel,
           include: [
@@ -46,6 +37,9 @@ export class OrderRepository {
   async Find(input: any) {
     return OrderModel.findOne({
       where: input,
+      attributes: {
+        exclude: ["trackingCode"],
+      },
       include: [
         {
           model: UserModel,
@@ -57,14 +51,7 @@ export class OrderRepository {
           attributes: ["products", "totalAmount"],
         },
         {
-          model: VendorModel,
-          attributes: ["firstName", "lastName", "phone", "email"],
-          include: [
-            {
-              model: VendorProfileModel,
-              attributes: ["location"],
-            },
-          ],
+          model: ShopModel,
         },
         {
           model: TransactionHistoryModel,
@@ -80,6 +67,9 @@ export class OrderRepository {
   async FindAll(input: Partial<Order>) {
     return OrderModel.findAll({
       where: input,
+      attributes: {
+        exclude: ["trackingCode"],
+      },
       include: [
         {
           model: UserModel,
@@ -91,14 +81,7 @@ export class OrderRepository {
           attributes: ["products", "totalAmount"],
         },
         {
-          model: VendorModel,
-          attributes: ["firstName", "lastName", "phone", "email"],
-          include: [
-            {
-              model: VendorProfileModel,
-              attributes: ["location"],
-            },
-          ],
+          model: ShopModel,
         },
         {
           model: TransactionHistoryModel,
@@ -120,9 +103,11 @@ export class OrderRepository {
     });
   }
   async latestOrder(input: Partial<Order>) {
- 
     return OrderModel.findOne({
       where: input,
+      attributes: {
+        exclude: ["trackingCode"],
+      },
       order: [["createdAt", "DESC"]],
       include: [
         {
@@ -135,14 +120,7 @@ export class OrderRepository {
           attributes: ["products", "totalAmount"],
         },
         {
-          model: VendorModel,
-          attributes: ["firstName", "lastName", "phone", "email"],
-          include: [
-            {
-              model: VendorProfileModel,
-              attributes: ["location"],
-            },
-          ],
+          model: ShopModel,
         },
         {
           model: TransactionHistoryModel,

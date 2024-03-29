@@ -1,13 +1,13 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { ProductService } from "../services";
 import { v4 as uuid } from "uuid";
-import { VendorAuth, successHandler } from "./middleware";
+import { ShopAuth, successHandler } from "./middleware";
 
 export default (app: Application) => {
   const service = new ProductService();
   app.post(
     "/product",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const id = uuid();
@@ -119,7 +119,7 @@ export default (app: Application) => {
   );
   app.patch(
     "/product/:id",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { data } = await service.updateProduct(req.params.id, req.user, req.body);
@@ -150,7 +150,7 @@ export default (app: Application) => {
   );
   app.get(
     "/product/vendor/me/:id",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
@@ -166,8 +166,8 @@ export default (app: Application) => {
     }
   );
   app.get(
-    "/product/vendor/me",
-    VendorAuth,
+    "/product/shop/me",
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.getVendorsProducts(req.user);

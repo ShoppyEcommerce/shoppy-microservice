@@ -16,11 +16,7 @@ const startServer = async () => {
   const httpServer = await ExpressApp(app);
   await new AdminWalletService().createWallet();
 
-  app.use(
-    errorHandler
-   
-  
-  );
+  app.use(errorHandler);
   httpServer
     .listen(process.env.PORT, () => {
       console.log(`listening on port ${process.env.PORT}`);

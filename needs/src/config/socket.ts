@@ -6,12 +6,14 @@ const userSocketMap = new Map();
 io.on("connection", (socket) => {
   io.emit("welcome", "hello");
   socket.on("login", (userId) => {
+    console.log(userId);
     // Store the user's socket ID in the map
     userSocketMap.set(userId, socket.id);
     io.emit("getUsers", userSocketMap);
     console.log(`User ${userId} connected with socket ID ${socket.id}`);
   });
   socket.on("sendMessage", (userId, receiverId, body) => {
+    console.log(userId, receiverId, body)
     const receiverSocketId = userSocketMap.get(receiverId);
     io.to(receiverSocketId).emit("getMessage", { userId, body });
   });

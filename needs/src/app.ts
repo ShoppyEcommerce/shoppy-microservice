@@ -10,8 +10,7 @@ import {
   Product,
   Profile,
   User,
-  Vendor,
-  VendorProfile,
+
   appEvents,
   Like,
   Conversation,
@@ -20,13 +19,15 @@ import {
   Payment,
   Wallet,
   Service,
-  SubVendor,
-  VendorWallet,
-  VendorPayment,
+
   Parcel,
   ParcelDelivery,
   DeliveryProfile,
   Message,
+  Admin,
+  Shop,
+  ShopWallet,
+  ShopPayment,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -45,10 +46,10 @@ export default async (app: Application) => {
   Media(app);
   Module(app);
   Category(app);
-  Vendor(app);
+
   Product(app);
   Delivery(app);
-  VendorProfile(app);
+
   Profile(app);
   Order(app);
   Like(app);
@@ -58,13 +59,16 @@ export default async (app: Application) => {
   Payment(app);
   Wallet(app);
   Service(app);
-  SubVendor(app);
-  VendorWallet(app);
-  VendorPayment(app);
+
+
   Parcel(app);
   ParcelDelivery(app);
   DeliveryProfile(app);
   Message(app);
+  Admin(app);
+  Shop(app);
+  ShopWallet(app);
+  ShopPayment(app);
 
   // Return the http server to be used by index.ts
   return httpServer;

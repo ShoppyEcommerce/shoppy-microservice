@@ -13,21 +13,15 @@ export interface Delivery {
   createdAt?: Date;
   OTP?: number | null;
   OTPExpiration?: number | null;
-  OTPVerification:boolean,
-  isVerified:boolean,
-  status:status
-
-
-
+  OTPVerification: boolean;
+  isVerified: boolean;
+  status: status;
 }
-enum status{
-  Online="online",
-  OffLine="offline",
-  OnTrip="ontrip" 
-
-
+enum status {
+  Online = "online",
+  OffLine = "offline",
+  OnTrip = "ontrip",
 }
-
 
 export class DeliveryModel extends Model<Delivery> {}
 
@@ -73,23 +67,19 @@ const deliverySchema = {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  OTPExpiration:{
-    type:DataTypes.FLOAT,
-    defaultValue:null
+  OTPExpiration: {
+    type: DataTypes.FLOAT,
+    defaultValue: null,
   },
-  isVerified:{
-    type:DataTypes.BOOLEAN,
-    defaultValue:false
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
-  status:{
-    type:DataTypes.ENUM(),
-    values: [
-      status.OffLine,
-      status.OnTrip,
-      status.Online,
-    ],
-    defaultValue:status.Online
-  }
+  status: {
+    type: DataTypes.ENUM(),
+    values: [status.OffLine, status.OnTrip, status.Online],
+    defaultValue: status.Online,
+  },
 };
 
 DeliveryModel.init(deliverySchema, {

@@ -17,7 +17,7 @@ export class ServiceService {
     this.repository = new ServiceRepository();
     this.category = new CategoryRepository();
   }
-  async createService(service: Service, vendorId: string) {
+  async createService(service: Service, shopId: string) {
     const { error, value } = ServiceValidation.validate(service, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
@@ -32,7 +32,7 @@ export class ServiceService {
 
     const exist = await this.repository.findOne({
       categoryId: value.categoryId,
-      vendorId,
+      shopId,
     });
     if (exist) {
       throw new BadRequestError(
@@ -42,7 +42,7 @@ export class ServiceService {
     }
     value.id = uuid();
 
-    return await this.repository.create({ ...value, vendorId });
+    return await this.repository.create({ ...value, shopId });
   }
 
   async getService(id: string) {

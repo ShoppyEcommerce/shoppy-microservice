@@ -2,8 +2,8 @@ import {
   AdminPaymentModel,
   AdminPayment,
   UserModel,
-  VendorModel,
-  VendorProfileModel,
+  ShopModel,
+
 } from "../model";
 
 export class AdminPaymentRepository {
@@ -19,14 +19,8 @@ export class AdminPaymentRepository {
           attributes: ["id", "firstName", "lastName", "email", "phone"],
         },
         {
-          model: VendorModel,
-          attributes: ["id", "firstName", "lastName", "email", "phone"],
-          include: [
-            {
-              model: VendorProfileModel,
-              attributes: ["id", "location"],
-            },
-          ],
+          model: ShopModel,
+       
         },
       ],
     });
@@ -39,14 +33,8 @@ export class AdminPaymentRepository {
           attributes: ["id", "firstName", "lastName", "email", "phone"],
         },
         {
-          model: VendorModel,
-          attributes: ["id", "firstName", "lastName", "email", "phone"],
-          include: [
-            {
-              model: VendorProfileModel,
-              attributes: ["id", "location"],
-            },
-          ],
+          model: ShopModel,
+        
         },
       ],
     });

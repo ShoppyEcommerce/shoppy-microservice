@@ -8,10 +8,11 @@ import {
 } from "./validation";
 import {
   UserRepository,
-  VendorRepository,
+  User, UserModel,
+   WalletModel,
   WalletRepository,
 } from "../../database";
-import { User, UserModel, Vendor, WalletModel } from "../../database/model";
+
 import { Utils } from "../../utils";
 import shortid from "shortid";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
@@ -25,11 +26,11 @@ interface Wallet {
 
 export class UserService {
   private userRepository: UserRepository;
-  private vendorRepository: VendorRepository;
+
   private wallet: WalletRepository;
   constructor() {
     this.userRepository = new UserRepository();
-    this.vendorRepository = new VendorRepository();
+
     this.wallet = new WalletRepository();
   }
 
@@ -118,7 +119,7 @@ export class UserService {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
     const user = await this.transformUser(exist.dataValues);
-    const valid = await Utils.ComparePassword(value.password, user.password);
+    const valid = await Utils.ComparePassword(value.password, exist.dataValues.password);
     if (!valid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
@@ -193,16 +194,16 @@ export class UserService {
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
   async VerifyVendor(vendorId: string) {
-    const vendor = (await this.vendorRepository.Find({
-      id: vendorId,
-    })) as unknown as Vendor;
-    if (!vendor) {
-      throw new BadRequestError("vendor not found", "");
-    }
-    if (vendor.isVerified) {
-      throw new BadRequestError("vendor has already been verified", "");
-    }
-    await this.vendorRepository.update(vendorId, { isVerified: true });
+    // const vendor = (await this.vendorRepository.Find({
+    //   id: vendorId,
+    // })) as unknown as Vendor;
+    // if (!vendor) {
+    //   throw new BadRequestError("vendor not found", "");
+    // }
+    // if (vendor.isVerified) {
+    //   throw new BadRequestError("vendor has already been verified", "");
+    // }
+    // await this.vendorRepository.update(vendorId, { isVerified: true });
     return Utils.FormatData("vendor has been verified");
   }
   async formatWalletModel(rawData: any): Promise<Wallet> {
@@ -291,15 +292,14 @@ export class UserService {
     await UserModel.update({ password: hash }, { where: { id: user.id } });
     return "password changed successfully"
   }
-  async transformUser(userData: any): Promise<User> {
-    const user: User = {
+  async transformUser(userData: any) {
+    const user= {
       id: userData.id,
       firstName: userData.firstName,
       lastName: userData.lastName,
       email: userData.email,
       phone: userData.phone,
-      password: userData.password,
-      confirmPassword: userData.confirmPassword,
+     
       referralCode: userData.referralCode,
       role: userData.role,
       createdAt: new Date(userData.createdAt),

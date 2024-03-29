@@ -1,7 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
-import { VendorModel } from "./vendor";
+
 import { CategoryModel } from "./category";
+import { ShopModel } from "./shop";
 
 export interface Service {
   id: string;
@@ -13,7 +14,7 @@ export interface Service {
   reviews?: number;
   description: string;
   name: string;
-  vendorId: string;
+  shopId: string;
   categoryId: string;
   image: string;
   logo: string;
@@ -49,7 +50,7 @@ ServiceModel.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    vendorId: {
+    shopId: {
       type: DataTypes.UUID,
       allowNull: false,
       onDelete: "CASCADE",
@@ -92,7 +93,7 @@ ServiceModel.init(
   { sequelize: databaseConnection, tableName: "service" }
 );
 
-VendorModel.hasMany(ServiceModel, { foreignKey: "vendorId" });
-ServiceModel.belongsTo(VendorModel, { foreignKey: "vendorId" });
+ShopModel.hasMany(ServiceModel, { foreignKey: "shopId" });
+ServiceModel.belongsTo(ShopModel, { foreignKey: "shopId" });
 CategoryModel.hasMany(ServiceModel, { foreignKey: "categoryId" });
 ServiceModel.belongsTo(CategoryModel, { foreignKey: "categoryId" });
