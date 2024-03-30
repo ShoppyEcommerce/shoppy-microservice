@@ -1,7 +1,8 @@
 import { Application, NextFunction, Request, Response } from "express";
-import { ShopService } from "../services";
+import { ShopService, ShopWalletService } from "../services";
 import { AuthMiddleware, ShopAuth, successHandler } from "./middleware";
-import { any } from "joi";
+import { ShopWallet } from ".";
+
 
 export default (app: Application) => {
   const service = new ShopService();
@@ -11,6 +12,9 @@ export default (app: Application) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { data } = await service.register(req.body);
+
+        await new ShopWalletService().createWallet(data.id)
+
 
         return successHandler(res, {
           data,

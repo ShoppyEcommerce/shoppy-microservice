@@ -37,16 +37,16 @@ export const loginUserSchema = Joi.object().keys({
 });
 //VERIFYOTP
 export const verifyOTPSchema = Joi.object().keys({
-  phone: Joi.string().required(),
+  phone: PasswordComplexity(phoneComplexity).required(),
   OTP: Joi.number().required(),
 });
 export const ResetPasswordValidation = Joi.object().keys({
   OTP: Joi.number().required(),
-  email: Joi.string().trim().lowercase().email().required(),
+  phone:PasswordComplexity(phoneComplexity).required(),
   password: PasswordComplexity(complexityOptions).required(),
 });
 export const ChangePasswordValidation = Joi.object().keys({
-  email: Joi.string().trim().lowercase().email().required(),
+  phone: PasswordComplexity(phoneComplexity).required(),
   oldPassword:PasswordComplexity(complexityOptions).required(),
   newPassword:PasswordComplexity(complexityOptions).required(),
 })

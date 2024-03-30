@@ -152,6 +152,8 @@ export class ShopService {
     };
   }
 
+
+
   async updateShopDetails(input: ShopDetails, userId: string) {
     const { error } = ShopDetailsValidation.validate(input, option);
     if (error) {

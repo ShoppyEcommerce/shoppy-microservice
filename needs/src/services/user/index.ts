@@ -213,8 +213,10 @@ export class UserService {
       id: rawData.WalletModel.dataValues.id,
     };
   }
-  async ResetOtpPasssword(input: { email: string }) {
-    const user = await this.userRepository.Find({ email: input.email });
+  async ResetOtpPasssword(input: { phone: string }) {
+
+    const phone =  Utils.intertionalizePhoneNumber(input.phone)
+    const user = await this.userRepository.Find({phone });
     if (!user) {
       throw new BadRequestError("user not found", "");
     }
@@ -235,13 +237,13 @@ export class UserService {
       `A 6 digit OTP has been sent to your phone number ${info.OTP}`
     );
   }
-  async ResetPassword(input: { email: string; OTP: number; password: string }) {
+  async ResetPassword(input: { phone: string; OTP: number; password: string }) {
     const { error } = ResetPasswordValidation.validate(input, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-
-    const user = await this.userRepository.Find({ email: input.email });
+    const phone = Utils.intertionalizePhoneNumber(input.phone)
+    const user = await this.userRepository.Find({ phone });
     if (!user) {
       throw new BadRequestError("user not found", "");
     }
@@ -266,7 +268,7 @@ export class UserService {
   }
   async changePassword(
     input: {
-      email: string;
+      phone: string;
       oldPassword: string;
       newPassword: string;
     },
@@ -276,8 +278,9 @@ export class UserService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
+    const phone =  Utils.intertionalizePhoneNumber(input.phone)
     const user = (await this.userRepository.Find({
-      email: input.email,
+      phone,
       id: userId,
     })) as unknown as User;
     if (!user) {

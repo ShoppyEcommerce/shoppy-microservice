@@ -83,4 +83,20 @@ export default (app: Application) => {
       }
     }
   );
+  app.post("/verify/bank-account", async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+
+      const data =  await service.verifyAccount(req.body)
+
+      return successHandler(res,{
+        data,
+        message:"account verified successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
 };
