@@ -1,13 +1,13 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { ServiceService } from "../services";
-import { VendorAuth, successHandler } from "./middleware";
+import { ShopAuth, successHandler } from "./middleware";
 
 export default (app: Application) => {
   const service = new ServiceService();
 
   app.post(
     "/service",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.createService(req.body, req.user);

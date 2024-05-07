@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 export const CartValidationSchema = Joi.object().keys({
-  vendor: Joi.string().required(),
+  shopId: Joi.string().required(),
   products: Joi.object()
     .keys({
       id: Joi.string().required(),

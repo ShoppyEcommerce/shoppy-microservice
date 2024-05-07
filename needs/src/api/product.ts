@@ -1,13 +1,13 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { ProductService } from "../services";
 import { v4 as uuid } from "uuid";
-import { VendorAuth, successHandler } from "./middleware";
+import { ShopAuth, successHandler } from "./middleware";
 
 export default (app: Application) => {
   const service = new ProductService();
   app.post(
     "/product",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const id = uuid();
@@ -72,6 +72,20 @@ export default (app: Application) => {
       }
     }
   );
+  app.get("/product/vendor/module/:id", async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+      const {data} =  await service.getVendorModule(req.params.id)
+      return successHandler(res,{
+        data,
+        message:"vendor returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
   app.get(
     "/product/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
@@ -88,11 +102,27 @@ export default (app: Application) => {
       }
     }
   );
-  app.patch(
-    "/product/:id",
+  app.get(
+    "/product/vendor/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { data } = await service.updateProduct(req.params.id, req.body);
+        const { data } = await service.getProductModule(req.params.id);
+        return successHandler(res, {
+          data,
+          message: "vendor returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/product/:id",
+    ShopAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const { data } = await service.updateProduct(req.params.id, req.user, req.body);
         return successHandler(res, {
           data,
           message: "product updated successfully",
@@ -120,7 +150,7 @@ export default (app: Application) => {
   );
   app.get(
     "/product/vendor/me/:id",
-    VendorAuth,
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
@@ -136,8 +166,8 @@ export default (app: Application) => {
     }
   );
   app.get(
-    "/product/vendor/me",
-    VendorAuth,
+    "/product/shop/me",
+    ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.getVendorsProducts(req.user);
@@ -201,7 +231,7 @@ export default (app: Application) => {
     "/favorite/product/all",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log("favorite");
+      
         const data = await service.getFavorite();
         return successHandler(res, {
           data,

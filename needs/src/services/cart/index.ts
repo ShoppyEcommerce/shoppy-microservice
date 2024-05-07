@@ -1,7 +1,7 @@
 import {
   Cart,
   CartRepository,
-  VendorRepository,
+  ShopRepository,
   CartStatus,
 } from "../../database";
 import { v4 as uuid } from "uuid";
@@ -10,10 +10,12 @@ import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 
 export class CartService {
   private repository: CartRepository;
-  private vendor: VendorRepository;
+  private shopRepository:ShopRepository
+
   constructor() {
     (this.repository = new CartRepository()),
-      (this.vendor = new VendorRepository());
+    this.shopRepository = new ShopRepository()
+      
   }
 
   async createCart(input: any, ownerId: string) {
@@ -22,12 +24,12 @@ export class CartService {
       throw new ValidationError(error.details[0].message, "");
     }
     input.ownerId = ownerId;
-    const vendor = await this.vendor.Find({
-      id: input.vendor,
+    const shop = await this.shopRepository.find({
+      id: input.shopId,
       isVerified: true,
     });
-    if (!vendor) {
-      throw new BadRequestError("invalid vendor", "");
+    if (!shop) {
+      throw new BadRequestError("invalid shop", "");
     }
     const exist = (await this.repository.getOpenCart({
       ownerId: input.ownerId,
@@ -36,7 +38,7 @@ export class CartService {
 
     if (exist) {
       const cart = this.mapCartModelToCart(exist);
-      if (cart.vendor !== input.vendor) {
+      if (cart.shopId !== input.shopId) {
         throw new BadRequestError(
           "only one vendor can be assigned to a cart",
           ""
@@ -50,28 +52,12 @@ export class CartService {
       await this.repository.createCart(input);
     }
 
-    // if (exist) {
-    //   const cart = this.mapCartModelToCart(exist);
 
-    // if (cart.vendor !== input.vendor) {
-    //   throw new BadRequestError(
-    //     "only one vendor can be assigned to a cart",
-    //     ""
-    //   );
-    // }
 
-    //   const update = await this.updateCart(cart, input);
-    //   return "added to cart";
-    // } else {
-    // input.id = uuid();
-    // await this.repository.createCart(input);
-    //   return "new product added to cart";
-    // }
   }
   async updateCart(input: Cart, data: any) {
     const productToUpdate = data.products; // Assuming only one product is updated at a time
 
-    console.log(productToUpdate);
 
     // Find the index of the product in the input cart
     const index = input.products.findIndex(
@@ -86,7 +72,7 @@ export class CartService {
       // If the product doesn't exist in the cart, add it
       input.products.push(productToUpdate);
     }
-    console.log(input);
+  
 
     // // Perform any other necessary updates to the cart
 
@@ -95,7 +81,7 @@ export class CartService {
       (total, product) => total + product.amount,
       0
     );
-    // console.log(input);
+
 
     // Save the updated cart to the repository
     return await this.repository.updateCart(input, input);
@@ -127,10 +113,11 @@ export class CartService {
         Qty: product.Qty,
         amount: product.amount,
       })),
-      vendor: cartModel.dataValues.vendor,
+    
       totalAmount: cartModel.dataValues.totalAmount,
       status: cartModel.dataValues.status as CartStatus, // Assuming status is of type CartStatus
       ownerId: cartModel.dataValues.ownerId,
+      shopId:cartModel.dataValues.shopId
     };
 
   };

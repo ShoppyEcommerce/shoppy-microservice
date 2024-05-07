@@ -19,6 +19,7 @@ import {
   option,
   CreateRecipientValidation,
   TransferValidation,
+  verifyAccountValidation,
 } from "./validation";
 
 import { PAYSTACK_API } from "../../config/constant";
@@ -119,7 +120,7 @@ export class PaymentService {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         },
       });
-      console.log(bankList);
+     
       return bankList.data.data;
       
     } catch (error) {
@@ -211,7 +212,7 @@ export class PaymentService {
     }
     const verifyPin = await Utils.ComparePassword(input.pin, wallet.pin!);
 
-    console.log(verifyPin)
+ 
 
     if (!verifyPin) {
       throw new BadRequestError("incorrect pin", "");
@@ -255,6 +256,29 @@ export class PaymentService {
           "An error occurred during Paystack transfer pls try again",
         ""
       );
+    }
+  }
+
+  async verifyAccount(input: { account_number: any; bank_code: any }) {
+    const { error } = verifyAccountValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    try {
+      const response = await axios.get(
+        `${PAYSTACK_API}/bank/resolve?account_number=${input.account_number}&bank_code=${input.bank_code}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const err = error as AxiosError;
+      const customErr = err?.response?.data as { message: string };
+      throw new BadRequestError(customErr.message, "");
     }
   }
 }

@@ -7,19 +7,24 @@ export { default as Category } from "./category";
 export { default as Cart } from "./cart";
 export { default as Profile } from "./profile";
 export { default as Order } from "./order";
-export { default as Vendor } from "./vendor";
+// export { default as Vendor } from "./vendor";
 export { default as Product } from "./product";
 export { default as Delivery } from "./delivery";
-export { default as VendorProfile } from "./vendorProfile";
+// export { default as VendorProfile } from "./vendorProfile";
 export { default as Like } from "./like";
 export { default as Conversation } from "./conversation";
 export { default as Rating } from "./rating";
 export { default as Payment } from "./payment";
-export { default as Wallet} from "./wallet"
-export {default as Service} from "./service"
-export {default as VendorWallet} from "./vendor-wallet"
-export  {default as SubVendor} from "./subVendor"
-export {default as VendorPayment  } from "./vendor-payment"
-export  {default  as Parcel} from "./parcel"
-export  {default as ParcelDelivery} from "./parcel-delivery"
-export  {default as DeliveryProfile} from "./delivery-profile"
+export { default as Wallet } from "./wallet";
+export { default as Service } from "./service";
+// export { default as VendorWallet } from "./vendor-wallet";
+// export { default as SubVendor } from "./subVendor";
+// export { default as VendorPayment } from "./vendor-payment";
+export { default as Parcel } from "./parcel";
+export { default as ParcelDelivery } from "./parcel-delivery";
+export { default as DeliveryProfile } from "./delivery-profile";
+export { default as Message } from "./message";
+export { default as Admin } from "./admin";
+export { default as Shop } from "./shop";
+export { default as ShopPayment} from "./shop-payment";
+export { default as ShopWallet} from "./shop-wallet";

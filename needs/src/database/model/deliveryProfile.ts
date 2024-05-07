@@ -1,6 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import { databaseConnection } from "../connection";
-import { DeliveryModel } from "./delivery";
+import { DeliveryModel } from "./Delivery";
 
 export interface DeliveryProfile {
   id: string;

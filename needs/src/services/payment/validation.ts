@@ -40,3 +40,8 @@ export const TransferValidation = Joi.object().keys({
   pin:PasswordComplexity(phoneComplexity).required(),
   amount:Joi.number().required()
 })
+export const verifyAccountValidation = Joi.object().keys({
+  account_number: Joi.number().required(),
+  bank_code: Joi.number().required(),
+ 
+})

@@ -1,17 +1,17 @@
 import { databaseConnection } from "../connection";
 import { DataTypes, Model } from "sequelize";
-
-import { VendorModel } from "./vendor";
 import { UserModel } from "./user";
 import { OrderModel } from "./order";
+import { ShopModel } from "./shop";
 
 export interface Cart {
   id: string;
   products: Product[]
-  vendor: string;
+
   totalAmount: number;
   status: CartStatus;
   ownerId: string;
+  shopId:string
 }
 interface Product{
   id: string;
@@ -38,14 +38,15 @@ CartModel.init(
       type: DataTypes.JSONB,
       allowNull: false,
     },
+    shopId:{
+      type:DataTypes.UUID,
+      allowNull:false
+    },
     status: {
       type: DataTypes.ENUM(...Object.values(CartStatus)),
       defaultValue: CartStatus.OPEN,
     },
-    vendor: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
+  
     totalAmount: {
       type: DataTypes.FLOAT,
       allowNull: false,
@@ -53,19 +54,21 @@ CartModel.init(
     ownerId: {
       type: DataTypes.UUID,
       allowNull: false,
+      onDelete:"CASCADE"
     },
   },
   { sequelize: databaseConnection, tableName: "cart" }
 );
 
-CartModel.belongsTo(VendorModel, { foreignKey: "vendor" });
-VendorModel.hasMany(CartModel, { foreignKey: "vendor" });
+
 CartModel.belongsTo(UserModel, { foreignKey: "ownerId" });
 UserModel.hasMany(CartModel, { foreignKey: "ownerId" });
 CartModel.hasOne(OrderModel, {
   foreignKey: 'cartId', // Add a foreign key 'cartId' to the Order model
   onDelete: 'CASCADE', // If a cart is deleted, delete the associated order
 });
+ShopModel.hasMany(CartModel, {foreignKey:"shopId"})
+CartModel.belongsTo(ShopModel, {foreignKey:"shopId"})
 
 // In the Order model
 OrderModel.belongsTo(CartModel, { foreignKey: 'cartId' });

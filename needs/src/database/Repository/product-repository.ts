@@ -3,7 +3,8 @@ import {
   ModuleModel,
   Product,
   ProductModel,
-  VendorModel,
+  ShopModel,
+
 } from "../model";
 
 export class ProductRepository {
@@ -16,8 +17,8 @@ export class ProductRepository {
       where: input,
       include: [
         {
-          model: VendorModel,
-          attributes: ["id", "firstName", "lastName", "email", "phone"],
+          model: ShopModel,
+       
         },
         {
           model: CategoryModel,
@@ -35,8 +36,8 @@ export class ProductRepository {
     return ProductModel.findAll({
       include: [
         {
-          model: VendorModel,
-          attributes: ["id", "firstName", "lastName", "email", "phone"],
+          model: ShopModel,
+       
         },
         {
           model: CategoryModel,
@@ -54,8 +55,8 @@ export class ProductRepository {
       where: { categoryId: id },
       include: [
         {
-          model: VendorModel,
-          attributes: ["id", "firstName", "lastName", "email", "phone"],
+          model: ShopModel,
+      
         },
       ],
     });
@@ -65,8 +66,8 @@ export class ProductRepository {
       where: { moduleId: id },
       include: [
         {
-          model: VendorModel,
-          attributes: ["id", "firstName", "lastName", "email", "phone"],
+          model: ShopModel
+         
         },
       ],
     });
@@ -80,6 +81,6 @@ export class ProductRepository {
   }
 
   async getVendorsProducts(id: string) {
-    return await ProductModel.findAll({ where: { ownerId: id } });
+    return await ProductModel.findAll({ where: { shopId: id } });
   }
 }

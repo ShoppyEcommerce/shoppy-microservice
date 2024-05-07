@@ -1,8 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
-import { VendorModel } from "./vendor";
 import { CategoryModel } from "./category";
 import { ModuleModel } from "./module";
+import { ShopModel } from "./shop";
 //  item name
 //  description
 //  price
@@ -19,43 +19,24 @@ export interface Product {
   id: string;
   itemName: string;
   categoryId: string;
-
+  shopId: string;
   moduleId: string;
   price: number;
-  totalStock:number;
+  totalStock: number;
   ItemImages: Array<string>;
   Description: string;
   rating?: number;
   available: Availability;
   ownerId: string;
   numRating?: number;
- 
-  Attribute:Array<string>;
-  unit:string;
-  Tag?:string
-  discountType?:string;
-  discount?:number;
-  Vat:number;
 
+  Attribute: Array<string>;
+  unit: string;
+  Tag?: string;
+  discountType?: string;
+  discount?: number;
+  Vat: number;
 }
-// export interface Category {
-//   id: string;
-//   name: string;
-//   active: boolean;
-//   image: string;
-//   moduleId: string;
-//   createdAt: Date;
-//   updatedAt: Date;
-//   ModuleModel: ModuleModel;
-// }
-// export interface ModuleModel {
-//   id: string;
-//   name: string;
-//   active: boolean;
-//   image: string;
-//   createdAt: Date;
-//   updatedAt: Date;
-// }
 
 export enum Availability {
   IN_STOCK = "In Stock",
@@ -71,21 +52,25 @@ ProductModel.init(
       primaryKey: true,
       allowNull: false,
     },
-    unit:{
-      type:DataTypes.STRING,
-      allowNull:false
+    unit: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    Vat:{
-      type:DataTypes.FLOAT,
-      allowNull:false
-
+    Vat: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
     },
-    categoryId: { type: DataTypes.UUID, onDelete:"CASCADE" },
+    shopId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    categoryId: { type: DataTypes.UUID, onDelete: "CASCADE" },
     ownerId: { type: DataTypes.UUID, onDelete: "CASCADE" },
     itemName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
     discount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
@@ -94,11 +79,11 @@ ProductModel.init(
       type: DataTypes.ENUM("Percentage", "Fixed"),
       allowNull: true,
     },
-    Attribute:{
-      type:DataTypes.ARRAY(DataTypes.STRING),
-      allowNull:false
+    Attribute: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
     },
-   
+
     moduleId: {
       type: DataTypes.UUID,
     },
@@ -131,12 +116,10 @@ ProductModel.init(
   { sequelize: databaseConnection, tableName: "product" }
 );
 //relationship between vendor and product
-VendorModel.hasMany(ProductModel, { foreignKey: "ownerId" });
-//relationship between module and product
-ProductModel.belongsTo(VendorModel, { foreignKey: "ownerId" });
+
 CategoryModel.hasMany(ProductModel, { foreignKey: "categoryId" });
 ProductModel.belongsTo(CategoryModel, { foreignKey: "categoryId" });
 ModuleModel.hasMany(ProductModel, { foreignKey: "moduleId" });
-ProductModel.belongsTo(ModuleModel, { foreignKey: "moduleId" })
-
-
+ProductModel.belongsTo(ModuleModel, { foreignKey: "moduleId" });
+ShopModel.hasMany(ProductModel, { foreignKey: "shopId" });
+ProductModel.belongsTo(ShopModel, { foreignKey: "shopId" });

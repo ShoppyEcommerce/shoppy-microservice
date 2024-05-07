@@ -39,15 +39,19 @@ export class DeliveryService {
     value.id = uuid();
     const delivery = await this.repository.create(value);
     const info = Utils.generateRandomNumber();
-    // const sms = await sendSMS(info.OTP, value.phone);
-    // if (sms && sms.status === 400) {
-    //   throw new BadRequestError(sms.message, "");
-    // }
-   const delv =  await DeliveryModel.update(
+    const send = process.env.SEND_SMS === "true" ? true : false;
+    if (send) {
+      const sms = await sendSMS(info.OTP, value.phone);
+      if (sms && sms.status === 400) {
+        throw new BadRequestError(sms.message, "");
+      }
+    }
+    await this.repository.update(
       { OTP: info.OTP, OTPExpiration: info.time },
-      { where: { id: delivery.id }, returning:true }
+      { id: delivery.id }
     );
-    return Utils.FormatData(delv[1][0].dataValues);
+
+    return `A verification code has been sent to your phone number ${info.OTP}`;
   }
   async Login(input: { phone: string; password: string }) {
     const { error, value } = loginVendorSchema.validate(input, option);
@@ -58,19 +62,19 @@ export class DeliveryService {
 
     const exist = (await this.repository.Find({
       phone,
-    })) as unknown as Delivery;
+    })) 
     if (!exist) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
-    const valid = Utils.ComparePassword(input.password, exist.password);
+    const valid = Utils.ComparePassword(input.password, exist.dataValues.password);
     if (!valid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
-    const token = await Utils.Encoded({ id: exist.id });
+    const token = await Utils.Encoded({ id: exist.dataValues.id });
 
     //send a verification code to the user phone number
 
-    return Utils.FormatData({ token, ...exist });
+    return Utils.FormatData({ token, ...exist.dataValues });
   }
   async VerifyOTP(input: { OTP: number; phone: string }) {
     const { error, value } = verifyOTPSchema.validate(input, option);
@@ -94,22 +98,20 @@ export class DeliveryService {
 
     const currentTimestamp = Date.now();
     const expirationTime = 5 * 60 * 1000;
-    console.log(currentTimestamp - Number(user.OTPExpiration), expirationTime);
+
     if (
       user &&
       currentTimestamp - Number(user.OTPExpiration) > expirationTime
     ) {
       throw new BadRequestError("OTP has expired", "Bad Request");
     }
+    const update = await this.repository.update({OTP:null, OTPExpiration:null, OTPVerification:true},{id:user.id})
+    
 
-    await DeliveryModel.update(
-      { OTP: null, OTPExpiration: null, OTPVerification: true },
-      { where: { id: user.id } }
-    );
     const token = await Utils.Encoded({ id: user.id });
     const data = {
       token,
-      ...user,
+      ...update[1][0].dataValues,
     };
     return Utils.FormatData(data);
   }
@@ -135,8 +137,16 @@ export class DeliveryService {
     return delivery;
   }
   async getDeliveriesMan() {
-    return  await DeliveryModel.findAll({ where: { isVerified: true } });
+   const delivery =  await DeliveryModel.findAll({
+    where:{
+      isVerified:true
+    }
+   })
+   console.log(delivery)
   }
-
-  
+  async getUnVerifiedDelivery() {
+    return (await this.repository.findAll({
+      isVerified: false,
+    })) as unknown as Delivery[];
+  }
 }

@@ -1,15 +1,14 @@
 import { databaseConnection } from "../connection";
 import { Model, DataTypes } from "sequelize";
 import { UserModel } from "./user";
-import { DeliveryModel } from "./delivery";
-import { VendorModel } from "./vendor";
-import order from "../../api/order";
+import { DeliveryModel } from "./Delivery";
+
 import { TransactionHistoryModel } from "./transaction";
+import { ShopModel } from "./shop";
 
 export interface Order {
   id: string;
   cartId: string;
-  vendorId: string;
   referenceId: string;
   paymentType: PaymentType;
   userId: string;
@@ -21,6 +20,8 @@ export interface Order {
   discount?: number;
   VatTax?: number;
   transactionId: string;
+  trackingCode: number;
+  shopId:string
 }
 interface Product {
   id: string;
@@ -63,11 +64,11 @@ const OrderSchema = {
     type: DataTypes.UUID,
     allowNull: false,
   },
-
-  vendorId: {
-    type: DataTypes.UUID,
+  trackingCode: {
+    type: DataTypes.BIGINT,
     allowNull: false,
   },
+ 
   referenceId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -92,6 +93,10 @@ const OrderSchema = {
   CancelOrderReason: {
     type: DataTypes.TEXT,
     allowNull: true,
+  },
+  shopId:{
+    type:DataTypes.UUID,
+    allowNull:false
   },
   deliveryMan: {
     type: DataTypes.UUID,
@@ -119,10 +124,10 @@ OrderModel.belongsTo(UserModel, { foreignKey: "userId" });
 UserModel.hasMany(OrderModel, { foreignKey: "userId" });
 OrderModel.belongsTo(DeliveryModel, { foreignKey: "deliveryMan" });
 DeliveryModel.hasMany(OrderModel, { foreignKey: "deliveryMan" });
-OrderModel.belongsTo(VendorModel, { foreignKey: "vendorId" });
-VendorModel.hasMany(OrderModel, { foreignKey: "vendorId" });
-TransactionHistoryModel.belongsTo(OrderModel, { foreignKey: "transactionId" });
+TransactionHistoryModel.belongsTo(OrderModel, { foreignKey: "transactionId" })
 OrderModel.belongsTo(TransactionHistoryModel, { foreignKey: "transactionId" });
+ShopModel.hasMany(OrderModel,{foreignKey:"shopId"})
+OrderModel.belongsTo(ShopModel,{foreignKey:"shopId"})
 
 //end point
 // - create endpoint to get today order

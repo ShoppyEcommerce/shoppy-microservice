@@ -3,13 +3,16 @@ import {
   registerUserSchema,
   loginUserSchema,
   verifyOTPSchema,
+  ResetPasswordValidation,
+  ChangePasswordValidation,
 } from "./validation";
 import {
   UserRepository,
-  VendorRepository,
+  User, UserModel,
+   WalletModel,
   WalletRepository,
 } from "../../database";
-import { User, UserModel, Vendor, WalletModel } from "../../database/model";
+
 import { Utils } from "../../utils";
 import shortid from "shortid";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
@@ -23,11 +26,11 @@ interface Wallet {
 
 export class UserService {
   private userRepository: UserRepository;
-  private vendorRepository: VendorRepository;
+
   private wallet: WalletRepository;
   constructor() {
     this.userRepository = new UserRepository();
-    this.vendorRepository = new VendorRepository();
+
     this.wallet = new WalletRepository();
   }
 
@@ -71,17 +74,17 @@ export class UserService {
 
     const userData = await this.userRepository.createUser(value);
     const user = await this.transformUser(userData.dataValues);
-const send =  process.env.SEND_SMS === "true" ? true : false;
-console.log(send)
-    if ( value.role === "user") {
-       const info = Utils.generateRandomNumber();
+    const send = process.env.SEND_SMS === "true" ? true : false;
 
-       if(send){
-         const sms = await sendSMS(info.OTP, value.phone);
-         if (sms && sms.status === 400) {
-           throw new BadRequestError(sms.message, "");
-         }
-       }
+    if (value.role === "user") {
+      const info = Utils.generateRandomNumber();
+
+      if (send) {
+        const sms = await sendSMS(info.OTP, value.phone);
+        if (sms && sms.status === 400) {
+          throw new BadRequestError(sms.message, "");
+        }
+      }
 
       const update = await UserModel.update(
         { OTP: info.OTP, OTPExpiration: info.time },
@@ -116,7 +119,7 @@ console.log(send)
       throw new BadRequestError("invalid credentials", "Bad request");
     }
     const user = await this.transformUser(exist.dataValues);
-    const valid = await Utils.ComparePassword(value.password, user.password);
+    const valid = await Utils.ComparePassword(value.password, exist.dataValues.password);
     if (!valid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
@@ -191,16 +194,16 @@ console.log(send)
     return Utils.FormatData("A 6 digit OTP has been sent to your phone number");
   }
   async VerifyVendor(vendorId: string) {
-    const vendor = (await this.vendorRepository.Find({
-      id: vendorId,
-    })) as unknown as Vendor;
-    if (!vendor) {
-      throw new BadRequestError("vendor not found", "");
-    }
-    if (vendor.isVerified) {
-      throw new BadRequestError("vendor has already been verified", "");
-    }
-    await this.vendorRepository.update(vendorId, { isVerified: true });
+    // const vendor = (await this.vendorRepository.Find({
+    //   id: vendorId,
+    // })) as unknown as Vendor;
+    // if (!vendor) {
+    //   throw new BadRequestError("vendor not found", "");
+    // }
+    // if (vendor.isVerified) {
+    //   throw new BadRequestError("vendor has already been verified", "");
+    // }
+    // await this.vendorRepository.update(vendorId, { isVerified: true });
     return Utils.FormatData("vendor has been verified");
   }
   async formatWalletModel(rawData: any): Promise<Wallet> {
@@ -210,15 +213,96 @@ console.log(send)
       id: rawData.WalletModel.dataValues.id,
     };
   }
-  async transformUser(userData: any): Promise<User> {
-    const user: User = {
+  async ResetOtpPasssword(input: { phone: string }) {
+
+    const phone =  Utils.intertionalizePhoneNumber(input.phone)
+    const user = await this.userRepository.Find({phone });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    const info = Utils.generateRandomNumber();
+    const send = process.env.SEND_SMS === "true" ? true : false;
+    if (send) {
+      const sms = await sendSMS(info.OTP, exist.phone);
+      if (sms && sms.status === 400) {
+        throw new BadRequestError(sms.message, "");
+      }
+    }
+    await UserModel.update(
+      { OTP: info.OTP, OTPExpiration: info.time },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData(
+      `A 6 digit OTP has been sent to your phone number ${info.OTP}`
+    );
+  }
+  async ResetPassword(input: { phone: string; OTP: number; password: string }) {
+    const { error } = ResetPasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const phone = Utils.intertionalizePhoneNumber(input.phone)
+    const user = await this.userRepository.Find({ phone });
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const exist = await this.transformUser(user.dataValues);
+    if (Number(exist.OTP) !== Number(input.OTP)) {
+      throw new BadRequestError("invalid Otp", "");
+    }
+    const currentTimestamp = Date.now();
+    const expirationTime = 5 * 60 * 1000;
+    if (
+      user &&
+      currentTimestamp - Number(exist.OTPExpiration) > expirationTime
+    ) {
+      throw new BadRequestError("OTP has expired", "Bad Request");
+    }
+    const hash = await Utils.HashPassword(input.password);
+    await UserModel.update(
+      { OTP: null, OTPExpiration: null, password: hash },
+      { where: { id: exist.id } }
+    );
+    return Utils.FormatData("password reset successfully");
+  }
+  async changePassword(
+    input: {
+      phone: string;
+      oldPassword: string;
+      newPassword: string;
+    },
+    userId: string
+  ) {
+    const { error } = ChangePasswordValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const phone =  Utils.intertionalizePhoneNumber(input.phone)
+    const user = (await this.userRepository.Find({
+      phone,
+      id: userId,
+    })) as unknown as User;
+    if (!user) {
+      throw new BadRequestError("user not found", "");
+    }
+    const compare =   await Utils.ComparePassword(input.oldPassword, user.password);
+    if (!compare) {
+      throw new BadRequestError("invalid password", "");
+    }
+    const hash = await Utils.HashPassword(input.newPassword);
+
+    await UserModel.update({ password: hash }, { where: { id: user.id } });
+    return "password changed successfully"
+  }
+  async transformUser(userData: any) {
+    const user= {
       id: userData.id,
       firstName: userData.firstName,
       lastName: userData.lastName,
       email: userData.email,
       phone: userData.phone,
-      password: userData.password,
-      confirmPassword: userData.confirmPassword,
+     
       referralCode: userData.referralCode,
       role: userData.role,
       createdAt: new Date(userData.createdAt),
