@@ -8,8 +8,9 @@ import {
 } from "./validation";
 import {
   UserRepository,
-  User, UserModel,
-   WalletModel,
+  User,
+  UserModel,
+  WalletModel,
   WalletRepository,
 } from "../../database";
 
@@ -119,7 +120,10 @@ export class UserService {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
     const user = await this.transformUser(exist.dataValues);
-    const valid = await Utils.ComparePassword(value.password, exist.dataValues.password);
+    const valid = await Utils.ComparePassword(
+      value.password,
+      exist.dataValues.password
+    );
     if (!valid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
@@ -214,9 +218,8 @@ export class UserService {
     };
   }
   async ResetOtpPasssword(input: { phone: string }) {
-
-    const phone =  Utils.intertionalizePhoneNumber(input.phone)
-    const user = await this.userRepository.Find({phone });
+    const phone = Utils.intertionalizePhoneNumber(input.phone);
+    const user = await this.userRepository.Find({ phone });
     if (!user) {
       throw new BadRequestError("user not found", "");
     }
@@ -242,7 +245,7 @@ export class UserService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const phone = Utils.intertionalizePhoneNumber(input.phone)
+    const phone = Utils.intertionalizePhoneNumber(input.phone);
     const user = await this.userRepository.Find({ phone });
     if (!user) {
       throw new BadRequestError("user not found", "");
@@ -278,7 +281,7 @@ export class UserService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const phone =  Utils.intertionalizePhoneNumber(input.phone)
+    const phone = Utils.intertionalizePhoneNumber(input.phone);
     const user = (await this.userRepository.Find({
       phone,
       id: userId,
@@ -286,23 +289,26 @@ export class UserService {
     if (!user) {
       throw new BadRequestError("user not found", "");
     }
-    const compare =   await Utils.ComparePassword(input.oldPassword, user.password);
+    const compare = await Utils.ComparePassword(
+      input.oldPassword,
+      user.password
+    );
     if (!compare) {
       throw new BadRequestError("invalid password", "");
     }
     const hash = await Utils.HashPassword(input.newPassword);
 
     await UserModel.update({ password: hash }, { where: { id: user.id } });
-    return "password changed successfully"
+    return "password changed successfully";
   }
   async transformUser(userData: any) {
-    const user= {
+    const user = {
       id: userData.id,
       firstName: userData.firstName,
       lastName: userData.lastName,
       email: userData.email,
       phone: userData.phone,
-     
+
       referralCode: userData.referralCode,
       role: userData.role,
       createdAt: new Date(userData.createdAt),

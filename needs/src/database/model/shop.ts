@@ -15,10 +15,6 @@ export interface Shop {
   city: string;
   state?: string;
   zipCode?: string;
-  shopAdmin: {
-    firstName: string;
-    lastName: string;
-  };
 
   shopDetails: {
     logo: string;
@@ -28,6 +24,10 @@ export interface Shop {
     Banner: string;
     latitude: number;
     longitude: number;
+    storeAdmin: {
+      firstName: string;
+      lastName: string;
+    };
   };
   shopSchedule: {
     Sunday?: {
@@ -64,7 +64,7 @@ export interface Shop {
     Delivery?: boolean;
     TakeAway?: boolean;
     MinimumProcessingTime?: string;
-    ApproximateDeliveryTime: string;
+    ApproximateDeliveryTime?: string;
   };
 }
 
@@ -85,10 +85,7 @@ ShopModel.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    shopAdmin: {
-      type: DataTypes.JSONB,
-      allowNull: false,
-    },
+
     isVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

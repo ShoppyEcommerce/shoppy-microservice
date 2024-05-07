@@ -46,7 +46,7 @@ export const ShopDetailsValidation = Joi.object().keys({
   Banner: Joi.string().required(),
   latitude: Joi.number().required(),
   longitude: Joi.number().required(),
-  shopAdmin: Joi.object()
+  storeAdmin: Joi.object()
     .keys({
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),

@@ -11,12 +11,12 @@ const startServer = async () => {
   const app = express();
 
   databaseConnection
-    .sync({ force: true })
+    .sync()
     .then(() => console.log("database connected"))
     .catch((err) => console.log(err));
   const httpServer = await ExpressApp(app);
   await new AdminWalletService().createWallet();
-  // await createModule();
+  await createModule();
 
   app.use(errorHandler);
   httpServer

@@ -21,6 +21,10 @@ interface ShopDetails {
   Banner: string;
   latitude: number;
   longitude: number;
+  storeAdmin:{
+    firstName:string;
+    lastName:string
+  }
 }
 interface ShopSchedule {
   Monday?: any;
@@ -35,6 +39,8 @@ interface ShopDeliverySettings {
   scheduleOrder?: boolean;
   Delivery?: boolean;
   TakeAway?: boolean;
+  ApproximateDeliveryTime: string | undefined;
+  MinimumProcessingTime: string | undefined;
 }
 
 export class ShopService {
@@ -53,7 +59,7 @@ export class ShopService {
       phoneNumber: value.phoneNumber,
     });
     if (phone) {
-      throw new BadRequestError("phone number already in user", "");
+      throw new BadRequestError("phone number already in use", "");
     }
     const email = await this.repository.find({ email: value.email });
     if (email) {
@@ -62,7 +68,7 @@ export class ShopService {
     value.id = uuid();
     const code = Utils.generateVerification();
     const shop = await this.repository.createShop(value);
-    
+
     const send = process.env.SEND_SMS === "true" ? true : false;
     if (send) {
       const sms = await sendSMS(code.OTP, value.phoneNumber);
@@ -76,9 +82,11 @@ export class ShopService {
       { verificationCode: code.OTP, verificationExpiration: code.time },
       shop.dataValues.id
     );
-    return Utils.FormatData(
-      `A 4 digit OTP has been sent to your phone number ${code.OTP}`
-    );
+    const data = {
+      message: `A 4 digit OTP has been sent to your phone number ${code.OTP}`,
+      id: shop.dataValues.id
+    }
+    return data
   }
   async login(input: { phoneNumber: string }) {
     const { error } = loginShopValidation.validate(input, option);
@@ -152,8 +160,6 @@ export class ShopService {
     };
   }
 
-
-
   async updateShopDetails(input: ShopDetails, userId: string) {
     const { error } = ShopDetailsValidation.validate(input, option);
     if (error) {
@@ -214,14 +220,12 @@ export class ShopService {
       verification: input.verification,
     };
   }
-  async verifyShop(shopId:string){
-    const shop =  await this.repository.getShop(shopId);
-    if(!shop){
+  async verifyShop(shopId: string) {
+    const shop = await this.repository.getShop(shopId);
+    if (!shop) {
       throw new BadRequestError("shop not found", "");
     }
 
-    await this.repository.update({isVerified : true}, shopId); 
-
-    
+    await this.repository.update({ isVerified: true }, shopId);
   }
 }

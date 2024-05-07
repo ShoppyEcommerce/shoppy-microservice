@@ -11,13 +11,13 @@ export default (app: Application) => {
     "/register-shop",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { data } = await service.register(req.body);
+        const  data  = await service.register(req.body);
 
         await new ShopWalletService().createWallet(data.id)
 
 
         return successHandler(res, {
-          data,
+          data:data.message,
           message: "shop created successfully",
           statusCode: 201,
         });
