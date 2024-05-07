@@ -17,13 +17,10 @@ import {
   Category,
   Product,
   ProductModel,
- 
   ProductRepository,
   CategoryRepository,
-
   ModuleModel,
   CategoryModel,
-
   ShopRepository,
   Shop,
   ShopModel,
@@ -65,12 +62,10 @@ export class ProductService {
     //   id: user,
     // })) as unknown as Vendor;
     const shop = await this.shopRepository.getShop(user);
-    console.log(shop);
-    if (!shop?.dataValues.isVerified) {
-      throw new UnAuthorized("you are not verified", "");
-    }
-
-   
+    // console.log(shop);
+    // if (!shop?.dataValues.isVerified) {
+    //   throw new UnAuthorized("you are not verified", "");
+    // }
 
     value.itemName = Utils.Capitalizeword(value.itemName);
     const exist = await this.repository.getProduct({
@@ -89,7 +84,6 @@ export class ProductService {
     try {
       const select = `SELECT * FROM shopmodule WHERE shop_id = '${user}' AND module_id = '${category.moduleId}' LIMIT 1`;
       const shopModule = await databaseConnection.query(select, {});
-     
 
       const shopModuleLength = Number(shopModule.length);
       if (shopModule[0].length === 0) {
@@ -102,7 +96,7 @@ export class ProductService {
         const [result]: [any, any] = await databaseConnection.query(query, {
           replacements: [user, category.moduleId],
         });
-        console.log(result)
+        console.log(result);
 
         // // Check if the insertion was successful
         if (result && result.affectedRows > 0) {
@@ -142,7 +136,6 @@ export class ProductService {
     const shopModule = await databaseConnection.query(query, {
       replacements: [id],
     });
-
 
     return Utils.FormatData(shopModule[0]);
   }
@@ -190,7 +183,10 @@ export class ProductService {
         profiles.map((profile: Shop) => {
           const valid = geolib.isPointWithinRadius(
             { latitude: input.latitude, longitude: input.longitude },
-            { latitude: profile.shopDetails.latitude, longitude: profile.shopDetails.longitude },
+            {
+              latitude: profile.shopDetails.latitude,
+              longitude: profile.shopDetails.longitude,
+            },
             10000
           );
           valid && shops.push(profile.id);
@@ -198,9 +194,7 @@ export class ProductService {
         if (shops.length === 0) {
           return [];
         }
-        const product = shops.map((vendor) =>
-          this.getVendorsProducts(vendor)
-        );
+        const product = shops.map((vendor) => this.getVendorsProducts(vendor));
 
         const close = await Promise.all(product);
         return close;

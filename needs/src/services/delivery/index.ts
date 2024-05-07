@@ -60,13 +60,16 @@ export class DeliveryService {
     }
     const phone = Utils.intertionalizePhoneNumber(value.phone);
 
-    const exist = (await this.repository.Find({
+    const exist = await this.repository.Find({
       phone,
-    })) 
+    });
     if (!exist) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
-    const valid = Utils.ComparePassword(input.password, exist.dataValues.password);
+    const valid = Utils.ComparePassword(
+      input.password,
+      exist.dataValues.password
+    );
     if (!valid) {
       throw new BadRequestError("invalid credentials", "Bad request");
     }
@@ -85,11 +88,10 @@ export class DeliveryService {
     const phone = Utils.intertionalizePhoneNumber(value.phone);
 
     const user = (await this.repository.Find({
-      OTP,
       phone,
     })) as unknown as Delivery;
     if (!user) {
-      throw new BadRequestError("user does not exist", "Bad Request");
+      throw new BadRequestError("user not found", "Bad Request");
     }
 
     if (Number(user.OTP) !== Number(OTP)) {
@@ -105,8 +107,10 @@ export class DeliveryService {
     ) {
       throw new BadRequestError("OTP has expired", "Bad Request");
     }
-    const update = await this.repository.update({OTP:null, OTPExpiration:null, OTPVerification:true},{id:user.id})
-    
+    const update = await this.repository.update(
+      { OTP: null, OTPExpiration: null, OTPVerification: true },
+      { id: user.id }
+    );
 
     const token = await Utils.Encoded({ id: user.id });
     const data = {
@@ -137,12 +141,12 @@ export class DeliveryService {
     return delivery;
   }
   async getDeliveriesMan() {
-   const delivery =  await DeliveryModel.findAll({
-    where:{
-      isVerified:true
-    }
-   })
-   console.log(delivery)
+    const delivery = await DeliveryModel.findAll({
+      where: {
+        isVerified: true,
+      },
+    });
+    console.log(delivery);
   }
   async getUnVerifiedDelivery() {
     return (await this.repository.findAll({

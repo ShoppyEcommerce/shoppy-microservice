@@ -146,7 +146,6 @@ export class UserService {
     const phone = Utils.intertionalizePhoneNumber(value.phone);
 
     const userData = await this.userRepository.Find({
-      OTP,
       phone,
     });
 
