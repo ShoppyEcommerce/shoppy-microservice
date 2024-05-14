@@ -14,7 +14,7 @@ export default (app: Application, channel: Channel) => {
         const category = await service.createCategory(req.body);
         return res.status(201).json(category);
       } catch (error) {
-        console.log(error);
+       
         next(error);
       }
     }

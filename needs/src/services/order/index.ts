@@ -321,9 +321,9 @@ export class OrderService {
       await this.CreditAdminWallet(Order.dataValues.id, totalPrice);
      
     }
-    console.log(Order);
+  
     const socketId = userSocketMap.get(input.shopId);
-    console.log(socketId);
+   
     if (socketId) {
       io.to(socketId).emit(VendorOrder, { message: "you have a new order" });
     }

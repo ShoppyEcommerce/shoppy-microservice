@@ -4,9 +4,9 @@ import path from "path";
 
 const storage = multer.diskStorage({
   filename: function (req, file, cb) {
-    console.log(file);
+    
     const split = file.mimetype.split("/")[0];
-    console.log(split);
+   
 
     if (split !== "image") {
       return cb(new Error("invalid image"), "");

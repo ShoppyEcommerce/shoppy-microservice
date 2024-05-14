@@ -96,7 +96,7 @@ export class ProductService {
         const [result]: [any, any] = await databaseConnection.query(query, {
           replacements: [user, category.moduleId],
         });
-        console.log(result);
+       
 
         // // Check if the insertion was successful
         if (result && result.affectedRows > 0) {

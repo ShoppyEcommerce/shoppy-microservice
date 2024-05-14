@@ -30,7 +30,7 @@ export class CategoryService {
     }
     value.id = uuid();
     const data = await this.repository.create(value);
-    console.log(value);
+  
 
     return Utils.FormatData(data);
   }

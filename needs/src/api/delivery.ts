@@ -1,11 +1,6 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { DeliveryService } from "../services";
-import {
-  AuthMiddleware,
-
-  GeneralAuth,
-  successHandler,
-} from "./middleware";
+import { AuthMiddleware, GeneralAuth, successHandler } from "./middleware";
 
 export default (app: Application) => {
   const service = new DeliveryService();
@@ -50,6 +45,23 @@ export default (app: Application) => {
       }
     }
   );
+  app.patch(
+    "/delivery/verify/:id",
+    AuthMiddleware.Authenticate(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+       
+        const data = await service.verifyDeliveryMan(req.params.id);
+        return successHandler(res, {
+          data,
+          message: "deliveryman verified successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
   app.get(
     "/delivery/:id",
     GeneralAuth,
@@ -68,7 +80,7 @@ export default (app: Application) => {
     }
   );
   app.get(
-    "/delivery/verify-list/all",
+    "/deliveryman/verified-list-all",
     GeneralAuth,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -92,22 +104,6 @@ export default (app: Application) => {
         return successHandler(res, {
           data,
           message: "delivery returned successfully",
-          statusCode: 200,
-        });
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
-  app.patch(
-    "/delivery/verify/:id",
-    AuthMiddleware.Authenticate(["admin"]),
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const data = await service.verifyDeliveryMan(req.params.id);
-        return successHandler(res, {
-          data,
-          message: "deliveryman verified successfully",
           statusCode: 200,
         });
       } catch (error) {

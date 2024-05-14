@@ -15,7 +15,7 @@ export class ProfileRepository {
   }
   async update(id: string, update: any) {
     const profile = await ProfileModel.update(update, { where: { id } });
-    console.log(profile);
+   
     return profile;
   }
   async delete(input: { id: string }) {

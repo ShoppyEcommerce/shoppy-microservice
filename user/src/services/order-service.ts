@@ -39,7 +39,7 @@ export class OrderService {
     let amount: number = 0;
     try {
       const res = await axios.all(prod);
-      console.log(res[0].data.data);
+      
       productVendor = {
         fullName:
           res[0].data.data.VendorModel.firstName +

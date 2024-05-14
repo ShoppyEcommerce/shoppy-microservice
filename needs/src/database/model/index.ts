@@ -45,3 +45,5 @@ export {
 export { Shop, ShopModel } from "./shop";
 export { ShopWallet, ShopWalletModel } from "./shop-wallet";
 export { ShopPaymentModel, ShopPayment } from "./shop-payment";
+export {Rider, RiderModel,RiderAvailability} from "./rider"
+export {ShopRating, ShopRatingModel} from "./shop-rating"

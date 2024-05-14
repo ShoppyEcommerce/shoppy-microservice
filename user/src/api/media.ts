@@ -10,7 +10,7 @@ export default (app: Application, channel: Channel) => {
     upload.single("images"),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log(req.file);
+       
         const data = await service.uploadSingle(req.file);
         return res.status(201).json(data);
       } catch (error) {

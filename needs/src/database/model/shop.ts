@@ -15,7 +15,8 @@ export interface Shop {
   city: string;
   state?: string;
   zipCode?: string;
-
+  rating?:number;
+  numRating?:number;
   shopDetails: {
     logo: string;
     storeName: string;
@@ -85,7 +86,16 @@ ShopModel.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-
+    rating: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+      allowNull: true,
+    },
+    numRating: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: true,
+    },
     isVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

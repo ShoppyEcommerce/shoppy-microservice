@@ -10,7 +10,6 @@ import {
   Product,
   Profile,
   User,
-
   appEvents,
   Like,
   Conversation,
@@ -19,7 +18,6 @@ import {
   Payment,
   Wallet,
   Service,
-
   Parcel,
   ParcelDelivery,
   DeliveryProfile,
@@ -28,6 +26,8 @@ import {
   Shop,
   ShopWallet,
   ShopPayment,
+  Rider,
+  ShopRating,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -41,15 +41,15 @@ export default async (app: Application) => {
   app.set("socketio", io);
   appEvents(app);
 
-  const channel = await Utils.CreateChannel();
+  // const channel = await Utils.CreateChannel();
   User(app);
   Media(app);
   Module(app);
   Category(app);
-
+  ShopRating(app);
   Product(app);
   Delivery(app);
-
+  Rider(app);
   Profile(app);
   Order(app);
   Like(app);
@@ -59,7 +59,6 @@ export default async (app: Application) => {
   Payment(app);
   Wallet(app);
   Service(app);
-
 
   Parcel(app);
   ParcelDelivery(app);

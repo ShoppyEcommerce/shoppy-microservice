@@ -12,6 +12,7 @@ export class AuthMiddleware {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const token = req.headers.authorization;
+       
         if (!token) {
           throw new UnAuthorized(
             " unauthorized No token provided",
@@ -32,6 +33,7 @@ export class AuthMiddleware {
         if (!role.includes(user.role)) {
           throw new UnAuthorized("Unauthorized user", "");
         }
+      
 
         req.user = user.id;
         next();

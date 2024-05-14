@@ -33,7 +33,7 @@ export class LikeRepository {
         {
           model: ProductModel, // Include the Product model
           as: "ProductModel", // Alias for the Product model
-          attributes:["id","name","price", "images","quantity","available"]
+          attributes:["id","itemName","price", "images","available"]
         },
       ],
     });

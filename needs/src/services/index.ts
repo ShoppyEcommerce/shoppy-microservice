@@ -28,3 +28,5 @@ export { AdminService } from "./admin";
 export { ShopService } from "./shop";
 export {ShopWalletService} from"./shop-wallet"
 export {ShopPaymentService} from "./shop-payment"
+export {RiderService} from "./rider"
+export {ShopRatingService} from "./shop-rating"

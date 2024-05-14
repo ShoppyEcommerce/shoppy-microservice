@@ -1,19 +1,18 @@
 import dotenv from "dotenv";
 dotenv.config();
 import Jwt from "jsonwebtoken";
-import amqplib, { Channel } from "amqplib";
+// import amqplib, { Channel } from "amqplib";
 import { BadRequestError, UnAuthorized } from "./ErrorHandler";
 import bcryptjs, { genSaltSync } from "bcryptjs";
 import {
   User,
   UserModel,
-
   ProfileModel,
-
   DeliveryModel,
   DeliveryProfileModel,
   ShopModel,
-  Shop
+  Shop,
+  RiderModel,
 } from "../database";
 export class Utils {
   static async Encoded(input: { id: string }) {
@@ -33,16 +32,16 @@ export class Utils {
       throw new UnAuthorized(customErr.message, "");
     }
   }
-  static async CreateChannel() {
-    try {
-      const connection = await amqplib.connect(process.env.MSG_QUEUE_URL!);
-      const channel = await connection.createChannel();
-      await channel.assertQueue(process.env.EXCHANGE_NAME!, { durable: true });
-      return channel;
-    } catch (err) {
-      throw err;
-    }
-  }
+  // static async CreateChannel() {
+  //   try {
+  //     const connection = await amqplib.connect(process.env.MSG_QUEUE_URL!);
+  //     const channel = await connection.createChannel();
+  //     await channel.assertQueue(process.env.EXCHANGE_NAME!, { durable: true });
+  //     return channel;
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // }
   static async generatePaymentReference(userId: string) {
     const timestamp = Date.now().toString();
     const randomString = Math.random().toString(36).substring(2, 8); // Adjust length as needed
@@ -57,37 +56,37 @@ export class Utils {
     return compare;
   }
 
-  static async PublishMessage(channel: Channel, service: any, msg: any) {
-    channel.publish(process.env.EXCHANGE_NAME!, service, Buffer.from(msg));
-    console.log("Sent: ", msg);
-  }
-  static async SubscribeMessage(channel: Channel, service: any) {
-    await channel.assertExchange(process.env.EXCHANGE_NAME!, "direct", {
-      durable: true,
-    });
-    const q = await channel.assertQueue("", { exclusive: true });
-    console.log(` Waiting for messages in queue: ${q.queue}`);
+  // static async PublishMessage(channel: Channel, service: any, msg: any) {
+  //   channel.publish(process.env.EXCHANGE_NAME!, service, Buffer.from(msg));
+  //   console.log("Sent: ", msg);
+  // }
+  // static async SubscribeMessage(channel: Channel, service: any) {
+  //   await channel.assertExchange(process.env.EXCHANGE_NAME!, "direct", {
+  //     durable: true,
+  //   });
+  //   const q = await channel.assertQueue("", { exclusive: true });
+  //   console.log(` Waiting for messages in queue: ${q.queue}`);
 
-    channel.bindQueue(
-      q.queue,
-      process.env.EXCHANGE_NAME!,
-      process.env.USER_SERVICE!
-    );
+  //   channel.bindQueue(
+  //     q.queue,
+  //     process.env.EXCHANGE_NAME!,
+  //     process.env.USER_SERVICE!
+  //   );
 
-    channel.consume(
-      q.queue,
-      (msg) => {
-        if (msg?.content) {
-          console.log("the message is:", msg.content.toString());
-          service.SubscribeEvents(msg.content.toString());
-        }
-        console.log("[X] received");
-      },
-      {
-        noAck: true,
-      }
-    );
-  }
+  //   channel.consume(
+  //     q.queue,
+  //     (msg) => {
+  //       if (msg?.content) {
+  //         console.log("the message is:", msg.content.toString());
+  //         service.SubscribeEvents(msg.content.toString());
+  //       }
+  //       console.log("[X] received");
+  //     },
+  //     {
+  //       noAck: true,
+  //     }
+  //   );
+  // }
   static Capitalizeword(input: string) {
     const array = input.split(" ");
     const word = [];
@@ -145,7 +144,7 @@ export class Utils {
     if (user) {
       return this.transformUser(user);
     }
-   
+
     const delivery = await DeliveryModel.findByPk(id, {
       include: { model: DeliveryProfileModel },
       attributes: { exclude: ["password", "confirmPassword"] },
@@ -153,10 +152,16 @@ export class Utils {
     if (delivery) {
       return this.transformDelivery(delivery);
     }
-      const shop =  await ShopModel.findByPk(id)
-      if(shop){
-        return this.transformShop(shop)
-      }
+    const shop = await ShopModel.findByPk(id);
+    if (shop) {
+      return this.transformShop(shop);
+    }
+
+    const rider =  await RiderModel.findByPk(id)
+    if(rider){
+      return this.transformRider(rider)
+
+    }   
     else {
       throw new BadRequestError("unAuthorized pls kindly login", "");
     }
@@ -164,8 +169,8 @@ export class Utils {
 
   static transformUser(data: any) {
     return {
-      id: data.dataValues.id,
-      profile: data.dataValues.ProfileModel.dataValues,
+      id: data?.dataValues?.id,
+      profile: data?.dataValues?.ProfileModel?.dataValues,
     };
   }
   static transformVendor(data: any) {
@@ -180,10 +185,15 @@ export class Utils {
       profile: data.dataValues.DeliveryProfileModel,
     };
   }
-  static transformShop(data:any){
+  static transformShop(data: any) {
+    return {
+      id: data.dataValues.id,
+    };
+  }
+  static transformRider(data:any){
+
     return {
       id:data.dataValues.id
     }
-
   }
 }

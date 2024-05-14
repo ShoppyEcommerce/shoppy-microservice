@@ -34,6 +34,7 @@ export class AdminPaymentRepository {
         },
         {
           model: ShopModel,
+          attributes:["id", "phoneNumber","email", "shopDetails"]
         
         },
       ],

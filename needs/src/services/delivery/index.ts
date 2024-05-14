@@ -120,14 +120,13 @@ export class DeliveryService {
     return Utils.FormatData(data);
   }
   async verifyDeliveryMan(id: string) {
-    const delivery = (await DeliveryModel.findByPk(id, {
-      include: DeliveryProfileModel,
-    })) as unknown as Delivery;
+    const delivery = (await DeliveryModel.findByPk(id)) as unknown as Delivery;
     if (!delivery) {
       throw new BadRequestError("delivery man does not exist", "Bad Request");
     }
+   
 
-    await this.repository.update({ isVerified: true }, id);
+    await this.repository.update({ isVerified: true }, { id });
     return "delivery man verified successfully";
   }
   async getDeliveryMan(id: string) {
@@ -141,12 +140,9 @@ export class DeliveryService {
     return delivery;
   }
   async getDeliveriesMan() {
-    const delivery = await DeliveryModel.findAll({
-      where: {
-        isVerified: true,
-      },
-    });
-    console.log(delivery);
+    return (await this.repository.findAll({
+      isVerified: true,
+    })) as unknown as Delivery[];
   }
   async getUnVerifiedDelivery() {
     return (await this.repository.findAll({

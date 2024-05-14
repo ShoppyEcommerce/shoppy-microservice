@@ -1,4 +1,4 @@
-import { Delivery, DeliveryModel } from "../model/Delivery";
+import { Delivery, DeliveryModel } from "../model";
 
 export class DeliveryRepository {
   async create(input: Delivery): Promise<Delivery> {

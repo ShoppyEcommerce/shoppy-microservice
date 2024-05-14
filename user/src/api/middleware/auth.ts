@@ -19,7 +19,7 @@ export class AuthMiddleware {
           );
         }
         const verify = (await Utils.Decoded(token)) as JwtPayload;
-        console.log(verify);
+      
 
         const user = (await new UserRepository().Find({
           id: verify.id,
@@ -27,7 +27,7 @@ export class AuthMiddleware {
         if (!user) {
           throw new UnAuthorized("user with this token not found", "");
         }
-        console.log(role, user.role);
+       
         if (!role.includes(user.role)) {
           throw new UnAuthorized("Unauthorized user", "");
         }
