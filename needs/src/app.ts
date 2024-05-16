@@ -28,6 +28,7 @@ import {
   ShopPayment,
   Rider,
   ShopRating,
+  FavoriteStore,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -59,7 +60,7 @@ export default async (app: Application) => {
   Payment(app);
   Wallet(app);
   Service(app);
-
+  FavoriteStore(app)
   Parcel(app);
   ParcelDelivery(app);
   DeliveryProfile(app);

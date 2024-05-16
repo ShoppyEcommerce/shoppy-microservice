@@ -3,4 +3,5 @@ export * from "./auth";
 export * from "./successHandler";
 export * from "./DeliveryAuth";
 export * from "./shopAuth";
-export * from "./riderAuth"
+export * from "./riderAuth";
+export * from "./optional";

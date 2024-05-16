@@ -41,6 +41,7 @@ export class ServiceService {
       );
     }
     value.id = uuid();
+    value.moduleId = category.moduleId;
 
     return await this.repository.create({ ...value, shopId });
   }

@@ -19,6 +19,7 @@ export interface Service {
   image: string;
   logo: string;
   deliveryTime?: string;
+  moduleId:string
 }
 interface Catelogue {
   image: string;
@@ -56,6 +57,11 @@ ServiceModel.init(
       onDelete: "CASCADE",
     },
     categoryId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      onDelete: "CASCADE",
+    },
+    moduleId: {
       type: DataTypes.UUID,
       allowNull: false,
       onDelete: "CASCADE",

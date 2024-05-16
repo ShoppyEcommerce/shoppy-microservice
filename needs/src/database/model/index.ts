@@ -1,4 +1,5 @@
 export { User, UserModel } from "./user";
+import { FavoriteProduct } from './favorite-products';
 export { Profile, ProfileModel } from "./profile";
 export { Category, CategoryModel } from "./category";
 export { Module, ModuleModel } from "./module";
@@ -33,8 +34,7 @@ export {
   DeliveryProfileModel,
   ModeOfIdentification,
 } from "./deliveryProfile";
-// export { VendorWalletModel } from "./vendor-wallet";
-// export { VendorPaymentModel, VendorPayment } from "./vendor-payment";
+export {FavoriteProduct, FavoriteProductModel} from "./favorite-products"
 export { AdminWalletModel, AdminWallet } from "./admin-wallet";
 export {
   AdminPaymentModel,
@@ -47,3 +47,4 @@ export { ShopWallet, ShopWalletModel } from "./shop-wallet";
 export { ShopPaymentModel, ShopPayment } from "./shop-payment";
 export {Rider, RiderModel,RiderAvailability} from "./rider"
 export {ShopRating, ShopRatingModel} from "./shop-rating"
+export {FavoriteStore, FavoriteStoreModel} from "./favorite-store"

@@ -25,6 +25,7 @@ import {
   Shop,
   ShopModel,
   databaseConnection,
+  ServiceModel,
 } from "../../database";
 import sequelize, { Op } from "sequelize";
 
@@ -96,7 +97,6 @@ export class ProductService {
         const [result]: [any, any] = await databaseConnection.query(query, {
           replacements: [user, category.moduleId],
         });
-       
 
         // // Check if the insertion was successful
         if (result && result.affectedRows > 0) {
@@ -126,18 +126,74 @@ export class ProductService {
     const product = await this.repository.getProductCategory(id);
     return Utils.FormatData(product);
   }
-  async getProductModule(id: string) {
+  async getProductModule(id: string, search: string) {
     const product = await this.repository.getProductModule(id);
     return Utils.FormatData(product);
   }
-  async getVendorModule(id: string) {
+  async getVendorModule(id: string, queryString: any, user?: string) {
     const query = `
       SELECT * FROM  shopmodule   JOIN  shop ON shop.id = shopmodule.shop_id JOIN  module ON module.id = shopmodule.module_id WHERE  module_id= ? `;
     const shopModule = await databaseConnection.query(query, {
       replacements: [id],
     });
+    if (
+      queryString.search ||
+      queryString.Favorite ||
+      queryString.delivery ||
+      queryString.takeAway
+    ) {
+      const product = await ProductModel.findAll({
+        where: {
+          itemName: { [Op.iLike]: `%${queryString.search}%` },
+          moduleId: id,
+        },
+      });
+      let shop: any[] = [];
+      let favorite: any[] = [];
+      let takeAway: any[] = [];
+      let delivery: any[] = [];
+      let service: any[] = [];
 
-    return Utils.FormatData(shopModule[0]);
+      service =  await ServiceModel.findAll({
+       where:{
+        moduleId:id,
+        name:{[Op.iLike]: `%${queryString.search}%`}
+       }
+      })
+      if (queryString.search) {
+        shop = shopModule[0].filter(
+          (shop: any) =>
+            shop.module_id === id &&
+            shop.shopDetails.storeName.includes(queryString.search)
+        );
+      }
+      if (queryString.takeAway) {
+        takeAway = shopModule[0].filter(
+          (shop: any) => shop.module === id && shop.DeliverySettings.TakeAway
+        );
+      }
+      if (queryString.delivery) {
+        delivery = shopModule[0].filter(
+          (shop: any) => shop.module_id === id && shop.DeliverySettings.Delivery
+        );
+      }
+      if (queryString.favorite && user) {
+        favorite = shopModule[0].filter(
+          (shop: any) => shop.module_id === id && shop.favorite.includes(user)
+        );
+      }
+
+      return Utils.FormatData([
+        ...product,
+        ...shop,
+        ...takeAway,
+        ...delivery,
+        ...favorite,
+        ...service,
+      ]);
+    } else {
+      return Utils.FormatData(shopModule[0]);
+    }
   }
   async updateProduct(id: string, shopId: string, update: any) {
     const { error, value } = UpdateProductSchema.validate(update, option);

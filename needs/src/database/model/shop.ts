@@ -17,6 +17,7 @@ export interface Shop {
   zipCode?: string;
   rating?:number;
   numRating?:number;
+  favorite?:String[];
   shopDetails: {
     logo: string;
     storeName: string;
@@ -90,6 +91,10 @@ ShopModel.init(
       type: DataTypes.FLOAT,
       defaultValue: 0,
       allowNull: true,
+    },
+    favorite:{
+      type:DataTypes.JSONB,
+      allowNull:true
     },
     numRating: {
       type: DataTypes.INTEGER,
