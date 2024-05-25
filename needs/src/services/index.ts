@@ -31,3 +31,5 @@ export {ShopPaymentService} from "./shop-payment"
 export {RiderService} from "./rider"
 export {ShopRatingService} from "./shop-rating"
 export {FavoriteStoreService} from "./favorite-store"
+export {RiderWalletService} from "./rider-wallet";
+export {RiderPaymentService} from "./rider-payment"

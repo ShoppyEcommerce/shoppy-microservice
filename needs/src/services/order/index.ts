@@ -616,7 +616,7 @@ export class OrderService {
       id
     );
     const shopWallet = (await this.shopWalletRepository.getWallet({
-      shoPiD: order.shopId,
+      shopId: order.shopId,
     })) as unknown as ShopWallet;
     if (shopWallet) {
       const credit = Number(shopWallet.credit) + order.totalAmount,

@@ -304,4 +304,8 @@ export class ProductService {
 
     return favorite;
   }
+  async getProductByShopId (shopId:string){
+
+    return await this.repository.getProduct({shopId})
+  }
 }

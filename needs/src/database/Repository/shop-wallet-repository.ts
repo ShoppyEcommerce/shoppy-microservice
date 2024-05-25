@@ -1,4 +1,4 @@
-import { ShopWalletModel } from "../model";
+import { ShopWallet, ShopWalletModel } from "../model";
 
 export class ShopWalletRepository {
   async create(input: { shopId: string; id: string }) {
@@ -6,7 +6,7 @@ export class ShopWalletRepository {
 
     return wallet;
   }
-  async getWallet(input: Record<string, string>) {
+  async getWallet(input: Partial<ShopWallet>) {
     return ShopWalletModel.findOne({ where: input });
   }
   async update(shopId: string, update: any) {

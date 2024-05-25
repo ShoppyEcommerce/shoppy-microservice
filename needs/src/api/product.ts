@@ -222,4 +222,19 @@ export default (app: Application) => {
       }
     }
   );
+  app.get(
+    "/product/shop/:id",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getProductByShopId(req.params.id);
+        return successHandler(res, {
+          data,
+          message: "product returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

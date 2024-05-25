@@ -1,9 +1,9 @@
 export { CategoryRepository } from "./category-repository";
-import { ShopRatingRepository } from './shop-rating-repository';
+import { ShopRatingRepository } from "./shop-rating-repository";
 export { LikeRepository } from "./like.repository";
 export { UserRepository } from "./user-repository";
-export {FavoriteStoreRepository} from "./favorite-store-repository"
-export {FavoriteProductRepository} from "./favourite-product-repository"
+export { FavoriteStoreRepository } from "./favorite-store-repository";
+export { FavoriteProductRepository } from "./favourite-product-repository";
 export { ModuleRepository } from "./module-repository";
 export { ProductRepository } from "./product-repository";
 export { RatingRepository } from "./rating-repository";
@@ -27,4 +27,6 @@ export { ShopRepository } from "./shop-repository";
 export { ShopWalletRepository } from "./shop-wallet-repository";
 export { ShopPaymentRepository } from "./shop-payment-repository";
 export { RiderRepository } from "./rider-repository";
-export {ShopRatingRepository} from "./shop-rating-repository"
+export { ShopRatingRepository } from "./shop-rating-repository";
+export { RiderPaymentRepository } from "./rider-payment-repository";
+export { RiderWalletRepository } from "./rider-wallet-repository";
