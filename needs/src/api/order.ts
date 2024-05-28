@@ -3,6 +3,7 @@ import { Application, NextFunction, Request, Response } from "express";
 import {
   AuthMiddleware,
   DeliveryAuth,
+  RiderAuth,
   ShopAuth,
   successHandler,
 } from "./middleware";
@@ -109,8 +110,8 @@ export default (app: Application, ) => {
     }
   );
   app.post(
-    "order/delivery/accept/:id",
-    DeliveryAuth,
+    "/order/rider/accept/:id",
+    RiderAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
@@ -158,8 +159,8 @@ export default (app: Application, ) => {
     }
   );
   app.patch(
-    "/order/delivery/confirm/:id",
-    DeliveryAuth,
+    "/order/rider/confirm/:id",
+    RiderAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const data = await service.orderCompleted(req.user, req.params.id, req.body);

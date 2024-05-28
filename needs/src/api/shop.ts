@@ -3,7 +3,6 @@ import { ShopService, ShopWalletService } from "../services";
 import { AuthMiddleware, ShopAuth, successHandler } from "./middleware";
 import { ShopWallet } from ".";
 
-
 export default (app: Application) => {
   const service = new ShopService();
 
@@ -11,13 +10,12 @@ export default (app: Application) => {
     "/register-shop",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const  data  = await service.register(req.body);
+        const data = await service.register(req.body);
 
-        await new ShopWalletService().createWallet(data.id)
-
+        await new ShopWalletService().createWallet(data.id);
 
         return successHandler(res, {
-          data:data.message,
+          data: data.message,
           message: "shop created successfully",
           statusCode: 201,
         });
@@ -153,4 +151,32 @@ export default (app: Application) => {
       }
     }
   );
+  app.get(
+    "/shop/top-seller",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.TopSeller();
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "shop returned successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.put("/shop/update/num", ShopAuth, async(req:Request | any, res:Response, next:NextFunction) =>{
+    try{
+      const data =  await service.updateShop(req.user, req.body)
+      successHandler(res,{
+        data,
+        statusCode:201,
+        message:"shop updated"
+      })
+
+    }catch(err){
+      next(err)
+    }
+  })
 };

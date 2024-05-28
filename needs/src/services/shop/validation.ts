@@ -54,6 +54,7 @@ export const ShopDetailsValidation = Joi.object().keys({
     .required(),
 });
 export const ShopScheduleValidation = Joi.object().keys({
+  numOfProductSold: Joi.number().optional(),
   Sunday: Joi.object()
     .keys({
       openingTime: Joi.string().optional(),

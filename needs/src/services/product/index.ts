@@ -11,6 +11,7 @@ import {
   ProductSchema,
   UpdateProductSchema,
   option,
+  toggleProductSchema,
 } from "./validation";
 import { Utils } from "../../utils";
 import {
@@ -154,12 +155,12 @@ export class ProductService {
       let delivery: any[] = [];
       let service: any[] = [];
 
-      service =  await ServiceModel.findAll({
-       where:{
-        moduleId:id,
-        name:{[Op.iLike]: `%${queryString.search}%`}
-       }
-      })
+      service = await ServiceModel.findAll({
+        where: {
+          moduleId: id,
+          name: { [Op.iLike]: `%${queryString.search}%` },
+        },
+      });
       if (queryString.search) {
         shop = shopModule[0].filter(
           (shop: any) =>
@@ -304,8 +305,23 @@ export class ProductService {
 
     return favorite;
   }
-  async getProductByShopId (shopId:string){
+  async getProductByShopId(shopId: string) {
+    return await this.repository.getVendorsProducts(shopId);
+  }
+  async toggleVisibleProduct(id: string, shopId: string, input: any) {
+    const { error } = toggleProductSchema.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    console.log(id, shopId)
+    const product = await this.repository.getAnyProduct(id, shopId);
+    if (!product) {
+      throw new BadRequestError("product does not exist", "");
+    }
+    await this.repository.switchProductVisibility(id, input.active);
+  }
 
-    return await this.repository.getProduct({shopId})
+  async getLatestProduct() {
+    return await this.repository.getNewestArrival();
   }
 }

@@ -15,9 +15,10 @@ export interface Shop {
   city: string;
   state?: string;
   zipCode?: string;
-  rating?:number;
-  numRating?:number;
-  favorite?:String[];
+  numOfProductSold: number;
+  rating?: number;
+  numRating?: number;
+  favorite?: String[];
   shopDetails: {
     logo: string;
     storeName: string;
@@ -92,9 +93,14 @@ ShopModel.init(
       defaultValue: 0,
       allowNull: true,
     },
-    favorite:{
-      type:DataTypes.JSONB,
-      allowNull:true
+    favorite: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
+    numOfProductSold: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: true,
     },
     numRating: {
       type: DataTypes.INTEGER,

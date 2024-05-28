@@ -29,7 +29,7 @@ export interface Product {
   available: Availability;
   ownerId: string;
   numRating?: number;
-
+  active:boolean;
   Attribute: Array<string>;
   unit: string;
   Tag?: string;
@@ -82,6 +82,10 @@ ProductModel.init(
     Attribute: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
+    },
+    active:{
+      type:DataTypes.BOOLEAN,
+      defaultValue:true
     },
 
     moduleId: {

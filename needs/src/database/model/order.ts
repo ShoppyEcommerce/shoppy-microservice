@@ -2,7 +2,7 @@ import { databaseConnection } from "../connection";
 import { Model, DataTypes } from "sequelize";
 import { UserModel } from "./user";
 import { DeliveryModel } from "./Delivery";
-import {RiderModel} from "./rider"
+import { RiderModel } from "./rider";
 import { TransactionHistoryModel } from "./transaction";
 import { ShopModel } from "./shop";
 
@@ -17,13 +17,13 @@ export interface Order {
   orderStatus: OrderStatus;
   deliveryMan?: string;
   deliveryFee?: number;
-  riderId?:string
-  riderFee?:number
+  riderId?: string;
+  riderFee?: number;
   discount?: number;
   VatTax?: number;
   transactionId: string;
   trackingCode: number;
-  shopId:string
+  shopId: string;
 }
 interface Product {
   id: string;
@@ -70,7 +70,7 @@ const OrderSchema = {
     type: DataTypes.BIGINT,
     allowNull: false,
   },
- 
+
   referenceId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -96,9 +96,9 @@ const OrderSchema = {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  shopId:{
-    type:DataTypes.UUID,
-    allowNull:false
+  shopId: {
+    type: DataTypes.UUID,
+    allowNull: false,
   },
   deliveryMan: {
     type: DataTypes.UUID,
@@ -136,10 +136,10 @@ OrderModel.belongsTo(DeliveryModel, { foreignKey: "deliveryMan" });
 OrderModel.belongsTo(RiderModel, { foreignKey: "riderId" });
 RiderModel.hasMany(OrderModel, { foreignKey: "riderId" });
 DeliveryModel.hasMany(OrderModel, { foreignKey: "deliveryMan" });
-TransactionHistoryModel.belongsTo(OrderModel, { foreignKey: "transactionId" })
+TransactionHistoryModel.belongsTo(OrderModel, { foreignKey: "transactionId" });
 OrderModel.belongsTo(TransactionHistoryModel, { foreignKey: "transactionId" });
-ShopModel.hasMany(OrderModel,{foreignKey:"shopId"})
-OrderModel.belongsTo(ShopModel,{foreignKey:"shopId"})
+ShopModel.hasMany(OrderModel, { foreignKey: "shopId" });
+OrderModel.belongsTo(ShopModel, { foreignKey: "shopId" });
 
 //end point
 // - create endpoint to get today order

@@ -3,7 +3,7 @@ import { OrderStatus } from "../../database";
 
 export const OrderValidationSchema = Joi.object().keys({
   cartId: Joi.string().required(),
-  vendorId: Joi.string().required(),
+ 
   paymentType: Joi.string().required(),
   referenceId: Joi.string().optional(),
   shopId:Joi.string().required()

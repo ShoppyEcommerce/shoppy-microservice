@@ -13,7 +13,7 @@ export const ProductSchema = Joi.object().keys({
   ItemImages: Joi.array().items(Joi.string()).required(),
   Attribute: Joi.array().items(Joi.string()).required(),
   Tag: Joi.string().optional(),
-  Vat:Joi.string().required()
+  Vat: Joi.string().required(),
 });
 
 //Update product Schema
@@ -28,12 +28,16 @@ export const UpdateProductSchema = Joi.object().keys({
   Attribute: Joi.array().items(Joi.string()).optional(),
   Tag: Joi.string().optional(),
   unit: Joi.string().optional(),
+
 });
 //closes product
 
 export const ClosestProductSchema = Joi.object().keys({
   latitude: Joi.number().required(),
   longitude: Joi.number().required(),
+});
+export const toggleProductSchema = Joi.object().keys({
+  active: Joi.boolean().required(),
 });
 export const option = {
   abortEarly: false,

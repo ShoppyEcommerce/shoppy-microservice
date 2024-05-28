@@ -21,10 +21,10 @@ interface ShopDetails {
   Banner: string;
   latitude: number;
   longitude: number;
-  storeAdmin:{
-    firstName:string;
-    lastName:string
-  }
+  storeAdmin: {
+    firstName: string;
+    lastName: string;
+  };
 }
 interface ShopSchedule {
   Monday?: any;
@@ -84,9 +84,9 @@ export class ShopService {
     );
     const data = {
       message: `A 4 digit OTP has been sent to your phone number ${code.OTP}`,
-      id: shop.dataValues.id
-    }
-    return data
+      id: shop.dataValues.id,
+    };
+    return data;
   }
   async login(input: { phoneNumber: string }) {
     const { error } = loginShopValidation.validate(input, option);
@@ -117,6 +117,9 @@ export class ShopService {
     return Utils.FormatData(
       `A 4 digit OTP has been sent to your phone number ${code.OTP}`
     );
+  }
+  async updateShop (shopId:string, update:any){
+    await this.repository.update({numOfProductSold:update.numOfProductSold},shopId)
   }
 
   async verifyOtp(input: { OTP: number; phoneNumber: string }) {
@@ -184,7 +187,7 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-    await this.repository.update({ shopSchedule: input }, userId);
+    await this.repository.update({ shopSchedule: input, }, userId);
   }
   async updateDeliverySetting(input: ShopDeliverySettings, userId: string) {
     const { error } = DeliverySettingValidation.validate(input, option);
@@ -227,5 +230,9 @@ export class ShopService {
     }
 
     await this.repository.update({ isVerified: true }, shopId);
+  }
+
+  async TopSeller() {
+    return await this.repository.getTopSeller();
   }
 }

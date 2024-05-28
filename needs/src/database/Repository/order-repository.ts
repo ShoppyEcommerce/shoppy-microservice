@@ -3,6 +3,7 @@ import {
   Order,
   OrderModel,
   PaymentModel,
+  RiderModel,
   ShopModel,
   TransactionHistoryModel,
   UserModel,
@@ -52,6 +53,58 @@ export class OrderRepository {
         },
         {
           model: ShopModel,
+          attributes: ["id", "phoneNumber", "email"],
+        },
+        {
+          model: RiderModel,
+          attributes: [
+            "id",
+            "email",
+            "phoneNumber",
+            "lastName",
+            "firstName",
+            "vehicleDetails",
+          ],
+        },
+        {
+          model: TransactionHistoryModel,
+          include: [
+            {
+              model: PaymentModel,
+            },
+          ],
+        },
+      ],
+    });
+  }
+  async findTrackingCode(input: any) {
+    return OrderModel.findOne({
+      where: input,
+
+      include: [
+        {
+          model: UserModel,
+          attributes: ["firstName", "lastName", "phone"],
+        },
+        {
+          model: CartModel,
+
+          attributes: ["products", "totalAmount"],
+        },
+        {
+          model: ShopModel,
+          attributes: ["id", "phoneNumber", "email"],
+        },
+        {
+          model: RiderModel,
+          attributes: [
+            "id",
+            "email",
+            "phoneNumber",
+            "lastName",
+            "firstName",
+            "vehicleDetails",
+          ],
         },
         {
           model: TransactionHistoryModel,
