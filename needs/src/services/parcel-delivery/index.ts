@@ -1,6 +1,6 @@
 import { Op, Sequelize } from "sequelize";
 import {
-  DeliveryProfileRepository,
+
   ParcelDelivery,
   ParcelDeliveryRepository,
   ParcelDeliveryStatus,
@@ -17,9 +17,7 @@ import {
   TransactionType,
   Type,
   WalletRepository,
-  DeliveryProfileModel,
-  DeliveryProfile,
-  DeliveryModel,
+
   AdminType,
   AdminPaymentStatus,
   AdminPayment,
@@ -42,7 +40,7 @@ export class ParcelDeliveryService {
   private Transaction: TransactionRepository;
   private payment: PaymentRepository;
   private userProfile: ProfileRepository;
-  private Delivery: DeliveryProfileRepository;
+;
 
   constructor() {
     this.repository = new ParcelDeliveryRepository();
@@ -51,7 +49,7 @@ export class ParcelDeliveryService {
     this.Transaction = new TransactionRepository();
     this.payment = new PaymentRepository();
     this.userProfile = new ProfileRepository();
-    this.Delivery = new DeliveryProfileRepository();
+ 
   }
 
   async create(input: ParcelDelivery, ownerId: string) {
@@ -151,31 +149,31 @@ export class ParcelDeliveryService {
     value.parcelDeliveryStatus = ParcelDeliveryStatus.ONGOING;
     value.ownerId = ownerId;
     value.transactionId = transact.id;
-    let deliveryMan: DeliveryProfile[] = [];
+    // let deliveryMan: DeliveryProfile[] = [];
 
-    const deliveries = (await DeliveryProfileModel.findAll({
-      include: DeliveryModel,
-    })) as unknown as DeliveryProfile[];
-    deliveries.map((delivery: DeliveryProfile) => {
-      const valid = geolib.isPointWithinRadius(
-        { latitude: delivery.latitude, longitude: delivery.longitude },
-        { latitude: delivery.latitude, longitude: delivery.longitude },
-        10000
-      );
+    // const deliveries = (await DeliveryProfileModel.findAll({
+    //   include: DeliveryModel,
+    // })) as unknown as DeliveryProfile[];
+    // deliveries.map((delivery: DeliveryProfile) => {
+    //   const valid = geolib.isPointWithinRadius(
+    //     { latitude: delivery.latitude, longitude: delivery.longitude },
+    //     { latitude: delivery.latitude, longitude: delivery.longitude },
+    //     10000
+    //   );
 
-      valid && deliveryMan.push(delivery);
-    });
-    const data = await this.repository.create(value) as unknown as ParcelDelivery
-    admin.parcelDeliveryId =  data.id
+    //   valid && deliveryMan.push(delivery);
+    // });
+    // const data = await this.repository.create(value) as unknown as ParcelDelivery
+    // admin.parcelDeliveryId =  data.id
 
-    await new AdminWalletService().creditWallet(input.amount)
-    await new AdminPaymentService().create(admin)
+    // await new AdminWalletService().creditWallet(input.amount)
+    // await new AdminPaymentService().create(admin)
 
-    if (deliveryMan.length > 0) {
-      deliveryMan.map((delivery) => {
-        io.emit(DeliveryOrder, { data, delivery: delivery.deliveryManId });
-      });
-    }
+    // if (deliveryMan.length > 0) {
+    //   deliveryMan.map((delivery) => {
+    //     io.emit(DeliveryOrder, { data, delivery: delivery.deliveryManId });
+    //   });
+    // }
 
     return "parcel delivery created successfully"
   }

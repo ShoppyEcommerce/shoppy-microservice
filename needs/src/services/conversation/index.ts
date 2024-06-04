@@ -4,7 +4,7 @@ import {
   ConversationSchema,
   UserModel,
   // VendorModel,
-  DeliveryModel,
+
 } from "../../database";
 import { v4 as uuid } from "uuid";
 import { conversationValidation, option } from "./validation";

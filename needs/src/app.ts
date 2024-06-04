@@ -3,7 +3,7 @@ import cors from "cors"; // Import Socket.IO Server
 import { Utils } from "./utils";
 import {
   Category,
-  Delivery,
+
   Media,
   Module,
   Order,
@@ -20,7 +20,7 @@ import {
   Service,
   Parcel,
   ParcelDelivery,
-  DeliveryProfile,
+
   Message,
   Admin,
   Shop,
@@ -49,7 +49,7 @@ export default async (app: Application) => {
   Category(app);
   ShopRating(app);
   Product(app);
-  Delivery(app);
+ 
   Rider(app);
   Profile(app);
   Order(app);
@@ -63,7 +63,7 @@ export default async (app: Application) => {
   FavoriteStore(app)
   Parcel(app);
   ParcelDelivery(app);
-  DeliveryProfile(app);
+
   Message(app);
   Admin(app);
   Shop(app);

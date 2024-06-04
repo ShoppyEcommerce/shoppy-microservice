@@ -166,17 +166,36 @@ export default (app: Application) => {
       }
     }
   );
-  app.put("/shop/update/num", ShopAuth, async(req:Request | any, res:Response, next:NextFunction) =>{
-    try{
-      const data =  await service.updateShop(req.user, req.body)
-      successHandler(res,{
-        data,
-        statusCode:201,
-        message:"shop updated"
-      })
-
-    }catch(err){
-      next(err)
+  app.put(
+    "/shop/update/num",
+    ShopAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.updateShop(req.user, req.body);
+        successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "shop updated",
+        });
+      } catch (err) {
+        next(err);
+      }
     }
-  })
+  );
+  app.get(
+    "/shop/dashboard/statistics",
+    ShopAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.ShopDashboard(req.user);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "shop dashboard returned successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

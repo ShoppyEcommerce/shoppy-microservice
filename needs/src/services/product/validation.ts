@@ -11,7 +11,14 @@ export const ProductSchema = Joi.object().keys({
   Description: Joi.string().required(),
   categoryId: Joi.string().required(),
   ItemImages: Joi.array().items(Joi.string()).required(),
-  Attribute: Joi.array().items(Joi.string()).required(),
+
+  Attributes: Joi.object()
+    .keys({
+      color: Joi.string().required(),
+      size: Joi.string().required(),
+      type: Joi.string().required(),
+    })
+    .required(),
   Tag: Joi.string().optional(),
   Vat: Joi.string().required(),
 });
@@ -25,10 +32,15 @@ export const UpdateProductSchema = Joi.object().keys({
   categoryId: Joi.string().optional(),
   ItemImages: Joi.array().items(Joi.string()).optional(),
   discountType: Joi.string().optional(),
-  Attribute: Joi.array().items(Joi.string()).optional(),
+  Attributes: Joi.object()
+    .keys({
+      color: Joi.string().optional(),
+      size: Joi.string().optional(),
+      type: Joi.string().optional(),
+    })
+    .optional(),
   Tag: Joi.string().optional(),
   unit: Joi.string().optional(),
-
 });
 //closes product
 
@@ -38,6 +50,9 @@ export const ClosestProductSchema = Joi.object().keys({
 });
 export const toggleProductSchema = Joi.object().keys({
   active: Joi.boolean().required(),
+});
+export const toggleVatSchema = Joi.object().keys({
+  vatActive: Joi.boolean().required(),
 });
 export const option = {
   abortEarly: false,

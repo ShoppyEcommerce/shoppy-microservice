@@ -1,8 +1,13 @@
 import { Application, NextFunction, Request, Response } from "express";
 import { ProductService } from "../services";
 import { v4 as uuid } from "uuid";
-import { OptionalAuth, ShopAuth, successHandler } from "./middleware";
-import { Message } from './../database/model/message';
+import {
+  OptionalAuth,
+  ShopAuth,
+  successHandler,
+  AuthMiddleware,
+} from "./middleware";
+import { Message } from "./../database/model/message";
 
 export default (app: Application) => {
   const service = new ProductService();
@@ -225,9 +230,10 @@ export default (app: Application) => {
   );
   app.get(
     "/product/shop/:id",
-    async (req: Request, res: Response, next: NextFunction) => {
+    async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getProductByShopId(req.params.id);
+  
+        const data = await service.getProductByShopId(req.params.id, req.query);
         return successHandler(res, {
           data,
           message: "product returned successfully",
@@ -238,36 +244,54 @@ export default (app: Application) => {
       }
     }
   );
-  app.get("/product/newest/arrival", async(req:Request, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.getLatestProduct()
-      return successHandler(res,{
-        data,
-        statusCode:200,
-        message:"product returned successful"
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  app.get(
+    "/product/newest/arrival",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getLatestProduct();
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "product returned successful",
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
-  app.put("/product/toggle-visibility/:id", ShopAuth, async(req:Request| any, res:Response, next:NextFunction) =>{
-    try {
-      const id =  req.params.id
-      const user =  req.user
-  
-      const data =  await service.toggleVisibleProduct(id, user, req.body)
-      return successHandler(res,{
-        data,
-        statusCode:201,
-        message:"product updated successfully"
-      })
-      
-    } catch (error) {
-      next(error)
-      
-    }
-  })
+  );
+  app.put(
+    "/product/toggle-visibility/:id",
+    ShopAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const id = req.params.id;
+        const user = req.user;
 
+        const data = await service.toggleVisibleProduct(id, user, req.body);
+        return successHandler(res, {
+          data,
+          statusCode: 201,
+          message: "product updated successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+  app.patch(
+    "/product/toggle/vat-active/:id",
+    AuthMiddleware.Authenticate(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.toggleVatActive(req.params.id, req.body);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "product updated successfully",
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
 };

@@ -1,7 +1,7 @@
 import { databaseConnection } from "../connection";
 import { Model, DataTypes } from "sequelize";
 import { UserModel } from "./user";
-import { DeliveryModel } from "./Delivery";
+
 import { RiderModel } from "./rider";
 import { TransactionHistoryModel } from "./transaction";
 import { ShopModel } from "./shop";
@@ -15,7 +15,7 @@ export interface Order {
   totalAmount: number;
   CancelOrderReason?: string;
   orderStatus: OrderStatus;
-  deliveryMan?: string;
+
   deliveryFee?: number;
   riderId?: string;
   riderFee?: number;
@@ -100,10 +100,7 @@ const OrderSchema = {
     type: DataTypes.UUID,
     allowNull: false,
   },
-  deliveryMan: {
-    type: DataTypes.UUID,
-    allowNull: true,
-  },
+
   riderId: {
     type: DataTypes.UUID,
     allowNull: true,
@@ -132,10 +129,10 @@ OrderModel.init(OrderSchema, {
 // relationship between user model and order model
 OrderModel.belongsTo(UserModel, { foreignKey: "userId" });
 UserModel.hasMany(OrderModel, { foreignKey: "userId" });
-OrderModel.belongsTo(DeliveryModel, { foreignKey: "deliveryMan" });
+
 OrderModel.belongsTo(RiderModel, { foreignKey: "riderId" });
 RiderModel.hasMany(OrderModel, { foreignKey: "riderId" });
-DeliveryModel.hasMany(OrderModel, { foreignKey: "deliveryMan" });
+
 TransactionHistoryModel.belongsTo(OrderModel, { foreignKey: "transactionId" });
 OrderModel.belongsTo(TransactionHistoryModel, { foreignKey: "transactionId" });
 ShopModel.hasMany(OrderModel, { foreignKey: "shopId" });

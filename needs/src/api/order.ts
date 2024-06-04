@@ -1,8 +1,6 @@
-
 import { Application, NextFunction, Request, Response } from "express";
 import {
   AuthMiddleware,
-  DeliveryAuth,
   RiderAuth,
   ShopAuth,
   successHandler,
@@ -10,9 +8,9 @@ import {
 import { OrderService } from "../services";
 import { Utils } from "../utils";
 
-export default (app: Application, ) => {
+export default (app: Application) => {
   const service = new OrderService();
- 
+
   app.post(
     "/order",
     AuthMiddleware.Authenticate(["user"]),
@@ -98,7 +96,11 @@ export default (app: Application, ) => {
     ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.CancelOrder(req.user, req.params.id, req.body);
+        const data = await service.CancelOrder(
+          req.user,
+          req.params.id,
+          req.body
+        );
         return successHandler(res, {
           data,
           message: "order cancelled successfully",
@@ -163,7 +165,11 @@ export default (app: Application, ) => {
     RiderAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.orderCompleted(req.user, req.params.id, req.body);
+        const data = await service.orderCompleted(
+          req.user,
+          req.params.id,
+          req.body
+        );
         return successHandler(res, {
           data,
           message: "order updated successfully",
@@ -209,7 +215,7 @@ export default (app: Application, ) => {
   );
   // app.patch(
   //   "/order/delivery-order/:id",
-  //   DeliveryAuth,
+  //
   //   async (req: Request | any, res: Response, next: NextFunction) => {
   //     try {
   //       const data = await service.DeliveredOrder(req.params.id, req.user);

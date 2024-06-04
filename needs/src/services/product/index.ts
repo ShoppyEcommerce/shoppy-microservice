@@ -12,6 +12,7 @@ import {
   UpdateProductSchema,
   option,
   toggleProductSchema,
+  toggleVatSchema,
 } from "./validation";
 import { Utils } from "../../utils";
 import {
@@ -224,7 +225,7 @@ export class ProductService {
     return Utils.FormatData(product);
   }
   async getVendorsProducts(user: string) {
-    const product = await this.repository.getVendorsProducts(user);
+    const product = await this.repository.getVendorsProducts(user, "");
     return Utils.FormatData(product);
   }
   async getClosestProduct(input: { latitude: number; longitude: number }) {
@@ -262,7 +263,12 @@ export class ProductService {
   }
   async searchProductsAndVendors(input: string) {
     const products = await ProductModel.findAll({
-      where: { itemName: { [Op.like]: `%${input}%` } },
+      where: {
+        [Op.or]: [
+          { itemName: { [Op.like]: `%${input}%` } },
+          { Tag: { [Op.like]: `%${input}%` } },
+        ],
+      },
     });
     // const vendors = await VendorModel.findAll({
     //   where: {
@@ -305,16 +311,25 @@ export class ProductService {
 
     return favorite;
   }
-  async getProductByShopId(shopId: string) {
-    return await this.repository.getVendorsProducts(shopId);
+  async getProductByShopId(shopId: string, query: any) {
+    const { type, categoryId, count } = query;
+    const normalizedType = String(type).trim().toLowerCase();
+
+    if (normalizedType === "top-sellers") {
+      return await this.repository.getTopSeller(shopId, count, categoryId);
+    } else if (normalizedType === "new-arrivals") {
+      return await this.repository.getNewestArrival(shopId, count, categoryId);
+    } else {
+      return await this.repository.getVendorsProducts(shopId, categoryId);
+    }
   }
   async toggleVisibleProduct(id: string, shopId: string, input: any) {
     const { error } = toggleProductSchema.validate(input, option);
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    console.log(id, shopId)
-    const product = await this.repository.getAnyProduct(id, shopId);
+
+    const product = await this.repository.getAnyProduct({ id, shopId });
     if (!product) {
       throw new BadRequestError("product does not exist", "");
     }
@@ -322,6 +337,19 @@ export class ProductService {
   }
 
   async getLatestProduct() {
-    return await this.repository.getNewestArrival();
+    // return await this.repository.getNewestArrival();
+  }
+
+  async toggleVatActive(id: string, input: { vatActive: boolean }) {
+    const { error } = toggleVatSchema.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    const product = await this.repository.getAnyProduct({ id });
+    if (!product) {
+      throw new BadRequestError("product does not exist", "");
+    }
+
+    await this.repository.update({ id }, { vatActive: input.vatActive });
   }
 }

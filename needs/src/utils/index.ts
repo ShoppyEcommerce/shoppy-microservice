@@ -8,8 +8,7 @@ import {
   User,
   UserModel,
   ProfileModel,
-  DeliveryModel,
-  DeliveryProfileModel,
+ 
   ShopModel,
   Shop,
   RiderModel,
@@ -145,13 +144,7 @@ export class Utils {
       return this.transformUser(user);
     }
 
-    const delivery = await DeliveryModel.findByPk(id, {
-      include: { model: DeliveryProfileModel },
-      attributes: { exclude: ["password", "confirmPassword"] },
-    });
-    if (delivery) {
-      return this.transformDelivery(delivery);
-    }
+ 
     const shop = await ShopModel.findByPk(id);
     if (shop) {
       return this.transformShop(shop);

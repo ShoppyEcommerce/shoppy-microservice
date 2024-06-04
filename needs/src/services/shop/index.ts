@@ -1,4 +1,17 @@
-import { Shop, ShopModel, ShopRepository } from "../../database";
+import {
+  Shop,
+  ShopModel,
+  ShopRepository,
+  ShopPaymentRepository,
+  OrderRepository,
+  Order,
+  OrderStatus,
+  ShopWalletRepository,
+  Wallet,
+  PaymentType,
+  Type,
+  PaymentStatus,
+} from "../../database";
 import { v4 as uuid } from "uuid";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -12,6 +25,7 @@ import {
 } from "./validation";
 import { Utils } from "../../utils";
 import { sendSMS } from "../../lib/sendSmS";
+import { Op } from "sequelize";
 
 interface ShopDetails {
   logo: string;
@@ -45,8 +59,14 @@ interface ShopDeliverySettings {
 
 export class ShopService {
   private repository: ShopRepository;
+  private shopWalletRepo: ShopWalletRepository;
+  private orderRepo: OrderRepository;
+  private shopPaymentRepo: ShopPaymentRepository;
   constructor() {
     this.repository = new ShopRepository();
+    this.shopWalletRepo = new ShopWalletRepository();
+    this.orderRepo = new OrderRepository();
+    this.shopPaymentRepo = new ShopPaymentRepository();
   }
   async register(input: Shop) {
     const { error, value } = registerShopValidation.validate(input, option);
@@ -118,8 +138,11 @@ export class ShopService {
       `A 4 digit OTP has been sent to your phone number ${code.OTP}`
     );
   }
-  async updateShop (shopId:string, update:any){
-    await this.repository.update({numOfProductSold:update.numOfProductSold},shopId)
+  async updateShop(shopId: string, update: any) {
+    await this.repository.update(
+      { numOfProductSold: update.numOfProductSold },
+      shopId
+    );
   }
 
   async verifyOtp(input: { OTP: number; phoneNumber: string }) {
@@ -187,7 +210,7 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-    await this.repository.update({ shopSchedule: input, }, userId);
+    await this.repository.update({ shopSchedule: input }, userId);
   }
   async updateDeliverySetting(input: ShopDeliverySettings, userId: string) {
     const { error } = DeliverySettingValidation.validate(input, option);
@@ -234,5 +257,84 @@ export class ShopService {
 
   async TopSeller() {
     return await this.repository.getTopSeller();
+  }
+  async ShopDashboard(shopId: string) {
+    const today = new Date();
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1
+    );
+    const shopSales = await this.shopPaymentRepo.findAll({
+      shopId,
+      type: Type.CREDIT,
+      status: PaymentStatus.SUCCESS,
+    });
+    const inProgressSales = await this.orderRepo.inProgessOrder(
+      shopId,
+
+   
+    );
+    const wallet = await this.shopWalletRepo.getWallet({ shopId });
+    const todayEarning = await this.shopPaymentRepo.findAll({
+      type: Type.CREDIT,
+      status: PaymentStatus.SUCCESS,
+      createdAt: {
+        [Op.between]: [startOfToday, endOfToday],
+      },
+    });
+    const orderCompleted = (await this.orderRepo.findAllShopOrder({
+      shopId,
+      orderStatus: OrderStatus.COMPLETED,
+    })) as unknown as Order[];
+    const orderPending = await this.orderRepo.findAllShopOrder({
+      shopId,
+      orderStatus: OrderStatus.PENDING,
+    });
+    const orderCancelled = await this.orderRepo.findAllShopOrder({
+      shopId,
+      orderStatus: OrderStatus.CANCELED,
+    });
+    const orderReturned = await this.orderRepo.findAllShopOrder({
+      shopId,
+      orderStatus: OrderStatus.RETURNED,
+    });
+    const latestOrder = await this.orderRepo.latestOrder({
+      shopId,
+    });
+    return {
+      shopSales,
+      inProgressSales,
+      wallet,
+      todayEarning,
+      orderCompleted,
+      orderPending,
+      orderCancelled,
+      orderReturned,
+      latestOrder,
+    };
+    // const wallet = (await this.vendorWallet.walletBalance({
+    //   ownerId: vendorId,
+    // })) as unknown as Wallet;
+
+    // const cancel: Order[] = orders.filter(
+    //   (order) => order.orderStatus === OrderStatus.CANCELED
+    // );
+    // const sales = orders.reduce((curr, acc) => curr + acc.totalAmount, 0);
+    // const pending = orders.filter(
+    //   (order) => order.orderStatus === OrderStatus.PENDING
+    // );
+    // const returned = orders.filter(
+    //   (order) => order.orderStatus === OrderStatus.RETURNED
+    // );
+    // const progress = orders
+    //   .filter((order) => order.orderStatus === OrderStatus.CONFIRMED)
+    //   .reduce((cur, acc) => cur + acc.totalAmount, 0);
+    // const cancelAmount = cancel.reduce((cur, acc) => cur + acc.totalAmount, 0);
   }
 }

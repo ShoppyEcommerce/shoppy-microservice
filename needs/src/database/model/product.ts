@@ -29,13 +29,21 @@ export interface Product {
   available: Availability;
   ownerId: string;
   numRating?: number;
-  active:boolean;
+  active: boolean;
   Attribute: Array<string>;
   unit: string;
   Tag?: string;
   discountType?: string;
   discount?: number;
   Vat: number;
+  Attributes: Attributes;
+  vatActive: boolean;
+  productSold?: number;
+}
+interface Attributes {
+  size: string;
+  color: string;
+  type: string;
 }
 
 export enum Availability {
@@ -64,6 +72,14 @@ ProductModel.init(
       type: DataTypes.UUID,
       allowNull: false,
     },
+    vatActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    productSold: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     categoryId: { type: DataTypes.UUID, onDelete: "CASCADE" },
     ownerId: { type: DataTypes.UUID, onDelete: "CASCADE" },
     itemName: {
@@ -81,11 +97,15 @@ ProductModel.init(
     },
     Attribute: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: false,
+      allowNull: true,
     },
-    active:{
-      type:DataTypes.BOOLEAN,
-      defaultValue:true
+    Attributes: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
+    active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
 
     moduleId: {
@@ -111,6 +131,10 @@ ProductModel.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: true,
+    },
+    Tag:{
+      type:DataTypes.STRING,
+      allowNull:true
     },
     Description: {
       type: DataTypes.TEXT,

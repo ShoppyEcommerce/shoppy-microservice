@@ -14,11 +14,10 @@ export { OrderRepository } from "./order-repository";
 export { ConversationRepository } from "./conversation-repository";
 export { MessageRepository } from "./message-repository";
 export { CartRepository } from "./cart-repository";
-export { DeliveryRepository } from "./delivery-repository";
-export { DeliveryProfileRepository } from "./delivery-profile-repository";
+
 export { PaymentRepository } from "./payment-repository";
 export { ServiceRepository } from "./service-repository";
-export { SubVendorRepository } from "./subVendor-repository";
+
 export { ParcelRepository } from "./parcel-repository";
 export { ParcelDeliveryRepository } from "./parcel-delivery-repository";
 export { AdminWalletRepository } from "./admin-wallet-repository";

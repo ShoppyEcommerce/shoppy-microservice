@@ -13,11 +13,10 @@ import {
   TransactionType,
   OrderStatus,
   Wallet,
-  DeliveryModel,
-  DeliveryProfileModel,
-  DeliveryProfile,
-  DeliveryProfileRepository,
-  Delivery,
+
+
+
+
   PaymentRepository,
   PaymentStatus,
   Type,
@@ -70,7 +69,7 @@ export class OrderService {
   private cart: CartRepository;
   private productRepo: ProductRepository;
   private shopRepository: ShopRepository;
-  private deliveryProfile: DeliveryProfileRepository;
+
   private payment: PaymentRepository;
   private walletReo: WalletRepository;
   private adminWallet: AdminWalletRepository;
@@ -86,7 +85,7 @@ export class OrderService {
     this.transaction = new TransactionService();
     this.cart = new CartRepository();
     this.productRepo = new ProductRepository();
-    this.deliveryProfile = new DeliveryProfileRepository();
+ 
     this.payment = new PaymentRepository();
     this.walletReo = new WalletRepository();
     this.adminWallet = new AdminWalletRepository();
@@ -450,39 +449,39 @@ export class OrderService {
     const payload = {
       orderStatus: OrderStatus.CONFIRMED,
     };
-    await this.repository.updateOrder(payload, order.id);
-    const deliveries = (await DeliveryProfileModel.findAll({
-      include: DeliveryModel,
-    })) as unknown as DeliveryProfile[];
-    const shop = (await this.shopRepository.getShop(shopId)) as unknown as Shop;
-    let deliveryMan: DeliveryProfile[] = [];
+    // await this.repository.updateOrder(payload, order.id);
+    // const deliveries = (await DeliveryProfileModel.findAll({
+    //   include: DeliveryModel,
+    // })) as unknown as DeliveryProfile[];
+    // const shop = (await this.shopRepository.getShop(shopId)) as unknown as Shop;
+    // let deliveryMan: DeliveryProfile[] = [];
 
-    io.emit(UserOrder, { order, user: order.userId });
-    deliveries.map((delivery: DeliveryProfile) => {
-      const valid = geolib.isPointWithinRadius(
-        { latitude: delivery.latitude, longitude: delivery.longitude },
-        {
-          latitude: shop.shopDetails.latitude,
-          longitude: shop.shopDetails.longitude,
-        },
-        10000
-      );
+    // io.emit(UserOrder, { order, user: order.userId });
+    // deliveries.map((delivery: DeliveryProfile) => {
+    //   const valid = geolib.isPointWithinRadius(
+    //     { latitude: delivery.latitude, longitude: delivery.longitude },
+    //     {
+    //       latitude: shop.shopDetails.latitude,
+    //       longitude: shop.shopDetails.longitude,
+    //     },
+    //     10000
+    //   );
 
-      valid && deliveryMan.push(delivery);
-    });
-    if (deliveryMan.length > 0) {
-      deliveryMan.map((delivery) => {
-        const socketId = userSocketMap.get(delivery.deliveryManId);
-        if (socketId) {
-          io.to(socketId).emit(DeliveryOrder, {
-            message: "new order for pickup",
-          });
-        }
-      });
+    //   valid && deliveryMan.push(delivery);
+    // });
+    // if (deliveryMan.length > 0) {
+    //   deliveryMan.map((delivery) => {
+    //     const socketId = userSocketMap.get(delivery.deliveryManId);
+    //     if (socketId) {
+    //       io.to(socketId).emit(DeliveryOrder, {
+    //         message: "new order for pickup",
+    //       });
+    //     }
+    //   });
       return "order updated successfully";
-    } else {
-      return "no delivery man is in your vaccinity";
-    }
+    // } else {
+    //   return "no delivery man is in your vaccinity";
+    // }
   }
   async CancelOrder(shopId: string, id: string, input: any) {
     const { error } = cancelOrderValidations.validate(input, option);
@@ -504,7 +503,7 @@ export class OrderService {
       CancelOrderReason: input.CancelOrderReason,
     };
     await this.repository.updateOrder(payload, order.id);
-    const delivery = await DeliveryProfileModel.findAll({});
+    // const delivery = await DeliveryProfileModel.findAll({});
 
     const socketId = userSocketMap.get(order.userId);
     if (socketId) {
@@ -559,9 +558,12 @@ export class OrderService {
       ownerId: productData.dataValues.ownerId,
       numRating: productData.dataValues.numRating,
       Attribute: productData.dataValues.Attribute,
+      Attributes: productData.dataValues.Attributes,
       unit: productData.dataValues.unit,
       Vat: productData.dataValues.Vat,
       shopId: productData.dataValues.shopId,
+      vatActive: productData.dataValues.vatActive,
+      productSold: productData.dataValues.productSold,
     };
   }
   private formatOrder(order: any) {
@@ -638,6 +640,7 @@ export class OrderService {
     if (!order) {
       throw new BadRequestError("order not found", "");
     }
+    const newOrder = this.formatOrder(order);
 
     if (Number(order.trackingCode) !== Number(input.trackingCode)) {
       throw new BadRequestError("invalid tracking code", "");
@@ -664,21 +667,41 @@ export class OrderService {
     );
     const formatOrder = this.formatOrder(order);
 
-    const shop = (await this.shopRepository.getShop(
-      order.shopId
-    )) as unknown as Shop;
-    if (shop) {
-      const count =
-        Number(shop.numOfProductSold ?? 0) + formatOrder.cart.product.length;
+    await Promise.all(
+      formatOrder.cart.product.map(async (product: any) => {
+        const exist = (await this.productRepo.getAnyProduct({
+          id: product.id,
+        })) as unknown as Product;
+        console.log(product.Qty);
 
-      await this.shopRepository.update({ numOfProductSold: count }, shop.id);
-    }
+        if (exist) {
+          const sold = Number(exist.productSold) + product.Qty;
+          console.log(sold);
+          await this.productRepo.update(
+            {
+              id: product.id,
+            },
+            { productSold: sold }
+          );
+        }
+      })
+    );
+
+    // const shop = (await this.shopRepository.getShop(
+    //   order.shopId
+    // )) as unknown as Shop;
+    // if (shop) {
+    //   const count =
+    //     Number(shop.numOfProductSold ?? 0) + formatOrder.cart.product.length;
+
+    //   await this.shopRepository.update({ numOfProductSold: count }, shop.id);
+    // }
     const update = await this.repository.updateOrder(
       { orderStatus: OrderStatus.COMPLETED },
       id
     );
 
-    return update[1][0].dataValues;
+    return "updated";
   }
 
   async returnOrder(orderId: string, userId: string) {

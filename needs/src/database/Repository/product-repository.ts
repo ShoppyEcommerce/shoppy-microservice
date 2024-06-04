@@ -5,6 +5,7 @@ import {
   ProductModel,
   ShopModel,
 } from "../model";
+import { Op } from "sequelize";
 
 export class ProductRepository {
   async create(input: Product) {
@@ -75,6 +76,8 @@ export class ProductRepository {
     });
   }
   async update(input: { id: string }, update: any) {
+    console.log(input, update);
+
     return await ProductModel.update(update, { where: input, returning: true });
   }
   async delete(input: { id: string }) {
@@ -82,19 +85,62 @@ export class ProductRepository {
     return "product deleted";
   }
 
-  async getVendorsProducts(id: string) {
-    return await ProductModel.findAll({ where: { shopId: id, active: true } });
+  async getVendorsProducts(id: string, categoryId:string) {
+    const whereClause :any ={
+      active: true,
+      shopId: id,
+    }
+    if(categoryId){
+      whereClause.categoryId =categoryId
+    }
+    return await ProductModel.findAll({ where: whereClause });
   }
-  async getNewestArrival() {
+  async getNewestArrival(shopId: string, count: number, categoryId?: string) {
+    const whereClause: any = {
+      active: true,
+      shopId,
+    };
+
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
+    }
+
     return await ProductModel.findAll({
+      where: whereClause,
       order: [["createdAt", "DESC"]],
-      limit: 30,
+      limit: Number(count) ?? 10,
     });
   }
   async switchProductVisibility(id: string, active: boolean) {
     await ProductModel.update({ active }, { where: { id } });
   }
-  async getAnyProduct(id: string, shopId: string) {
-    return await ProductModel.findOne({ where: { id, shopId } });
+  async getAnyProduct(input: Partial<Product>) {
+    return await ProductModel.findOne({ where: input });
+  }
+  async getTopSeller(shopId: string, count: number, categoryId?: string) {
+    const whereClause: any = {
+      active: true,
+      shopId,
+      productSold: {
+        [Op.gt]: 0,
+      },
+    };
+
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
+    }
+    return await ProductModel.findAll({
+      where: whereClause,
+      order: [["productSold", "DESC"]],
+      limit: Number(count) ?? 10,
+    });
+    // return await ShopModel.findAll({
+    //   where:{
+    //     numOfProductSold:{
+    //       [Op.gt]:0
+    //     }
+    //   },
+    //   order: [["numOfProductSold", "DESC"]],
+    // })
   }
 }

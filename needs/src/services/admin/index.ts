@@ -1,8 +1,9 @@
 import {
-  DeliveryModel,
+
   OrderModel,
   UserModel,
   ShopModel,
+  RiderModel,
 } from "../../database";
 
 export class AdminService {
@@ -20,9 +21,8 @@ export class AdminService {
          
         },
         {
-          model: DeliveryModel,
-          as: "DeliveryModel",
-          attributes: ["id", "firstName", "lastName", "email"],
+          model: RiderModel,
+     
         },
       ],
     });

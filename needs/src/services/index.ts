@@ -3,7 +3,7 @@ export { MediaService } from "./media";
 export { PaymentService } from "./payment";
 export { ProfileService } from "./profile";
 // export { VendorProfileService } from "./vendor-profile";
-export { DeliveryService } from "./delivery";
+
 export { RatingService } from "./rating";
 export { ModuleService } from "./module";
 export { OrderService } from "./order";
@@ -15,7 +15,7 @@ export { TransactionService } from "./transaction";
 export { WalletService } from "./wallet";
 export { ConversationService } from "./conversation";
 export { CartService } from "./cart";
-export { DeliveryProfileService } from "./deliveryProfile";
+
 // export { VendorWalletService } from "./vendor-wallet";
 export { ServiceService } from "./service";
 export { ParcelService } from "./parcel";
