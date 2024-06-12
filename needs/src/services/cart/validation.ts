@@ -8,6 +8,8 @@ export const CartValidationSchema = Joi.object().keys({
       itemName: Joi.string().required(),
       Qty: Joi.number().required(),
       amount: Joi.number().required(),
+      image: Joi.string().required(),
+      unit: Joi.string().required(),
     })
     .required(), // Make the entire products array required
   totalAmount: Joi.number().required(), // Add parentheses for required

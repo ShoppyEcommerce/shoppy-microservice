@@ -120,8 +120,9 @@ export class ProductService {
     }
     return Utils.FormatData(product);
   }
-  async getProducts() {
-    const product = await this.repository.getProducts();
+  async getProducts(query: any) {
+
+    const product = await this.repository.getProducts(query);
     return Utils.FormatData(product);
   }
   async getProductCategory(id: string) {

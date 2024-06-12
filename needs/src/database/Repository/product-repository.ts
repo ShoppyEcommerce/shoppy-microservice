@@ -4,8 +4,10 @@ import {
   Product,
   ProductModel,
   ShopModel,
+
 } from "../model";
 import { Op } from "sequelize";
+import{  getPaginatedData} from "./pagination"
 
 export class ProductRepository {
   async create(input: Product) {
@@ -32,11 +34,13 @@ export class ProductRepository {
     });
     return product;
   }
-  async getProducts() {
-    return ProductModel.findAll({
-      where: {
-        active: true,
-      },
+  async getProducts(query: any) {
+    const { page = 1, limit = 16 } = query;
+
+    return getPaginatedData(ProductModel, {
+      page,
+      limit,
+      where: { active: true },
       include: [
         {
           model: ShopModel,
@@ -51,7 +55,9 @@ export class ProductRepository {
           attributes: ["id", "name", "image"],
         },
       ],
+      order: [["itemName", "ASC"]],
     });
+   
   }
   async getProductCategory(id: string) {
     return ProductModel.findAll({
@@ -85,17 +91,17 @@ export class ProductRepository {
     return "product deleted";
   }
 
-  async getVendorsProducts(id: string, categoryId:string) {
-    const whereClause :any ={
+  async getVendorsProducts(id: string, categoryId: string) {
+    const whereClause: any = {
       active: true,
       shopId: id,
-    }
-    if(categoryId){
-      whereClause.categoryId =categoryId
+    };
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
     }
     return await ProductModel.findAll({ where: whereClause });
   }
-  async getNewestArrival(shopId: string, count: number, categoryId?: string) {
+  async getNewestArrival(shopId: string, count?: number, categoryId?: string) {
     const whereClause: any = {
       active: true,
       shopId,
@@ -104,12 +110,15 @@ export class ProductRepository {
     if (categoryId) {
       whereClause.categoryId = categoryId;
     }
-
-    return await ProductModel.findAll({
+    const queryOption: any = {
       where: whereClause,
       order: [["createdAt", "DESC"]],
-      limit: Number(count) ?? 10,
-    });
+    };
+    if (count !== undefined && count > 0) {
+      queryOption.limit = Number(count);
+    }
+
+    return await ProductModel.findAll(queryOption);
   }
   async switchProductVisibility(id: string, active: boolean) {
     await ProductModel.update({ active }, { where: { id } });
@@ -129,11 +138,42 @@ export class ProductRepository {
     if (categoryId) {
       whereClause.categoryId = categoryId;
     }
-    return await ProductModel.findAll({
+
+    const queryOptions: any = {
       where: whereClause,
       order: [["productSold", "DESC"]],
-      limit: Number(count) ?? 10,
-    });
+    };
+
+    if (count !== undefined && count > 0) {
+      queryOptions.limit = Number(count);
+    }
+
+    return await ProductModel.findAll(queryOptions);
+    // const whereClause: any = {
+    //   active: true,
+    //   shopId,
+    //   productSold: {
+    //     [Op.gt]: 0,
+    //   },
+    // };
+
+    // if (categoryId) {
+    //   whereClause.categoryId = categoryId;
+
+    // }
+    // const queryOptions: any = {
+    //   where: whereClause,
+    //   order: [["productSold", "DESC"]],
+    // };
+
+    // if (count !== undefined && count > 0) {
+    //   queryOptions.limit = Number(count);
+    // }
+    // return await ProductModel.findAll({
+    //   where: whereClause,
+    //   order: [["productSold", "DESC"]],
+    //   limit: Number(count) ?? 10,
+    // });
     // return await ShopModel.findAll({
     //   where:{
     //     numOfProductSold:{

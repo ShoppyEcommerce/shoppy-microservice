@@ -35,7 +35,8 @@ export default (app: Application) => {
     "/product",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { data } = await service.getProducts();
+   
+        const { data } = await service.getProducts(req.query);
         return successHandler(res, {
           data,
           message: "products returned successfully",

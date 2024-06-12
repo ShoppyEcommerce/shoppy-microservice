@@ -18,6 +18,8 @@ interface Product{
   itemName: string;
   Qty: number;
   amount: number;
+  unit:string;
+  image:string;
 
 }
 export enum CartStatus {

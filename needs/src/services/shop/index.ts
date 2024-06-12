@@ -197,7 +197,8 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-    await this.repository.update({ shopDetails: input }, userId);
+    const update = await this.repository.update({ shopDetails: input }, userId);
+    return update[1][0].dataValues
   }
   async updateShopSchedule(input: ShopSchedule, userId: string) {
     const { error } = ShopScheduleValidation.validate(input, option);
@@ -210,7 +211,8 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-    await this.repository.update({ shopSchedule: input }, userId);
+    const update = await this.repository.update({ shopSchedule: input }, userId);
+    return update[1][0].dataValues
   }
   async updateDeliverySetting(input: ShopDeliverySettings, userId: string) {
     const { error } = DeliverySettingValidation.validate(input, option);
@@ -223,7 +225,8 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-    await this.repository.update({ DeliverySettings: input }, userId);
+   const update =  await this.repository.update({ DeliverySettings: input }, userId);
+   return update[1][0].dataValues
   }
   async getUnVerifiedShops(): Promise<ShopModel[] | null> {
     return (await this.repository.getUnverifiedShop()) as unknown as ShopModel[];

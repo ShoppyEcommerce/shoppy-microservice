@@ -1,4 +1,4 @@
-import { CartModel, Cart } from "../model";
+import { CartModel, Cart, ShopModel, ProductModel } from "../model";
 
 export class CartRepository {
   async createCart(input: Cart) {
@@ -8,21 +8,40 @@ export class CartRepository {
   async getOpenCart(input: Partial<Cart>) {
     return await CartModel.findOne({ where: input });
   }
+
+  async getShopCart(input: Partial<Cart>) {
+    return await CartModel.findAll({
+      where: input,
+      include: [
+        {
+          model: ShopModel,
+          attributes: ["id", "phoneNumber", "email", "shopDetails"],
+        },
+      ],
+    });
+  }
   async getAllCart(input: Partial<Cart>) {
-     await CartModel.findAll({ where: input });
-  
+    return (await CartModel.findAll({
+      where: input,
+      include: [
+        {
+          model: ShopModel,
+          attributes: ["id", "phoneNumber", "email", "shopDetails"],
+        },
+      ],
+    })) as unknown as Cart[];
   }
   async updateCart(update: any, input: Partial<Cart>) {
-   return await CartModel.update(update, {
+    return await CartModel.update(update, {
       where: { id: input.id, ownerId: input.ownerId },
       returning: true,
-    }); 
+    });
   }
   async deleteCart(input: Partial<Cart>) {
- await CartModel.destroy({
+    await CartModel.destroy({
       where: { id: input.id, ownerId: input.ownerId },
-      
     });
     return "cart deleted";
   }
+  async deleteAllCart(input: Partial<Cart>) {}
 }

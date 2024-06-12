@@ -22,13 +22,31 @@ export default (app: Application) => {
       }
     }
   );
-
   app.get(
-    "/cart",
+    "/cart/shop",
     AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.getCart(req.user);
+  
+        const data = await service.getShopCart(req.user);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "cart returned successfully",
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
+
+  app.get(
+    "/cart/shop/product/:shopId",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const {shopId} =  req.params
+        const data = await service.getCart(req.user, shopId);
         return successHandler(res, {
           data,
           message: "cart returned successfully",
@@ -55,6 +73,19 @@ export default (app: Application) => {
       }
     }
   );
+  app.delete("/cart/delete/all", AuthMiddleware.Authenticate(["user"]), async(req:Request | any, res:Response, next:NextFunction) =>{
+    try{
+      const data =  await service.deleteAllCart(req.user)
+      return successHandler(res,{
+        data,
+        message:"all cart deleted successfully",
+        statusCode:200
+      })
+
+    }catch(err){
+      next(err)
+    }
+  })
   app.patch(
     "/cart/remove/product",
     AuthMiddleware.Authenticate(["user"]),
@@ -87,4 +118,17 @@ export default (app: Application) => {
       }
     }
   );
+  app.patch("/cart/increase/product-Qty", AuthMiddleware.Authenticate(["user"]), async(req:Request | any, res:Response, next:NextFunction) =>{
+    try{
+      const data =  await service.IncreaseProductQty(req.body, req.user)
+      return successHandler(res,{
+        data,
+        statusCode:201,
+        message:"product updated successfully"
+      })
+
+    }catch(err){
+      next(err)
+    }
+  })
 };

@@ -3,6 +3,7 @@ import {
   CartRepository,
   ShopRepository,
   CartStatus,
+  Product,
 } from "../../database";
 import { v4 as uuid } from "uuid";
 import { CartValidationSchema, option } from "./validation";
@@ -34,32 +35,34 @@ export class CartService {
     const exist = (await this.repository.getOpenCart({
       ownerId: input.ownerId,
       status: CartStatus.OPEN,
+      shopId:input.shopId
     })) as unknown as Cart;
 
     if (exist) {
       const cart = this.mapCartModelToCart(exist);
-      if (cart.shopId !== input.shopId) {
-        throw new BadRequestError(
-          "only one vendor can be assigned to a cart",
-          ""
-        );
-      }
-      await this.updateCart(cart, input);
-      return "added to cart";
+      // if (cart.shopId !== input.shopId) {
+      //   throw new BadRequestError(
+      //     "only one vendor can be assigned to a cart",
+      //     ""
+      //   );
+      // }
+      const update = await this.updateCart(cart, input);
+      return update
     } else {
       input.id = uuid();
       input.products = [input.products];
-      await this.repository.createCart(input);
+     const  update =  await this.repository.createCart(input);
+     return update
     }
 
 
 
   }
   async updateCart(input: Cart, data: any) {
-    const productToUpdate = data.products; // Assuming only one product is updated at a time
+    const productToUpdate = data.products; 
 
 
-    // Find the index of the product in the input cart
+
     const index = input.products.findIndex(
       (product) => product.id === productToUpdate.id
     );
@@ -84,13 +87,19 @@ export class CartService {
 
 
     // Save the updated cart to the repository
-    return await this.repository.updateCart(input, input);
+    const cart  =  await this.repository.updateCart(input, input);
+    return cart[1][0].dataValues
   }
-  async getCart(ownerId: string) {
+  async getCart(ownerId: string, shopId:string) {
     return await this.repository.getOpenCart({
       ownerId,
       status: CartStatus.OPEN,
+      shopId
     });
+  }
+
+  async getShopCart(ownerId:string, ){
+    return await this.repository.getShopCart({ownerId, status:CartStatus.OPEN})
   }
 
   async deleteCart(ownerId: string, id: string) {
@@ -109,9 +118,11 @@ export class CartService {
       id: cartModel.dataValues.id,
       products: cartModel.dataValues.products.map((product: any) => ({
         id: product.id,
-        name: product.name,
+        name: product.itemName,
         Qty: product.Qty,
         amount: product.amount,
+        unit:product.unit,
+        image:product.image
       })),
     
       totalAmount: cartModel.dataValues.totalAmount,
@@ -121,6 +132,25 @@ export class CartService {
     };
 
   };
+  async deleteAllCart(ownerId:string){
+
+
+
+  const carts = await this.repository.getAllCart({
+    ownerId,
+    status: CartStatus.OPEN,
+  });
+
+  if (carts.length === 0) {
+    throw new BadRequestError("No carts found for the owner", "");
+  }
+
+  // Delete all the carts
+  await Promise.all(carts.map(cart => this.repository.deleteCart({ id: cart.id, ownerId: ownerId })));
+
+  return "All carts deleted successfully";
+
+  }
   async deleteCartItem (input:{cartId:string, productId:string}, ownerId:string){
     const cart = await this.repository.getOpenCart({
       id: input.cartId,
@@ -189,5 +219,38 @@ export class CartService {
     const updated =  await this.repository.updateCart({ products: cart.products, totalAmount: cart.totalAmount }, { id: cart.id, ownerId });
     return updated[1][0].dataValues
   }
+  async IncreaseProductQty(input: { cartId: string; productId: string }, ownerId: string) {
+    // Find the open cart for the given owner and cart ID
+    const cart = await this.repository.getOpenCart({
+      id: input.cartId,
+      status: CartStatus.OPEN,
+      ownerId,
+    }) as unknown as Cart;
+  
+    if (!cart) {
+      throw new BadRequestError("Cart does not exist", "");
+    }
+  
+    const productIndex = cart.products.findIndex((product) => product.id === input.productId);
+  
+    if (productIndex === -1) {
+      throw new BadRequestError("Product does not exist in the cart", "");
+    }
+  
+    const product = cart.products[productIndex];
+  
+    // Increment the quantity by 1
+    const singleAmount = product.amount / product.Qty;
+    product.Qty += 1;
+    product.amount += singleAmount;
+  
+    // Recalculate totalAmount based on updated product quantities and amounts
+    cart.totalAmount = cart.products.reduce((total, product) => total + product.amount, 0);
+  
+    // Update the cart in the database
+    const updated = await this.repository.updateCart({ products: cart.products, totalAmount: cart.totalAmount }, { id: cart.id, ownerId });
+    return updated[1][0].dataValues;
+  }
+  
   
 }
