@@ -13,10 +13,6 @@ import {
   TransactionType,
   OrderStatus,
   Wallet,
-
-
-
-
   PaymentRepository,
   PaymentStatus,
   Type,
@@ -33,6 +29,8 @@ import {
   Shop,
   ShopWallet,
   RiderRepository,
+  ProfileRepository,
+  Profile,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -59,9 +57,6 @@ import {
 } from "../../config/constant";
 import * as geolib from "geolib";
 
-import { AdminPaymentService } from "../admin-payment";
-import { CartModel } from "./../../database/model/cart";
-
 export class OrderService {
   private repository: OrderRepository;
   private wallet: WalletService;
@@ -69,7 +64,7 @@ export class OrderService {
   private cart: CartRepository;
   private productRepo: ProductRepository;
   private shopRepository: ShopRepository;
-
+  private profile: ProfileRepository;
   private payment: PaymentRepository;
   private walletReo: WalletRepository;
   private adminWallet: AdminWalletRepository;
@@ -85,7 +80,7 @@ export class OrderService {
     this.transaction = new TransactionService();
     this.cart = new CartRepository();
     this.productRepo = new ProductRepository();
- 
+    this.profile = new ProfileRepository();
     this.payment = new PaymentRepository();
     this.walletReo = new WalletRepository();
     this.adminWallet = new AdminWalletRepository();
@@ -209,6 +204,12 @@ export class OrderService {
         transactionId: "",
         trackingCode,
         shopId: input.shopId,
+        deliveryAddress: input.deliveryAddress,
+        deliveryOption: input.deliveryOption,
+        additionalNotes: input.additionalNotes,
+        floorNumber: input.floorNumber,
+        houseNumber: input.houseNumber,
+        doorNumber: input.doorNumber,
       };
     } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
       const res = await this.processPaystackPayment(
@@ -247,6 +248,12 @@ export class OrderService {
         transactionId: "",
         trackingCode,
         shopId: input.shopId,
+        deliveryAddress: input.deliveryAddress,
+        deliveryOption: input.deliveryOption,
+        additionalNotes: input.additionalNotes,
+        floorNumber: input.floorNumber,
+        houseNumber: input.houseNumber,
+        doorNumber: input.doorNumber,
       };
     } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
       payment = {
@@ -280,6 +287,12 @@ export class OrderService {
         transactionId: "",
         trackingCode,
         shopId: input.shopId,
+        deliveryAddress: input.deliveryAddress,
+        deliveryOption: input.deliveryOption,
+        additionalNotes: input.additionalNotes,
+        floorNumber: input.floorNumber,
+        houseNumber: input.houseNumber,
+        doorNumber: input.doorNumber,
       };
     } else {
       throw new BadRequestError("invalid payment type", "");
@@ -327,6 +340,24 @@ export class OrderService {
 
     if (socketId) {
       io.to(socketId).emit(VendorOrder, { message: "you have a new order" });
+    }
+    if (input.deliveryAddress) {
+      const profile = (await this.profile.getProfile({
+        userId: ownerId,
+      })) as unknown as Profile;
+      if (profile && profile?.deliveryAddress?.length) {
+        const exist = profile.deliveryAddress?.find(
+          (item) => item === input.deliveryAddress
+        );
+        if (!exist) {
+          await this.profile.update(ownerId, {
+            deliveryAddress: [
+              ...profile.deliveryAddress,
+              input.deliveryAddress,
+            ],
+          });
+        }
+      }
     }
 
     // // Emit event for new order
@@ -478,7 +509,7 @@ export class OrderService {
     //       });
     //     }
     //   });
-      return "order updated successfully";
+    return "order updated successfully";
     // } else {
     //   return "no delivery man is in your vaccinity";
     // }
@@ -575,6 +606,12 @@ export class OrderService {
       orderStatus: order.dataValues.orderStatus,
       totalAmount: order.dataValues.totalAmount,
       orderItems: order.dataValues.orderItems,
+      deliveryOption: order.dataValues.deliveryOption,
+      houseNumber: order.dataValues.houseNumber,
+      doorNumber: order.dataValues.doorNumber,
+      deliveryAddress: order.dataValues.deliveryAddress,
+      floorNumber: order.dataValues.floorNumber,
+      additionalNotes: order.dataValues.additionalNotes,
       cart: {
         id: order.dataValues.CartModel.dataValues.id,
 

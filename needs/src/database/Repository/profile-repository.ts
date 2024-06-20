@@ -6,7 +6,7 @@ export class ProfileRepository {
     const profile = await ProfileModel.create(input);
     return profile;
   }
-  async getProfile(input: Record<string, string>) {
+  async getProfile(input: Partial<Profile>) {
     const profile = await ProfileModel.findOne({
       where: input,
       include: [

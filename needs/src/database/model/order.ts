@@ -15,7 +15,12 @@ export interface Order {
   totalAmount: number;
   CancelOrderReason?: string;
   orderStatus: OrderStatus;
-
+  deliveryOption: string;
+  houseNumber: string;
+  floorNumber: string;
+  doorNumber: string;
+  additionalNotes: string;
+  deliveryAddress: string;
   deliveryFee?: number;
   riderId?: string;
   riderFee?: number;
@@ -70,7 +75,30 @@ const OrderSchema = {
     type: DataTypes.BIGINT,
     allowNull: false,
   },
-
+  deliveryOption: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  deliveryAddress: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  houseNumber: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  floorNumber: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  doorNumber: {
+    allowNull: true,
+    type: DataTypes.STRING,
+  },
+  additionalNotes: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   referenceId: {
     type: DataTypes.STRING,
     allowNull: false,

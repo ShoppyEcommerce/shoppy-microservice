@@ -128,7 +128,7 @@ export class ParcelDeliveryService {
       }
     }
     const profile = (await this.userProfile.getProfile({
-      ownerId,
+      userId:ownerId,
     })) as unknown as Profile;
     if (!profile) {
       throw new BadRequestError("pls create a profile", "");

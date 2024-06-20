@@ -3,10 +3,16 @@ import { OrderStatus } from "../../database";
 
 export const OrderValidationSchema = Joi.object().keys({
   cartId: Joi.string().required(),
- 
+
   paymentType: Joi.string().required(),
   referenceId: Joi.string().optional(),
-  shopId:Joi.string().required()
+  shopId: Joi.string().required(),
+  additionalNotes: Joi.string().optional(),
+  deliveryOption: Joi.string().required(),
+  deliveryAddress: Joi.string().required(),
+  floorNumber: Joi.string().optional(),
+  doorNumber: Joi.string().optional(),
+  houseNumber: Joi.string().optional(),
 });
 export const InitializeValidation = Joi.object().keys({
   email: Joi.string().email().required(),
@@ -16,8 +22,8 @@ export const cancelOrderValidations = Joi.object().keys({
   CancelOrderReason: Joi.string().optional(),
 });
 export const OrderCompletedValidation = Joi.object().keys({
-  trackingCode:Joi.number().required()
-})
+  trackingCode: Joi.number().required(),
+});
 export const option = {
   abortEarly: false,
   errors: {
