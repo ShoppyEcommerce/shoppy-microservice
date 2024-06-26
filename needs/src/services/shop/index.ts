@@ -198,7 +198,7 @@ export class ShopService {
     }
 
     const update = await this.repository.update({ shopDetails: input }, userId);
-    return update[1][0].dataValues
+    return update[1][0].dataValues;
   }
   async updateShopSchedule(input: ShopSchedule, userId: string) {
     const { error } = ShopScheduleValidation.validate(input, option);
@@ -211,8 +211,11 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-    const update = await this.repository.update({ shopSchedule: input }, userId);
-    return update[1][0].dataValues
+    const update = await this.repository.update(
+      { shopSchedule: input },
+      userId
+    );
+    return update[1][0].dataValues;
   }
   async updateDeliverySetting(input: ShopDeliverySettings, userId: string) {
     const { error } = DeliverySettingValidation.validate(input, option);
@@ -225,8 +228,11 @@ export class ShopService {
       throw new BadRequestError("shop not found", "");
     }
 
-   const update =  await this.repository.update({ DeliverySettings: input }, userId);
-   return update[1][0].dataValues
+    const update = await this.repository.update(
+      { DeliverySettings: input },
+      userId
+    );
+    return update[1][0].dataValues;
   }
   async getUnVerifiedShops(): Promise<ShopModel[] | null> {
     return (await this.repository.getUnverifiedShop()) as unknown as ShopModel[];
@@ -278,11 +284,7 @@ export class ShopService {
       type: Type.CREDIT,
       status: PaymentStatus.SUCCESS,
     });
-    const inProgressSales = await this.orderRepo.inProgessOrder(
-      shopId,
-
-   
-    );
+    const inProgressSales = await this.orderRepo.inProgessOrder(shopId);
     const wallet = await this.shopWalletRepo.getWallet({ shopId });
     const todayEarning = await this.shopPaymentRepo.findAll({
       type: Type.CREDIT,
@@ -321,23 +323,80 @@ export class ShopService {
       orderReturned,
       latestOrder,
     };
-    // const wallet = (await this.vendorWallet.walletBalance({
-    //   ownerId: vendorId,
-    // })) as unknown as Wallet;
+  }
+  async shopOrderCount(shopId: string) {}
+  async shopOrderDetails(input: {
+    shopId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+  }) {
+    const { shopId, search, status, page, limit } = input;
+    const startOfToday = new Date();
+    const endOfDay = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfWeek = new Date(startOfToday);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
 
-    // const cancel: Order[] = orders.filter(
-    //   (order) => order.orderStatus === OrderStatus.CANCELED
-    // );
-    // const sales = orders.reduce((curr, acc) => curr + acc.totalAmount, 0);
-    // const pending = orders.filter(
-    //   (order) => order.orderStatus === OrderStatus.PENDING
-    // );
-    // const returned = orders.filter(
-    //   (order) => order.orderStatus === OrderStatus.RETURNED
-    // );
-    // const progress = orders
-    //   .filter((order) => order.orderStatus === OrderStatus.CONFIRMED)
-    //   .reduce((cur, acc) => cur + acc.totalAmount, 0);
-    // const cancelAmount = cancel.reduce((cur, acc) => cur + acc.totalAmount, 0);
+    const startOfMonth = new Date(startOfToday);
+    startOfMonth.setDate(1);
+
+    const [
+      todayCount,
+      weekCount,
+      monthCount,
+      orders,
+      inProgress,
+      Completed,
+      Cancel,
+      Pending,
+      Returned,
+      Confirmed,
+      all,
+    ] = await Promise.all([
+      this.orderRepo.shopOrderCount(startOfToday, endOfDay, shopId),
+      this.orderRepo.shopOrderCount(startOfWeek, endOfDay, shopId),
+      this.orderRepo.shopOrderCount(startOfMonth, endOfDay, shopId),
+      this.orderRepo.shopOrderDetails(shopId, page, limit, search, status),
+      await this.orderRepo.inProgessOrder(shopId),
+      await this.orderRepo.findAllShopOrder({
+        shopId,
+        orderStatus: OrderStatus.COMPLETED,
+      }),
+      await this.orderRepo.findAllShopOrder({
+        shopId,
+        orderStatus: OrderStatus.CANCELED,
+      }),
+      await this.orderRepo.findAllShopOrder({
+        shopId,
+        orderStatus: OrderStatus.PENDING,
+      }),
+      await this.orderRepo.findAllShopOrder({
+        shopId,
+        orderStatus: OrderStatus.RETURNED,
+      }),
+      await this.orderRepo.findAllShopOrder({
+        shopId,
+        orderStatus: OrderStatus.CONFIRMED,
+      }),
+      await this.orderRepo.findAllShopOrder({
+        shopId,
+      }),
+    ]);
+
+    return {
+      todayCount,
+      weekCount,
+      monthCount,
+      orders,
+      all: all.length,
+      inProgress: inProgress.length,
+      Completed: Completed.length,
+      cancel: Cancel.length,
+      pending: Pending.length,
+      returned: Returned.length,
+      confirmed: Confirmed.length,
+    };
   }
 }

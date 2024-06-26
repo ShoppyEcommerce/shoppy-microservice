@@ -198,4 +198,34 @@ export default (app: Application) => {
       }
     }
   );
+  app.get(
+    "/shop/order/all/details",
+    ShopAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const { status, search, page, limit } = req.query as unknown as Params;
+        const data = await service.shopOrderDetails({
+          page,
+          limit,
+          shopId: req.user,
+          status,
+          search,
+        });
+        return successHandler(res, {
+          data,
+          message: "order details return successfully",
+          statusCode: 200,
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
 };
+
+interface Params {
+  status: string;
+  search: string;
+  page: number;
+  limit: number;
+}

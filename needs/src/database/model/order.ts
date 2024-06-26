@@ -29,6 +29,8 @@ export interface Order {
   transactionId: string;
   trackingCode: number;
   shopId: string;
+  createdAt?:Date
+  updatedAt?:Date
 }
 interface Product {
   id: string;
