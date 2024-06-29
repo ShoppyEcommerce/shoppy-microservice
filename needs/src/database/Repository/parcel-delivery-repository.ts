@@ -20,4 +20,7 @@ export class ParcelDeliveryRepository {
       include: [{ model: AdminPaymentModel }],
     });
   }
+  async updateDelivery(input: Partial<ParcelDelivery>, id: string) {
+    await ParcelDeliveryModel.update(input, { where: { id } });
+  }
 }

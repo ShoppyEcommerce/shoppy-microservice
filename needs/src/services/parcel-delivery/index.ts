@@ -1,6 +1,5 @@
 import { Op, Sequelize } from "sequelize";
 import {
-
   ParcelDelivery,
   ParcelDeliveryRepository,
   ParcelDeliveryStatus,
@@ -17,10 +16,10 @@ import {
   TransactionType,
   Type,
   WalletRepository,
-
   AdminType,
   AdminPaymentStatus,
   AdminPayment,
+  CategoryRepository,
 } from "../../database";
 import { io } from "../../config/socket";
 import * as geolib from "geolib";
@@ -40,8 +39,7 @@ export class ParcelDeliveryService {
   private Transaction: TransactionRepository;
   private payment: PaymentRepository;
   private userProfile: ProfileRepository;
-;
-
+  private categoryRepo: CategoryRepository;
   constructor() {
     this.repository = new ParcelDeliveryRepository();
     this.parcel = new ParcelRepository();
@@ -49,7 +47,7 @@ export class ParcelDeliveryService {
     this.Transaction = new TransactionRepository();
     this.payment = new PaymentRepository();
     this.userProfile = new ProfileRepository();
- 
+    this.categoryRepo = new CategoryRepository();
   }
 
   async create(input: ParcelDelivery, ownerId: string) {
@@ -57,13 +55,25 @@ export class ParcelDeliveryService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const parcel = await this.parcel.find({ id: input.parcelId });
-    if (!parcel) {
-      throw new BadRequestError("parcel not found", "");
+    const category = await this.categoryRepo.Find({ id: input.categoryId });
+    if (!category) {
+      throw new BadRequestError("category not found", "");
+    }
+    const profile = (await this.userProfile.getProfile({
+      userId: ownerId,
+    })) as unknown as Profile;
+    if (!profile) {
+      throw new BadRequestError("pls create a profile", "");
+    }
+    if (!profile.latitude || !profile.longitude) {
+      throw new BadRequestError(
+        "update your profile with latitude and longitude",
+        ""
+      );
     }
     let transaction = {} as Transaction;
     let payment = {} as Payment;
-    let admin = {} as AdminPayment
+    let admin = {} as AdminPayment;
     if (input.whoIsPaying === "Sender") {
       if ((input.paymentMethod = PaymentDeliveryMethod.USER_WALLET)) {
         const wallet = await this.wallet.walletBalance({ ownerId });
@@ -71,82 +81,66 @@ export class ParcelDeliveryService {
           throw new BadRequestError("wallet not found", "");
         }
         const res = await new WalletService().debitWallet(
-          input.amount,
+          input.deliveryFee,
           ownerId
         );
         admin = {
-          id:uuid(),
-          parcelDeliveryId:"",
-          amount:input.amount,
-          type:AdminType.CREDIT,
-          status:AdminPaymentStatus.SUCCESS
+          id: uuid(),
+          parcelDeliveryId: "",
+          amount: input.deliveryFee,
+          type: AdminType.CREDIT,
+          status: AdminPaymentStatus.SUCCESS,
+        };
 
-        }
-        payment = {
-          id: uuid(),
-          merchant: PaymentDeliveryMethod.USER_WALLET,
-          amount: input.amount,
-          referenceId: res.id,
-          paymentType: PaymentType.USER_WALLET,
-          userId: ownerId,
-          status: PaymentStatus.SUCCESS,
-          type: Type.DEBIT,
-        };
-        transaction = {
-          id: uuid(),
-          amount: input.amount,
-          referenceId: res.id,
-          userId: ownerId,
-          type: TransactionType.CREDIT_WALLET,
-          description: `you sent a parcel to ${input.receiver.name} and the amount of ${input.amount} was deducted from your wallet`,
-          paymentId: "",
-        };
+        payment = this.createPayment(
+          ownerId,
+          input.deliveryFee,
+          res.id,
+          PaymentDeliveryMethod.USER_WALLET,
+          PaymentType.USER_WALLET,
+          Type.DEBIT,
+          PaymentStatus.SUCCESS
+        );
+        const description = `you sent a parcel to ${input.receiver.name} and the delivery fee of ${input.deliveryFee} was deducted from your wallet`,
+          transaction = this.createTransaction(
+            ownerId,
+            input.deliveryFee,
+            res.id,
+            description
+          );
       } else if (
         input.paymentMethod === PaymentDeliveryMethod.CASH_ON_DELIVERY
       ) {
-        transaction = {
-          id: uuid(),
-          userId: ownerId,
-          amount: input.amount,
-          referenceId: await Utils.generatePaymentReference(ownerId),
-          description: `you sent a parcel to ${input.receiver.name}`,
-          type: TransactionType.CASH_ON_DELIVERY,
-          paymentId: "",
-        };
-        payment = {
-          id: uuid(),
-          merchant: PaymentDeliveryMethod.CASH_ON_DELIVERY,
-          amount: input.amount,
-          referenceId: await Utils.generatePaymentReference(ownerId),
-          paymentType: PaymentType.CASH_ON_DELIVERY,
-          userId: ownerId,
-          status: PaymentStatus.PENDING,
-          type: Type.DEBIT,
-        };
+        const ref = await Utils.generatePaymentReference(ownerId);
+        const description = `you sent a parcel to ${input.receiver.name}`;
+        transaction = this.createTransaction(
+          ownerId,
+          input.deliveryFee,
+          ref,
+          description
+        );
+        payment = this.createPayment(
+          ownerId,
+          input.deliveryFee,
+          ref,
+          PaymentDeliveryMethod.CASH_ON_DELIVERY,
+          PaymentType.CASH_ON_DELIVERY,
+          Type.DEBIT,
+          PaymentStatus.PENDING
+        );
       } else {
         throw new BadRequestError("invalid payment delivery method", "");
       }
     }
-    const profile = (await this.userProfile.getProfile({
-      userId:ownerId,
-    })) as unknown as Profile;
-    if (!profile) {
-      throw new BadRequestError("pls create a profile", "");
-    }
-    if (!profile.latitude || !profile.longitude) {
-      throw new BadRequestError(
-        "update your profile with latitude ans longitude",
-        ""
-      );
-    }
+
     const payed = (await this.payment.create(payment)) as unknown as Payment;
     transaction.paymentId = payed.id;
     const transact = (await this.Transaction.create(
       transaction
     )) as unknown as Transaction;
- 
+
     value.id = uuid();
-    value.parcelDeliveryStatus = ParcelDeliveryStatus.ONGOING;
+    value.parcelDeliveryStatus = ParcelDeliveryStatus.PENDING;
     value.ownerId = ownerId;
     value.transactionId = transact.id;
     // let deliveryMan: DeliveryProfile[] = [];
@@ -163,11 +157,15 @@ export class ParcelDeliveryService {
 
     //   valid && deliveryMan.push(delivery);
     // });
-    // const data = await this.repository.create(value) as unknown as ParcelDelivery
-    // admin.parcelDeliveryId =  data.id
+    const data = (await this.repository.create(
+      value
+    )) as unknown as ParcelDelivery;
+    if (input.paymentMethod === PaymentDeliveryMethod.USER_WALLET) {
+      admin.parcelDeliveryId = data.id;
 
-    // await new AdminWalletService().creditWallet(input.amount)
-    // await new AdminPaymentService().create(admin)
+      await new AdminWalletService().creditWallet(input.deliveryFee);
+      await new AdminPaymentService().create(admin);
+    }
 
     // if (deliveryMan.length > 0) {
     //   deliveryMan.map((delivery) => {
@@ -175,24 +173,81 @@ export class ParcelDeliveryService {
     //   });
     // }
 
-    return "parcel delivery created successfully"
+    return "parcel delivery created successfully";
+  }
+  private createPayment(
+    ownerId: string,
+    amount: number,
+    ref: string,
+    merchant: PaymentDeliveryMethod,
+    paymentType: PaymentType,
+    type: Type,
+    status: PaymentStatus
+  ) {
+    return {
+      id: uuid(),
+      merchant,
+      amount: amount,
+      referenceId: ref,
+      paymentType,
+      userId: ownerId,
+      status,
+      type,
+    };
+  }
+  private createTransaction(
+    ownerId: string,
+    amount: number,
+    ref: string,
+    description: string
+  ) {
+    return {
+      id: uuid(),
+      userId: ownerId,
+      amount: amount,
+      referenceId: ref,
+      description,
+      type: TransactionType.CASH_ON_DELIVERY,
+      paymentId: "",
+    };
   }
 
-  async getAllParcelDelivery(ownerId:string){
-
-    return await this.repository.getAllParcelDelivery({ownerId})
-
+  async getAllParcelDelivery(ownerId: string) {
+    return await this.repository.getAllParcelDelivery({ ownerId });
   }
-  async getParcelDelivery(input:{ownerId:string, id:string}){
-    const parcel =  await this.repository.getParcelDelivery(input)
+  async getParcelDelivery(input: { ownerId: string; id: string }) {
+    const parcel = await this.repository.getParcelDelivery(input);
 
-    if(!parcel){
-      throw new BadRequestError("parcel delivery does not exist","")
+    if (!parcel) {
+      throw new BadRequestError("parcel delivery does not exist", "");
     }
   }
 
-  async acceptOrder(){
-    
+  async acceptOrder(riderId: string, id: string) {
+    const delivery = (await this.repository.getParcelDelivery({
+      id,
+    })) as unknown as ParcelDelivery;
+    if (!delivery) {
+      throw new BadRequestError("delivery does not exist", "");
+    }
+    if (delivery.parcelDeliveryStatus === ParcelDeliveryStatus.COMPLETED) {
+      throw new BadRequestError("This delivery  has been completed", "");
+    }
+    if (
+      delivery.riderId ||
+      delivery.parcelDeliveryStatus === ParcelDeliveryStatus.ONGOING
+    ) {
+      throw new BadRequestError(
+        "this delivery has been assigned to a rider",
+        ""
+      );
+    }
+
+    await this.repository.updateDelivery(
+      { parcelDeliveryStatus: ParcelDeliveryStatus.ONGOING, riderId },
+      delivery.id
+    );
   }
 
+  
 }

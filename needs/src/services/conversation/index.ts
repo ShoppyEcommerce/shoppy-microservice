@@ -4,7 +4,6 @@ import {
   ConversationSchema,
   UserModel,
   // VendorModel,
-
 } from "../../database";
 import { v4 as uuid } from "uuid";
 import { conversationValidation, option } from "./validation";
@@ -23,23 +22,20 @@ export class ConversationService {
       throw new ValidationError(error.details[0].message, "");
     }
     const exist = await ConversationSchema.findOne({
-        where: {
-            [Op.or]: [
-                {
-                    senderId:user.id,
-                    receiverId:input.receiverId
-                },
-                {
-                    senderId:input.receiverId,
-                    receiverId:user.id
-                }
-               
-               
-                    
-            ]
-        },
+      where: {
+        [Op.or]: [
+          {
+            senderId: user.id,
+            receiverId: input.receiverId,
+          },
+          {
+            senderId: input.receiverId,
+            receiverId: user.id,
+          },
+        ],
+      },
     });
-  
+
     if (!exist) {
       input.id = uuid();
       (input.sender = user),

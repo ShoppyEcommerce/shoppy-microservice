@@ -118,32 +118,36 @@ export default (app: Application) => {
       }
     }
   );
-  app.patch("/rider/go-online", RiderAuth, async(req:Request | any, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.goOnline(req.user)
-      return successHandler(res,{
-        data,
-        message:"rider updated successfully",
-        statusCode:200
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  app.patch(
+    "/rider/go-online",
+    RiderAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.goOnline(req.user);
+        return successHandler(res, {
+          data,
+          message: "rider updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
-  app.patch("/rider/go-offline", RiderAuth, async(req:Request | any, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.goOffline(req.user)
-      return successHandler(res,{
-        data,
-        message:"rider updated successfully",
-        statusCode:200
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  );
+  app.patch(
+    "/rider/go-offline",
+    RiderAuth,
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.goOffline(req.user);
+        return successHandler(res, {
+          data,
+          message: "rider updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
+  );
 };

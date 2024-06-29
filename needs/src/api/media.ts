@@ -4,7 +4,7 @@ import { MediaService } from "../services";
 
 import { successHandler, GeneralAuth } from "./middleware";
 
-export default (app: Application,) => {
+export default (app: Application) => {
   const service = new MediaService();
   app.post(
     "/image",
@@ -12,8 +12,7 @@ export default (app: Application,) => {
     upload.single("images"),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-       
-        const {data} = await service.uploadSingle(req.file);
+        const { data } = await service.uploadSingle(req.file);
         return successHandler(res, {
           data,
           message: "image uploaded successfuly",
@@ -32,7 +31,7 @@ export default (app: Application,) => {
       try {
         const files = req.files; // This will be an array of files
         if (!files || files.length === 0) {
-          throw new Error('No files uploaded');
+          throw new Error("No files uploaded");
         }
         const data = await service.uploadMultiple(req.files as any[]);
         return successHandler(res, {

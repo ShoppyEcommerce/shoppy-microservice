@@ -15,12 +15,8 @@ export class MessageService {
       throw new ValidationError(error.details[0].message, "");
     }
     input.id = uuid();
-   
-   
 
-   return await this.repository.create(input);
-    
-
+    return await this.repository.create(input);
   }
   async getAllMessage(conversationId: string) {
     return await MessageModel.findAll({

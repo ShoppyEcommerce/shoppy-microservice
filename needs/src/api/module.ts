@@ -1,10 +1,9 @@
-
 import { Application, NextFunction, Request, Response } from "express";
 import { ModuleService } from "../services";
 import { Utils } from "../utils";
-import { successHandler , AuthMiddleware} from "./middleware";
+import { successHandler, AuthMiddleware } from "./middleware";
 
-export default (app: Application,) => {
+export default (app: Application) => {
   const service = new ModuleService();
   // Utils.SubscribeMessage(channel, service);
   app.post(
@@ -12,7 +11,7 @@ export default (app: Application,) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.createModule(req.body);
+        const { data } = await service.createModule(req.body);
         return successHandler(res, {
           data,
           message: "module created successfully",
@@ -27,7 +26,7 @@ export default (app: Application,) => {
     "/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.getModule(req.params.id);
+        const { data } = await service.getModule(req.params.id);
         return successHandler(res, {
           data,
           message: "module returned successfully",
@@ -42,7 +41,7 @@ export default (app: Application,) => {
     "/module",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.getAllModule();
+        const { data } = await service.getAllModule();
         return successHandler(res, {
           data,
           message: "module returned successfully",
@@ -63,8 +62,7 @@ export default (app: Application,) => {
           req.body,
           "UPDATE_MODULE"
         );
-     
-      
+
         return successHandler(res, {
           data,
           message: "module updated successfully",
@@ -80,7 +78,7 @@ export default (app: Application,) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.delete(req.params.id);
+        const { data } = await service.delete(req.params.id);
 
         return successHandler(res, {
           data,

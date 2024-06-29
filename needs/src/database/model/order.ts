@@ -29,8 +29,9 @@ export interface Order {
   transactionId: string;
   trackingCode: number;
   shopId: string;
-  createdAt?:Date
-  updatedAt?:Date
+  createdAt?: Date;
+  updatedAt?: Date;
+  subTotalAmount?: number;
 }
 interface Product {
   id: string;
@@ -112,6 +113,10 @@ const OrderSchema = {
   totalAmount: {
     type: DataTypes.FLOAT,
     allowNull: false,
+  },
+  subTotalAmount: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
   },
   transactionId: {
     type: DataTypes.UUID,

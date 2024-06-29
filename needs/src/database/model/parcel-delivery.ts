@@ -2,19 +2,24 @@ import { DataTypes, Model } from "sequelize";
 import { databaseConnection } from "../connection";
 import { UserModel } from "./user";
 import { TransactionHistoryModel } from "./transaction";
+import { CategoryModel } from "./category";
+import { ModuleModel } from "./module";
+import { RiderModel } from "./rider";
 
 export interface ParcelDelivery {
   sender: Sender;
   receiver: Receiver;
   id: string;
-  ownerId:string
-  parcelId: string;
+  ownerId: string;
+  categoryId: string;
   distance: string;
-  amount: number;
+  deliveryFee: number;
   whoIsPaying: "Sender" | "Receiver";
   paymentMethod: PaymentDeliveryMethod;
   parcelDeliveryStatus: ParcelDeliveryStatus;
   transactionId: string;
+  moduleId: string;
+  riderId?: string;
 }
 
 interface Sender {
@@ -36,6 +41,7 @@ export enum PaymentDeliveryMethod {
   USER_WALLET = "User Wallet",
 }
 export enum ParcelDeliveryStatus {
+  PENDING = "Pending",
   ONGOING = "Ongoing",
   COMPLETED = "Completed",
 }
@@ -49,7 +55,11 @@ ParcelDeliveryModel.init(
       primaryKey: true,
       allowNull: false,
     },
-    parcelId: {
+    categoryId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
+    moduleId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
@@ -69,7 +79,7 @@ ParcelDeliveryModel.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    amount: {
+    deliveryFee: {
       type: DataTypes.FLOAT,
       allowNull: false,
     },
@@ -77,9 +87,9 @@ ParcelDeliveryModel.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    ownerId:{
-      type:DataTypes.UUID,
-      allowNull:false
+    ownerId: {
+      type: DataTypes.UUID,
+      allowNull: false,
     },
     paymentMethod: {
       type: DataTypes.ENUM(...Object.values(PaymentDeliveryMethod)),
@@ -87,6 +97,10 @@ ParcelDeliveryModel.init(
     },
     parcelDeliveryStatus: {
       type: DataTypes.ENUM(...Object.values(ParcelDeliveryStatus)),
+    },
+    riderId: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
   },
   { sequelize: databaseConnection, tableName: "parcel-delivery" }
@@ -99,3 +113,9 @@ ParcelDeliveryModel.belongsTo(TransactionHistoryModel, {
 TransactionHistoryModel.belongsTo(ParcelDeliveryModel, {
   foreignKey: "transactionId",
 });
+CategoryModel.hasMany(ParcelDeliveryModel, { foreignKey: "categoryId" });
+ParcelDeliveryModel.belongsTo(CategoryModel, { foreignKey: "categoryId" });
+ParcelDeliveryModel.belongsTo(ModuleModel, { foreignKey: "moduleId" });
+ModuleModel.hasMany(ParcelDeliveryModel, { foreignKey: "moduleId" });
+RiderModel.hasMany(ParcelDeliveryModel, { foreignKey: "riderId" });
+ParcelDeliveryModel.hasOne(RiderModel, { foreignKey: "riderId" });

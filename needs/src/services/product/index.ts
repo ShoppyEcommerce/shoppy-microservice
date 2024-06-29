@@ -121,7 +121,6 @@ export class ProductService {
     return Utils.FormatData(product);
   }
   async getProducts(query: any) {
-
     const product = await this.repository.getProducts(query);
     return Utils.FormatData(product);
   }
@@ -337,7 +336,12 @@ export class ProductService {
     await this.repository.switchProductVisibility(id, input.active);
   }
 
-  async getLatestProduct() {
+  async searchProductWithCategoryId(categoryId: string, search: string) {
+    return await this.repository.searchProductWithCategoryId(
+      categoryId,
+      search
+    );
+
     // return await this.repository.getNewestArrival();
   }
 

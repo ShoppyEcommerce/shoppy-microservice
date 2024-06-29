@@ -50,16 +50,20 @@ export default (app: Application) => {
       }
     }
   );
-  app.patch("/wallet/change-pin", AuthMiddleware.Authenticate(["user"]), async (req: Request | any, res: Response, next: NextFunction) => {
-    try {
-      const data = await service.changePin(req.body, req.user);
-      return successHandler(res, {
-        data,
-        message: "pin changed successfully",
-        statusCode: 200,
-      });
-    } catch (error) {
-      next(error);
+  app.patch(
+    "/wallet/change-pin",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.changePin(req.body, req.user);
+        return successHandler(res, {
+          data,
+          message: "pin changed successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
+  );
 };

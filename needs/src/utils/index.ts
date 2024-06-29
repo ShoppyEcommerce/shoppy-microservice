@@ -8,11 +8,10 @@ import {
   User,
   UserModel,
   ProfileModel,
- 
   ShopModel,
   Shop,
   RiderModel,
-} from "../database";
+} from  "../database";
 export class Utils {
   static async Encoded(input: { id: string }) {
     try {
@@ -144,18 +143,15 @@ export class Utils {
       return this.transformUser(user);
     }
 
- 
     const shop = await ShopModel.findByPk(id);
     if (shop) {
       return this.transformShop(shop);
     }
 
-    const rider =  await RiderModel.findByPk(id)
-    if(rider){
-      return this.transformRider(rider)
-
-    }   
-    else {
+    const rider = await RiderModel.findByPk(id);
+    if (rider) {
+      return this.transformRider(rider);
+    } else {
       throw new BadRequestError("unAuthorized pls kindly login", "");
     }
   }
@@ -183,10 +179,9 @@ export class Utils {
       id: data.dataValues.id,
     };
   }
-  static transformRider(data:any){
-
+  static transformRider(data: any) {
     return {
-      id:data.dataValues.id
-    }
+      id: data.dataValues.id,
+    };
   }
 }

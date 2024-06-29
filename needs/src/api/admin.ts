@@ -3,7 +3,6 @@ import { AdminService } from "../services";
 import { AuthMiddleware, successHandler } from "./middleware";
 import { Op } from "sequelize";
 
-
 export default (app: Application) => {
   const service = new AdminService();
   app.get(

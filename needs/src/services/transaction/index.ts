@@ -1,4 +1,4 @@
-import { Transaction,TransactionRepository } from "../../database";
+import { Transaction, TransactionRepository } from "../../database";
 
 export class TransactionService {
   private repository: TransactionRepository;
@@ -6,6 +6,6 @@ export class TransactionService {
     this.repository = new TransactionRepository();
   }
   async createTransaction(input: Transaction) {
-   return  await this.repository.create(input);
+    return await this.repository.create(input);
   }
 }

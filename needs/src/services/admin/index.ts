@@ -1,10 +1,4 @@
-import {
-
-  OrderModel,
-  UserModel,
-  ShopModel,
-  RiderModel,
-} from "../../database";
+import { OrderModel, UserModel, ShopModel, RiderModel } from "../../database";
 
 export class AdminService {
   async getAllOrder(where: any) {
@@ -18,11 +12,9 @@ export class AdminService {
         },
         {
           model: ShopModel,
-         
         },
         {
           model: RiderModel,
-     
         },
       ],
     });

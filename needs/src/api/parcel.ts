@@ -36,26 +36,27 @@ export default (app: Application) => {
       }
     }
   );
-  app.get("/parcel/:id", async(req:Request, res:Response, next:NextFunction)=>{
-    try {
-      const data =  await service.getParcel(req.params.id)
-      return successHandler(res,{
-        data,
-        statusCode:200,
-        message:"parcel returned successfully"
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  app.get(
+    "/parcel/:id",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getParcel(req.params.id);
+        return successHandler(res, {
+          data,
+          statusCode: 200,
+          message: "parcel returned successfully",
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
+  );
   app.get(
     "/parcel-search",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const search = req.query.search as string;
-       
+
         const data = await service.searchParcel(search);
         return successHandler(res, {
           data,

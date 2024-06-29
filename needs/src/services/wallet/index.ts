@@ -50,9 +50,10 @@ export class WalletService {
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
     }
-    if(!wallet.pin){
-      throw new BadRequestError("please set wallet pin","")
+    if (!wallet.pin) {
+      throw new BadRequestError("please set wallet pin", "");
     }
+    console.log(wallet, amount);
 
     if (wallet?.balance === undefined || wallet.balance < amount) {
       throw new BadRequestError("Insufficient balance", "");
@@ -133,26 +134,28 @@ export class WalletService {
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
     }
-    value.pin =  await Utils.HashPassword(value.pin);
+    value.pin = await Utils.HashPassword(value.pin);
 
     await this.repository.update(ownerId, { pin: value.pin });
   }
-  async changePin(input:{oldPin:string,newPin:string},ownerId:string){
-    const {error} =  ChangePinValidation.validate(input,option)
-    if(error){
-      throw new ValidationError(error.details[0].message, "")
+  async changePin(input: { oldPin: string; newPin: string }, ownerId: string) {
+    const { error } = ChangePinValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
     }
-    const wallet = await this.repository.walletBalance({ ownerId })as unknown  as Wallet
+    const wallet = (await this.repository.walletBalance({
+      ownerId,
+    })) as unknown as Wallet;
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
     }
- 
+
     const verifyPin = await Utils.ComparePassword(input.oldPin, wallet.pin!);
     if (!verifyPin) {
       throw new BadRequestError("incorrect  old pin", "");
     }
     const pin = await Utils.HashPassword(input.newPin);
     await this.repository.update(ownerId, { pin });
-    return "pin changed"
+    return "pin changed";
   }
 }

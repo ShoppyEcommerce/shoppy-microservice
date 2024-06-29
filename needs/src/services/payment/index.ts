@@ -112,7 +112,6 @@ export class PaymentService {
     return response;
   }
   async getBank() {
-
     try {
       const bankList = await axios.get(`${PAYSTACK_API}/bank`, {
         headers: {
@@ -120,15 +119,13 @@ export class PaymentService {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         },
       });
-     
-      return bankList.data.data;
-      
-    } catch (error) {
-    const err =  error as AxiosError
-    const newError =  err?.response?.data as {message:string}
 
-    throw new BadRequestError(newError.message,"")
-      
+      return bankList.data.data;
+    } catch (error) {
+      const err = error as AxiosError;
+      const newError = err?.response?.data as { message: string };
+
+      throw new BadRequestError(newError.message, "");
     }
   }
   async createRecipient(
@@ -146,38 +143,35 @@ export class PaymentService {
       throw new ValidationError(error.details[0].message, "");
     }
 
-      try {
-        const recipient = await axios.post(
-          `${PAYSTACK_API}/transferrecipient`,
-          input,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            },
-          }
-        );
-     
-        const user = (await this.profileRepo.getProfile({
-          userId,
-        })) as unknown as Profile;
-    
-        user.recipient = recipient.data.data.recipient_code;
-        await this.profileRepo.update(user.id, {
-          recipient: recipient.data.data.recipient_code,
-          bankName: recipient.data.data.details.bank_name,
-          accountNumber: recipient.data.data.details.account_number,
-          accountName: recipient.data.data.details.account_name,
-        });
-        return "recipient saved successfully";
-        
-      } catch (err) {
-        const error =  err as AxiosError
-        const newError =  error?.response?.data   as {message:string}
-        throw new BadRequestError(newError.message,"")
-        
-      }
-   
+    try {
+      const recipient = await axios.post(
+        `${PAYSTACK_API}/transferrecipient`,
+        input,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          },
+        }
+      );
+
+      const user = (await this.profileRepo.getProfile({
+        userId,
+      })) as unknown as Profile;
+
+      user.recipient = recipient.data.data.recipient_code;
+      await this.profileRepo.update(user.id, {
+        recipient: recipient.data.data.recipient_code,
+        bankName: recipient.data.data.details.bank_name,
+        accountNumber: recipient.data.data.details.account_number,
+        accountName: recipient.data.data.details.account_name,
+      });
+      return "recipient saved successfully";
+    } catch (err) {
+      const error = err as AxiosError;
+      const newError = error?.response?.data as { message: string };
+      throw new BadRequestError(newError.message, "");
+    }
   }
   async transferToUser(
     input: { amount: number; pin: string },
@@ -194,13 +188,13 @@ export class PaymentService {
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
     }
-    if(!wallet.pin){
-      throw new BadRequestError(" pl create a pin to withdraw from wallet", "")
+    if (!wallet.pin) {
+      throw new BadRequestError(" pl create a pin to withdraw from wallet", "");
     }
     const user = (await this.profileRepo.getProfile({
       userId: ownerId,
     })) as unknown as Profile;
-    
+
     if (!user) {
       throw new BadRequestError("pls create a profile", "");
     }
@@ -211,8 +205,6 @@ export class PaymentService {
       );
     }
     const verifyPin = await Utils.ComparePassword(input.pin, wallet.pin!);
-
- 
 
     if (!verifyPin) {
       throw new BadRequestError("incorrect pin", "");

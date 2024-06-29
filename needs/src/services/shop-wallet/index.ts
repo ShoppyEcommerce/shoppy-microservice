@@ -4,7 +4,6 @@ import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
   Payment,
   PaymentStatus,
-
   PaymentRepository,
   TransactionRepository,
   Wallet,
@@ -13,15 +12,14 @@ import {
   ShopWalletRepository,
   ShopWallet,
   ShopPaymentRepository,
-  ShopPayment
+  ShopPayment,
 } from "../../database";
 import { PaymentService } from "..";
 import { ChangePinValidation, option, pinValidation } from "./validation";
 
-
 export class ShopWalletService {
   private repository: ShopWalletRepository;
-  
+
   private payment: ShopPaymentRepository;
   private Transaction: TransactionRepository;
   constructor() {
@@ -41,7 +39,7 @@ export class ShopWalletService {
   }
   async getWalletBalance(shopId: string) {
     const wallet = (await this.repository.getWallet({
-      shopId
+      shopId,
     })) as unknown as ShopWallet;
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
@@ -79,7 +77,7 @@ export class ShopWalletService {
   }
   async creditWallet(ref: string, shopId: string) {
     const wallet = (await this.repository.getWallet({
-        shopId,
+      shopId,
     })) as unknown as ShopWallet;
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");
@@ -93,13 +91,13 @@ export class ShopWalletService {
       credit: (wallet?.credit ?? 0) + res.amount,
     };
     const updated = await this.repository.update(shopId, update);
-   
+
     return { ...updated[1][0].dataValues, amount: res.amount };
   }
- 
+
   async creditWithReferal(amount: number, shopId: string) {
     const wallet = (await this.repository.getWallet({
-        shopId
+      shopId,
     })) as unknown as ShopWallet;
     if (!wallet) {
       throw new BadRequestError("wallet not found", "");

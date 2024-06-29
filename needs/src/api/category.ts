@@ -1,4 +1,3 @@
-
 import { Application, NextFunction, Request, Response } from "express";
 import { CategoryService } from "../services";
 import { AuthMiddleware, successHandler } from "./middleware";
@@ -11,14 +10,13 @@ export default (app: Application) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.createCategory(req.body);
+        const { data } = await service.createCategory(req.body);
         return successHandler(res, {
           data,
           message: "category created successfully",
           statusCode: 201,
         });
       } catch (error) {
-       
         next(error);
       }
     }
@@ -27,7 +25,7 @@ export default (app: Application) => {
     "/category",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.getCategories();
+        const { data } = await service.getCategories();
         return successHandler(res, {
           data,
           message: "categories returned successfully",
@@ -43,7 +41,7 @@ export default (app: Application) => {
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = req.params.id;
-        const {data} = await service.getCategory(id);
+        const { data } = await service.getCategory(id);
         return successHandler(res, {
           data,
           message: "category returned successfully",
@@ -58,7 +56,7 @@ export default (app: Application) => {
     "/category/module/:id",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.getCategoryModule(req.params.id);
+        const { data } = await service.getCategoryModule(req.params.id);
         return successHandler(res, {
           data,
           message: "categories module returned successfully",
@@ -74,7 +72,7 @@ export default (app: Application) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.updateCategory(req.params.id, req.body);
+        const { data } = await service.updateCategory(req.params.id, req.body);
 
         return successHandler(res, {
           data,
@@ -91,7 +89,7 @@ export default (app: Application) => {
     AuthMiddleware.Authenticate(["admin"]),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const {data} = await service.deleteCategory(req.params.id);
+        const { data } = await service.deleteCategory(req.params.id);
 
         return successHandler(res, {
           data,
@@ -107,7 +105,6 @@ export default (app: Application) => {
     "/search/category",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-       
         const data = await service.searchCategory(req.query.search as string);
         return successHandler(res, {
           data,

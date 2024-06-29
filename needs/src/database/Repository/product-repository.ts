@@ -1,13 +1,14 @@
 import {
   CategoryModel,
+  LikeModel,
   ModuleModel,
   Product,
   ProductModel,
+  RatingModel,
   ShopModel,
-
 } from "../model";
 import { Op } from "sequelize";
-import{  getPaginatedData} from "./pagination"
+import { getPaginatedData } from "./pagination";
 
 export class ProductRepository {
   async create(input: Product) {
@@ -57,7 +58,28 @@ export class ProductRepository {
       ],
       order: [["itemName", "ASC"]],
     });
-   
+  }
+  async searchProductWithCategoryId(categoryId: string, search: string) {
+    const where = {
+      categoryId,
+      [Op.or]: [
+        { itemName: { [Op.like]: `%${search}%` } },
+        { Tag: { [Op.like]: `%${search}%` } },
+      ],
+    };
+
+    return await ProductModel.findAll({
+      where,
+      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: LikeModel,
+        },
+        {
+          model: RatingModel,
+        },
+      ],
+    });
   }
   async getProductCategory(id: string) {
     return ProductModel.findAll({
@@ -82,7 +104,7 @@ export class ProductRepository {
     });
   }
   async update(input: { id: string }, update: any) {
-    console.log(input, update);
+  
 
     return await ProductModel.update(update, { where: input, returning: true });
   }

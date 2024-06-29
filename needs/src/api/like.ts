@@ -1,7 +1,6 @@
-
 import { Application, NextFunction, Request, Response } from "express";
 import { LikeService } from "../services";
-import {  AuthMiddleware, successHandler } from "./middleware";
+import { AuthMiddleware, successHandler } from "./middleware";
 
 export default (app: Application) => {
   const service = new LikeService();

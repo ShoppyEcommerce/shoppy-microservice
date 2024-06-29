@@ -4,7 +4,6 @@ import {
   CategoryModel,
   ModuleModel,
   Category,
- 
 } from "../../database";
 
 import { Utils } from "../../utils";
@@ -35,7 +34,6 @@ export class CategoryService {
     }
     value.id = uuid();
     const data = await this.repository.create(value);
-   
 
     return Utils.FormatData(data);
   }
@@ -88,11 +86,9 @@ export class CategoryService {
     return Utils.FormatData(data);
   }
   async searchCategory(search: string) {
-
     return await CategoryModel.findAll({
       where: { name: { [Op.iLike]: `%${search}%` } },
-      include:ModuleModel
-     
+      include: ModuleModel,
     });
   }
 }

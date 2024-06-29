@@ -3,7 +3,6 @@ import { UnAuthorized } from "../../utils/ErrorHandler";
 import { Utils } from "../../utils";
 import { JwtPayload } from "jsonwebtoken";
 
-
 export const GeneralAuth = async (
   req: Request | any,
   res: Response,
@@ -14,10 +13,10 @@ export const GeneralAuth = async (
     if (!token) {
       throw new UnAuthorized("No token provided", "");
     }
-  
+
     const verify = (await Utils.Decoded(token)) as JwtPayload;
 
-   const data =  await Utils.getModel(verify.id);
+    const data = await Utils.getModel(verify.id);
     req.user = data;
 
     next();

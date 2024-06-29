@@ -125,20 +125,22 @@ export default (app: Application) => {
       }
     }
   );
-  app.put("/user/change-password", AuthMiddleware.Authenticate(["user","admin"]), async(req:Request | any, res:Response, next:NextFunction) =>{
-    try {
-      const data =  await service.changePassword(req.body, req.user)
-        return successHandler(res,{
+  app.put(
+    "/user/change-password",
+    AuthMiddleware.Authenticate(["user", "admin"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.changePassword(req.body, req.user);
+        return successHandler(res, {
           data,
-          message:"password updated successfully",
-          statusCode:200
-        })
-      
-    } catch (error) {
-      next(error)
-      
+          message: "password updated successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-  })
+  );
   app.post(
     "/admin/vendor/verify/:id",
     AuthMiddleware.Authenticate(["admin"]),

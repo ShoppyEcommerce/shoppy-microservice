@@ -2,7 +2,12 @@ import { ProfileRepository, Profile } from "../../database";
 
 import { Utils } from "../../utils";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
-import { UpdateBankDetails, UpdateProfileSchema, option, profileSchema } from "./validation";
+import {
+  UpdateBankDetails,
+  UpdateProfileSchema,
+  option,
+  profileSchema,
+} from "./validation";
 import { v4 as uuid } from "uuid";
 
 export class ProfileService {
@@ -32,7 +37,9 @@ export class ProfileService {
     if (error) {
       throw new ValidationError(error.details[0].message, "");
     }
-    const exist = await this.repository.getProfile({ userId }) as unknown as Profile
+    const exist = (await this.repository.getProfile({
+      userId,
+    })) as unknown as Profile;
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
     }
@@ -41,17 +48,19 @@ export class ProfileService {
     return Utils.FormatData(profile[1][0].dataValues);
   }
   async deleteProfile(userId: string) {
-    const exist = await this.repository.getProfile({ userId }) as unknown as Profile
+    const exist = (await this.repository.getProfile({
+      userId,
+    })) as unknown as Profile;
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
     }
-    const profile = await this.repository.delete({ id:exist.id });
+    const profile = await this.repository.delete({ id: exist.id });
     return Utils.FormatData(profile);
   }
   async updateBankDetails(input: Partial<Profile>, userId: string) {
-    const {error} =  UpdateBankDetails.validate(input, option)
-    if(error){
-      throw new BadRequestError(error.details[0].message,"")
+    const { error } = UpdateBankDetails.validate(input, option);
+    if (error) {
+      throw new BadRequestError(error.details[0].message, "");
     }
     const profile = (await this.repository.getProfile({
       userId,

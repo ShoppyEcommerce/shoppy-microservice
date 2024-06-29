@@ -1,4 +1,3 @@
-
 import { Application, NextFunction, Request, Response } from "express";
 import { RatingService } from "../services";
 
@@ -23,19 +22,19 @@ export default (app: Application) => {
       }
     }
   );
-  app.get("/rating/product/:id", async(req:Request, res:Response, next:NextFunction)=>{
-    try {
-      const data =  await service.getAllRating(req.params.id)
-      return successHandler(res, {
-        data,
-        message:"ratings returned successfully",
-        statusCode:200
-      })
-      
-    } catch (error) {
-      next(error)
-      
+  app.get(
+    "/rating/product/:id",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.getAllRating(req.params.id);
+        return successHandler(res, {
+          data,
+          message: "ratings returned successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
     }
-    
-  })
+  );
 };

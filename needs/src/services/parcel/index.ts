@@ -37,11 +37,11 @@ export class ParcelService {
       },
     });
   }
-  async getParcel (id:string){
-    const parcel =  await this.repository.find({id})
-    if(!parcel){
-      throw new BadRequestError("parcel not found","")
+  async getParcel(id: string) {
+    const parcel = await this.repository.find({ id });
+    if (!parcel) {
+      throw new BadRequestError("parcel not found", "");
     }
-    return parcel
+    return parcel;
   }
 }

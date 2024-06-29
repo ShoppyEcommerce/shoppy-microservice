@@ -7,7 +7,7 @@ import {
   successHandler,
   AuthMiddleware,
 } from "./middleware";
-import { Message } from "./../database/model/message";
+import { Message } from "../database/model/message";
 
 export default (app: Application) => {
   const service = new ProductService();
@@ -35,7 +35,6 @@ export default (app: Application) => {
     "/product",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-   
         const { data } = await service.getProducts(req.query);
         return successHandler(res, {
           data,
@@ -214,6 +213,22 @@ export default (app: Application) => {
       }
     }
   );
+  app.get("/search/product-with-category/:categoryId", async (req:Request| any, res:Response, next:NextFunction) =>{
+    try {
+      const {categoryId} = req.params
+      const {search} = req.query
+      const data =  await service.searchProductWithCategoryId(categoryId, search)
+      return successHandler(res,{
+        data,
+        message:"product returned successfully",
+        statusCode:200
+      })
+      
+    } catch (error) {
+      next(error)
+      
+    }
+  })
   app.get(
     "/favorite/product/all",
     async (req: Request, res: Response, next: NextFunction) => {
@@ -233,7 +248,6 @@ export default (app: Application) => {
     "/product/shop/:id",
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-  
         const data = await service.getProductByShopId(req.params.id, req.query);
         return successHandler(res, {
           data,
@@ -245,21 +259,21 @@ export default (app: Application) => {
       }
     }
   );
-  app.get(
-    "/product/newest/arrival",
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const data = await service.getLatestProduct();
-        return successHandler(res, {
-          data,
-          statusCode: 200,
-          message: "product returned successful",
-        });
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
+  // app.get(
+  //   "/product/newest/arrival",
+  //   async (req: Request, res: Response, next: NextFunction) => {
+  //     try {
+  //       const data = await service.getLatestProduct();
+  //       return successHandler(res, {
+  //         data,
+  //         statusCode: 200,
+  //         message: "product returned successful",
+  //       });
+  //     } catch (error) {
+  //       next(error);
+  //     }
+  //   }
+  // );
   app.put(
     "/product/toggle-visibility/:id",
     ShopAuth,
