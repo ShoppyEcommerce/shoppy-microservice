@@ -20,6 +20,7 @@ export const UpdateProfileSchema = Joi.object().keys({
   city: Joi.string().optional(),
   state: Joi.string().optional(),
   country: Joi.string().optional(),
+  deliveryAddress: Joi.array().items(Joi.string().optional()).optional(),
 });
 export const UpdateBankDetails = Joi.object().keys({
   bankName: Joi.string().required(),

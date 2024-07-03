@@ -43,8 +43,12 @@ export class ProfileService {
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
     }
+    if (value.deliveryAddress) {
+      const address: string[] = exist?.deliveryAddress ?? [];
+      value.deliveryAddress = [...address, value.deliveryAddress];
+    }
 
-    const profile = await this.repository.update(exist.id, value);
+    const profile = await this.repository.update({ id: exist.id }, value);
     return Utils.FormatData(profile[1][0].dataValues);
   }
   async deleteProfile(userId: string) {
@@ -68,7 +72,7 @@ export class ProfileService {
     if (!profile) {
       throw new BadRequestError("profile not found", "");
     }
-    const update = await this.repository.update(profile.id, input);
+    const update = await this.repository.update({id:profile.id}, input);
 
     return update[1][0].dataValues;
   }
@@ -84,7 +88,7 @@ export class ProfileService {
     const deliveryAddress = profile.deliveryAddress ?? [];
 
     // Update deliveryAddress field
-    const update = await this.repository.update(profile.id, {
+    const update = await this.repository.update({id:profile.id}, {
       deliveryAddress: [...deliveryAddress, address],
     });
     return update[1][0].dataValues;
@@ -100,7 +104,7 @@ export class ProfileService {
     const newAddress = profile.deliveryAddress?.filter(
       (prof) => prof.trim() !== address.trim()
     );
-    const update = await this.repository.update(profile.id, {
+    const update = await this.repository.update({id:profile.id}, {
       deliveryAddress: newAddress,
     });
     return update[1][0].dataValues;

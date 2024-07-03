@@ -160,7 +160,7 @@ export class PaymentService {
       })) as unknown as Profile;
 
       user.recipient = recipient.data.data.recipient_code;
-      await this.profileRepo.update(user.id, {
+      await this.profileRepo.update({id:user.id}, {
         recipient: recipient.data.data.recipient_code,
         bankName: recipient.data.data.details.bank_name,
         accountNumber: recipient.data.data.details.account_number,

@@ -18,8 +18,9 @@ export class ProfileRepository {
     });
     return profile;
   }
-  async update(id: string, update: any) {
-    const profile = await ProfileModel.update(update, { where: { id }, returning: true, });
+  async update(input:Partial<Profile>, update: any) {
+    const profile = await ProfileModel.update(update, { where:input, returning: true, });
+    console.log(profile)
     
     return profile;
   }

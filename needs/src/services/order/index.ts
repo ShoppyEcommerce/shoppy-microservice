@@ -73,7 +73,7 @@ export class OrderService {
   private shopWalletRepository: ShopWalletRepository;
   private shopPaymentRepository: ShopPaymentRepository;
   private riderRepository: RiderRepository;
-  private riderWalletRepository:RiderWalletRepository
+  private riderWalletRepository: RiderWalletRepository;
 
   constructor() {
     this.shopRepository = new ShopRepository();
@@ -91,7 +91,7 @@ export class OrderService {
     this.shopPaymentRepository = new ShopPaymentRepository();
     this.shopRepository = new ShopRepository();
     this.riderRepository = new RiderRepository();
-    this.riderWalletRepository =  new RiderWalletRepository()
+    this.riderWalletRepository = new RiderWalletRepository();
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -170,10 +170,22 @@ export class OrderService {
     const trackingCode = Utils.generateTrackingCode();
     // Perform payment
     if (input.paymentType === PaymentType.USER_WALLET) {
-      const wallet = await this.processWalletPayment(Number(input?.subTotalAmount), ownerId);
+      const wallet = await this.processWalletPayment(
+        Number(input?.subTotalAmount),
+        ownerId
+      );
       payment = this.createPayment(ownerId, Number(input?.subTotalAmount));
-      transaction = this.createTransaction(shop, ownerId, Number(input?.subTotalAmount));
-      order = this.order(input, ownerId, totalPrice, Number(input?.subTotalAmount));
+      transaction = this.createTransaction(
+        shop,
+        ownerId,
+        Number(input?.subTotalAmount)
+      );
+      order = this.order(
+        input,
+        ownerId,
+        totalPrice,
+        Number(input?.subTotalAmount)
+      );
     } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
       const res = await this.processPaystackPayment(
         input.referenceId,
@@ -181,12 +193,30 @@ export class OrderService {
         ownerId
       );
       payment = this.createPayment(ownerId, Number(input?.subTotalAmount));
-      transaction = this.createTransaction(shop, ownerId, Number(input?.subTotalAmount));
-      order = this.order(input, ownerId, totalPrice, Number(input?.subTotalAmount));
+      transaction = this.createTransaction(
+        shop,
+        ownerId,
+        Number(input?.subTotalAmount)
+      );
+      order = this.order(
+        input,
+        ownerId,
+        totalPrice,
+        Number(input?.subTotalAmount)
+      );
     } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
       payment = this.createPayment(ownerId, Number(input?.subTotalAmount));
-      transaction = this.createTransaction(shop, ownerId, Number(input?.subTotalAmount));
-      order = this.order(input, ownerId, totalPrice, Number(input?.subTotalAmount));
+      transaction = this.createTransaction(
+        shop,
+        ownerId,
+        Number(input?.subTotalAmount)
+      );
+      order = this.order(
+        input,
+        ownerId,
+        totalPrice,
+        Number(input?.subTotalAmount)
+      );
     } else {
       throw new BadRequestError("invalid payment type", "");
     }
@@ -226,7 +256,10 @@ export class OrderService {
       shopId: order.shopId,
     });
     if (input.paymentType !== PaymentType.CASH_ON_DELIVERY) {
-      await this.CreditAdminWallet(Order.dataValues.id, Number(input?.subTotalAmount));
+      await this.CreditAdminWallet(
+        Order.dataValues.id,
+        Number(input?.subTotalAmount)
+      );
     }
 
     const socketId = userSocketMap.get(input.shopId);
@@ -242,8 +275,9 @@ export class OrderService {
         const exist = profile.deliveryAddress?.find(
           (item) => item === input.deliveryAddress
         );
+        console.log(exist);
         if (!exist) {
-          await this.profile.update(ownerId, {
+          const update = await this.profile.update({userId:ownerId}, {
             deliveryAddress: [
               ...profile.deliveryAddress,
               input.deliveryAddress,
@@ -270,7 +304,12 @@ export class OrderService {
       type: Type.DEBIT,
     };
   };
-  private order = (input: any, ownerId: string, totalPrice: number, subTotalAmount:number) => {
+  private order = (
+    input: any,
+    ownerId: string,
+    totalPrice: number,
+    subTotalAmount: number
+  ) => {
     const trackingCode = Utils.generateTrackingCode();
     return {
       id: uuid(),
@@ -555,7 +594,7 @@ export class OrderService {
       deliveryAddress: order.dataValues.deliveryAddress,
       floorNumber: order.dataValues.floorNumber,
       additionalNotes: order.dataValues.additionalNotes,
-      subTotalAmount:order.dataValues.subTotalAmount,
+      subTotalAmount: order.dataValues.subTotalAmount,
       cart: {
         id: order.dataValues.CartModel.dataValues.id,
 
@@ -591,7 +630,10 @@ export class OrderService {
       throw new BadRequestError("order not found", "");
     }
     if (order.orderStatus === OrderStatus.OUT_FOR_DELIVERY) {
-      throw new BadRequestError("This order has been assigned to another rider", "");
+      throw new BadRequestError(
+        "This order has been assigned to another rider",
+        ""
+      );
     }
     if (order.orderStatus !== OrderStatus.CONFIRMED) {
       throw new BadRequestError("This order is not available", "");
@@ -644,8 +686,6 @@ export class OrderService {
         });
         await this.DebitAdminWallet(order.id, order.totalAmount);
       }
-
-    
     }
     await this.shopPaymentRepository.update(
       { order: order.id, shopId: order.shopId },
@@ -658,11 +698,10 @@ export class OrderService {
         const exist = (await this.productRepo.getAnyProduct({
           id: product.id,
         })) as unknown as Product;
-      
 
         if (exist) {
           const sold = Number(exist.productSold) + product.Qty;
-       
+
           await this.productRepo.update(
             {
               id: product.id,
@@ -682,7 +721,7 @@ export class OrderService {
 
       await this.shopRepository.update({ numOfProductSold: count }, shop.id);
     }
-   await this.repository.updateOrder(
+    await this.repository.updateOrder(
       { orderStatus: OrderStatus.COMPLETED },
       id
     );
