@@ -277,12 +277,15 @@ export class OrderService {
         );
         console.log(exist);
         if (!exist) {
-          const update = await this.profile.update({userId:ownerId}, {
-            deliveryAddress: [
-              ...profile.deliveryAddress,
-              input.deliveryAddress,
-            ],
-          });
+          const update = await this.profile.update(
+            { userId: ownerId },
+            {
+              deliveryAddress: [
+                ...profile.deliveryAddress,
+                input.deliveryAddress,
+              ],
+            }
+          );
         }
       }
     }
@@ -329,6 +332,8 @@ export class OrderService {
       floorNumber: input.floorNumber,
       houseNumber: input.houseNumber,
       doorNumber: input.doorNumber,
+      latitude: input.latitude,
+      longitude: input.longitude,
     };
   };
   private createTransaction = (

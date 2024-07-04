@@ -15,6 +15,8 @@ export const OrderValidationSchema = Joi.object().keys({
   houseNumber: Joi.string().optional(),
   discount: Joi.string().optional(),
   VatTax: Joi.string().optional(),
+  latitude: Joi.number().required(),
+  longitude: Joi.number().required(),
 });
 export const InitializeValidation = Joi.object().keys({
   email: Joi.string().email().required(),

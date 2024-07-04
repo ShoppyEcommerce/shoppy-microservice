@@ -32,6 +32,8 @@ export interface Order {
   createdAt?: Date;
   updatedAt?: Date;
   subTotalAmount?: number;
+  latitude?: number;
+  longitude?: number;
 }
 interface Product {
   id: string;
@@ -113,6 +115,14 @@ const OrderSchema = {
   totalAmount: {
     type: DataTypes.FLOAT,
     allowNull: false,
+  },
+  latitude: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
+  longitude: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
   },
   subTotalAmount: {
     type: DataTypes.FLOAT,
