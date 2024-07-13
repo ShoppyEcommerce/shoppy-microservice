@@ -51,3 +51,4 @@ export {
   RiderPaymentStatus,
   RiderType
 } from "./rider-payment";
+export {OrderTimeline, OrderTimelineModel} from "./order-timeline"

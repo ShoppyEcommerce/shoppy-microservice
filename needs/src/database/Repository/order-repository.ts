@@ -3,6 +3,7 @@ import {
   Order,
   OrderModel,
   OrderStatus,
+  OrderTimelineModel,
   PaymentModel,
   RiderModel,
   ShopModel,
@@ -57,6 +58,9 @@ export class OrderRepository {
         {
           model: ShopModel,
           attributes: ["id", "phoneNumber", "email"],
+        },
+        {
+          model: OrderTimelineModel,
         },
         {
           model: RiderModel,
@@ -120,7 +124,7 @@ export class OrderRepository {
       ],
     });
   }
-  
+
   async FindAll(input: Partial<Order>) {
     return OrderModel.findAll({
       where: input,
@@ -167,6 +171,9 @@ export class OrderRepository {
           model: CartModel,
 
           attributes: ["products", "totalAmount"],
+        },
+        {
+          model: OrderTimelineModel,
         },
 
         {

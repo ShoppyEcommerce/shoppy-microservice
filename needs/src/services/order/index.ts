@@ -32,6 +32,7 @@ import {
   ProfileRepository,
   Profile,
   RiderWalletRepository,
+  OrderTimelineModel,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -57,6 +58,7 @@ import {
   VendorOrder,
 } from "../../config/constant";
 import * as geolib from "geolib";
+import { OrderTimelineRepository } from "../../database/Repository/order-timeline-repository";
 
 export class OrderService {
   private repository: OrderRepository;
@@ -74,7 +76,7 @@ export class OrderService {
   private shopPaymentRepository: ShopPaymentRepository;
   private riderRepository: RiderRepository;
   private riderWalletRepository: RiderWalletRepository;
-
+  private orderTimeLine: OrderTimelineRepository;
   constructor() {
     this.shopRepository = new ShopRepository();
     this.repository = new OrderRepository();
@@ -92,6 +94,7 @@ export class OrderService {
     this.shopRepository = new ShopRepository();
     this.riderRepository = new RiderRepository();
     this.riderWalletRepository = new RiderWalletRepository();
+    this.orderTimeLine = new OrderTimelineRepository();
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -260,6 +263,13 @@ export class OrderService {
         Order.dataValues.id,
         Number(input?.subTotalAmount)
       );
+      await this.orderTimeLine.create({
+        id: uuid(),
+        order: Order.dataValues.id,
+        shopId: order.shopId,
+        note: "The Order payment has been confirmed",
+        status: "Payment Confirmed",
+      });
     }
 
     const socketId = userSocketMap.get(input.shopId);
@@ -467,7 +477,14 @@ export class OrderService {
     const payload = {
       orderStatus: OrderStatus.CONFIRMED,
     };
-    // await this.repository.updateOrder(payload, order.id);
+    await this.repository.updateOrder(payload, order.id);
+    await this.orderTimeLine.create({
+      id: uuid(),
+      order: id,
+      status: "In Process",
+      note: "Order is being prepared. All the items are being collected to be packed and ready for delivery",
+      shopId,
+    });
     // const deliveries = (await DeliveryProfileModel.findAll({
     //   include: DeliveryModel,
     // })) as unknown as DeliveryProfile[];
@@ -490,7 +507,7 @@ export class OrderService {
     // if (deliveryMan.length > 0) {
     //   deliveryMan.map((delivery) => {
     //     const socketId = userSocketMap.get(delivery.deliveryManId);
-    //     if (socketId) {
+    //     if (socketId), {
     //       io.to(socketId).emit(DeliveryOrder, {
     //         message: "new order for pickup",
     //       });
@@ -521,6 +538,13 @@ export class OrderService {
       CancelOrderReason: input.CancelOrderReason,
     };
     await this.repository.updateOrder(payload, order.id);
+    await this.orderTimeLine.create({
+      id: uuid(),
+      order: id,
+      shopId,
+      status: "Cancel Order",
+      note: "This order has been cancelled",
+    });
     // const delivery = await DeliveryProfileModel.findAll({});
 
     const socketId = userSocketMap.get(order.userId);
@@ -654,6 +678,13 @@ export class OrderService {
       { orderStatus: OrderStatus.OUT_FOR_DELIVERY, riderId: id },
       orderId
     );
+    await this.orderTimeLine.create({
+      id: uuid(),
+      order: orderId,
+      shopId: order.shopId,
+      status: "Out For Delivery",
+      note: "Order has been collected by a delivery rider and is out for delivery",
+    });
 
     return update[1][0].dataValues;
   }
@@ -730,6 +761,13 @@ export class OrderService {
       { orderStatus: OrderStatus.COMPLETED },
       id
     );
+    await this.orderTimeLine.create({
+      id: uuid(),
+      order: order.id,
+      shopId: order.shopId,
+      status: "Delivered",
+      note: "Order has been delivered",
+    });
 
     return "updated";
   }
@@ -748,6 +786,13 @@ export class OrderService {
       { orderStatus: OrderStatus.RETURNED },
       orderId
     );
+    await this.orderTimeLine.create({
+      id: uuid(),
+      shopId: order.shopId,
+      status: "Refund Requested",
+      note: "Buyer raised refund request",
+      order: orderId,
+    });
 
     io.emit(VendorOrder, { order: orderUpdate, vendor: order.shopId });
   }
