@@ -20,7 +20,7 @@ export { default as Service } from "./service";
 export {default as Rider} from "./rider"
 export { default as Parcel } from "./parcel";
 export { default as ParcelDelivery } from "./parcel-delivery";
-
+export {default as FavoriteProduct} from "./favorite"
 export { default as Message } from "./message";
 export { default as Admin } from "./admin";
 export { default as Shop } from "./shop";

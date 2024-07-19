@@ -26,10 +26,11 @@ export { AdminWalletService } from "./admin-wallet";
 export { MessageService } from "./message";
 export { AdminService } from "./admin";
 export { ShopService } from "./shop";
-export {ShopWalletService} from"./shop-wallet"
-export {ShopPaymentService} from "./shop-payment"
-export {RiderService} from "./rider"
-export {ShopRatingService} from "./shop-rating"
-export {FavoriteStoreService} from "./favorite-store"
-export {RiderWalletService} from "./rider-wallet";
-export {RiderPaymentService} from "./rider-payment"
+export { ShopWalletService } from "./shop-wallet";
+export { ShopPaymentService } from "./shop-payment";
+export { RiderService } from "./rider";
+export { ShopRatingService } from "./shop-rating";
+export { FavoriteStoreService } from "./favorite-store";
+export { RiderWalletService } from "./rider-wallet";
+export { RiderPaymentService } from "./rider-payment";
+export { FavoriteProductService } from "./favorite-product";

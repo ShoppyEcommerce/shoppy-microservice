@@ -24,7 +24,8 @@ export class FavoriteProductRepository {
         }
     ] });
   }
-  async delete(input: { userId: string; id: string }) {
+  async delete(input: { userId: string; productId: string }) {
+ 
     await FavoriteProductModel.destroy({ where: input });
     return "favorite deleted";
   }

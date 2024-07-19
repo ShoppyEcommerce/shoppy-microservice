@@ -57,12 +57,16 @@ export default (app: Application) => {
     }
   );
   app.delete(
-    "/favorite/:id",
+    "/favorite-store/:id",
     AuthMiddleware.Authenticate(["user"]),
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const favorite = await service.deleteFavorite(req.user, req.params.id);
-        return res.status(200).json(favorite);
+        const data = await service.deleteFavorite(req.user, req.params.id);
+        successHandler(res, {
+          data,
+          message: "favorite removed successfully",
+          statusCode: 201,
+        });
       } catch (error) {
         next(error);
       }

@@ -27,6 +27,7 @@ import {
   Rider,
   ShopRating,
   FavoriteStore,
+  FavoriteProduct,
 } from "./api";
 import { io } from "./config/socket";
 
@@ -47,7 +48,7 @@ export default async (app: Application) => {
   Category(app);
   ShopRating(app);
   Product(app);
-
+  FavoriteProduct(app);
   Rider(app);
   Profile(app);
   Order(app);
