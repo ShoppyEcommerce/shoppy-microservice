@@ -26,11 +26,11 @@ export class CartService {
     input.ownerId = ownerId;
     const shop = await this.shopRepository.find({
       id: input.shopId,
-      isVerified: true,
     });
     if (!shop) {
       throw new BadRequestError("invalid shop", "");
     }
+
     const exist = (await this.repository.getOpenCart({
       ownerId: input.ownerId,
       status: CartStatus.OPEN,

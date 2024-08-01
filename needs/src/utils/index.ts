@@ -124,6 +124,17 @@ export class Utils {
     const OTP = Math.floor(100000 + Math.random() * 900000);
     return { OTP, time };
   }
+  static generatePassword(){
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      result += characters[randomIndex];
+    }
+ 
+    return result;
+
+  }
   static generateVerification() {
     const time = Date.now();
     const OTP = Math.floor(1000 + Math.random() * 9000);

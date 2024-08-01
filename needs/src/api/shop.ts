@@ -221,6 +221,22 @@ export default (app: Application) => {
       }
     }
   );
+  app.post(
+    "/store/onboarding",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.createThirdPartyStore(req.body);
+
+        return successHandler(res, {
+          data,
+          message: "store created successfully",
+          statusCode: 201,
+        });
+      } catch (err) {
+        next(err);
+      }
+    }
+  );
 };
 
 interface Params {

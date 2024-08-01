@@ -270,6 +270,14 @@ export class OrderService {
         note: "The Order payment has been confirmed",
         status: "Payment Confirmed",
       });
+    } else {
+      await this.orderTimeLine.create({
+        id: uuid(),
+        order: Order.dataValues.id,
+        shopId: order.shopId,
+        note: "The Order payment is pending",
+        status: "Payment Pending",
+      });
     }
 
     const socketId = userSocketMap.get(input.shopId);

@@ -15,6 +15,38 @@ const phoneComplexity = {
   max: 11,
   requirementCount: 2,
 };
+
+export const ActivateMerchant = Joi.object().keys({
+  name: Joi.string().required(),
+  address: Joi.string().required(),
+  merchant_id: Joi.string().required(),
+  bank_details: Joi.object()
+    .keys({
+      Bank_name: Joi.string().required(),
+      Account_name: Joi.string().required(),
+      Account_number: Joi.string().required(),
+    })
+    .required(),
+  eventType: Joi.string().required(),
+});
+//onboardThirdPartyStore
+export const ThirdPartStoreValidation = Joi.object().keys({
+  email: Joi.string().trim().lowercase().email().required(),
+
+  phoneNumber: PasswordComplexity(phoneComplexity).required(),
+  city: Joi.string().required(),
+  state: Joi.string().required(),
+  shopDetails: Joi.object()
+    .keys({
+      logo: Joi.string().required(),
+      storeName: Joi.string().required(),
+      address: Joi.string().required(),
+      latitude: Joi.string().required(),
+      longitude: Joi.string().required(),
+    })
+    .required(),
+  uniqueId: Joi.string().required(),
+});
 //Registration validation
 export const registerShopValidation = Joi.object().keys({
   email: Joi.string().trim().lowercase().email().required(),

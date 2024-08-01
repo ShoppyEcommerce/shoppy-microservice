@@ -11,6 +11,7 @@ import {
   PaymentType,
   Type,
   PaymentStatus,
+  EventType,
 } from "../../database";
 import { v4 as uuid } from "uuid";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
@@ -22,10 +23,13 @@ import {
   ShopDetailsValidation,
   ShopScheduleValidation,
   DeliverySettingValidation,
+  ThirdPartStoreValidation,
+  ActivateMerchant,
 } from "./validation";
 import { Utils } from "../../utils";
 import { sendSMS } from "../../lib/sendSmS";
 import { Op } from "sequelize";
+import axios from "axios";
 
 interface ShopDetails {
   logo: string;
@@ -56,6 +60,32 @@ interface ShopDeliverySettings {
   ApproximateDeliveryTime: string | undefined;
   MinimumProcessingTime: string | undefined;
 }
+interface ThirdPartyStoreType {
+  phoneNumber: string;
+  email: string;
+  city: string;
+  state: string;
+  shopDetails: {
+    logo: string;
+    storeName: string;
+    address: string;
+    latitude: string;
+    longitude: string;
+  };
+}
+
+interface Activate {
+  name: string;
+  address: string;
+  logo_url: string;
+  merchant_id: string;
+  bank_detail: {
+    Bank_name: string;
+    Account_name: string;
+    Account_number: string;
+  };
+  eventType: string;
+}
 
 export class ShopService {
   private repository: ShopRepository;
@@ -67,6 +97,85 @@ export class ShopService {
     this.shopWalletRepo = new ShopWalletRepository();
     this.orderRepo = new OrderRepository();
     this.shopPaymentRepo = new ShopPaymentRepository();
+  }
+
+  async merchantStore(input: any) {
+    if (!input.eventType) {
+      throw new ValidationError("eventType is required", "");
+    }
+
+    if (input.eventType === EventType.ACTIVATE) {
+      await this.ActivateMerchantStore(input);
+    }
+  }
+
+  private async ActivateMerchantStore(input: Activate) {
+    // const { error, value } = ActivateMerchant.validate(input, option);
+    // if (error) {
+    //   throw new ValidationError(error.details[0].message, "");
+    // }
+    await this.getcordinates(input.address);
+
+    const data = {};
+  }
+  private async getcordinates(address: string) {
+    const apiKey = "AIzaSyA1RL1O5ZbbUW5YNl67iQwiOrtd8TSGbXI"; // Replace with your Google Maps API key
+    const encodedAddress = encodeURIComponent(address);
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+    try {
+      const response = await axios.get(url);
+      console.log(response);
+      if (response.data.status === "OK") {
+        const location = response.data.results[0].geometry.location;
+        console.log(location.lat, location);
+        return {
+          latitude: location.lat,
+          longitude: location.lng,
+        };
+      } else {
+        throw new Error(
+          "Geocoding API returned an error: " + response.data.status
+        );
+      }
+    } catch (error) {
+      console.error("Error getting coordinates:", error);
+      throw error;
+    }
+  }
+  async createThirdPartyStore(input: ThirdPartyStoreType) {
+    const { error, value } = ThirdPartStoreValidation.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "validation error");
+    }
+    value.phoneNumber = Utils.intertionalizePhoneNumber(value.phoneNumber);
+    const phone = await this.repository.find({
+      phoneNumber: value.phoneNumber,
+    });
+    if (phone) {
+      throw new BadRequestError("phone number already in use", "");
+    }
+    const email = await this.repository.find({ email: value.email });
+    if (email) {
+      throw new BadRequestError("email already in use", "Bad Request");
+    }
+    value.id = uuid();
+    console.log("got here too");
+
+    value.password = Utils.generatePassword();
+
+    const password = value.password;
+    value.password = await Utils.HashPassword(value.password);
+    value.isVerified = true;
+    value.verification = true;
+    value.thirdPartyStore = true;
+    value.thirdPartyStoreId = value.uniqueId;
+    console.log(value, input, password);
+
+    const shop = await this.repository.createShop(value);
+    await this.shopWalletRepo.create({
+      shopId: shop.dataValues.id,
+      id: uuid(),
+    });
   }
   async register(input: Shop) {
     const { error, value } = registerShopValidation.validate(input, option);
@@ -87,6 +196,7 @@ export class ShopService {
     }
     value.id = uuid();
     const code = Utils.generateVerification();
+    value.password = await Utils.HashPassword(value.password);
     const shop = await this.repository.createShop(value);
 
     const send = process.env.SEND_SMS === "true" ? true : false;

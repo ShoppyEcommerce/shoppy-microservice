@@ -38,7 +38,7 @@ export {
   AdminType,
   AdminPaymentStatus,
 } from "./admin-payment";
-export { Shop, ShopModel } from "./shop";
+export { Shop, ShopModel, EventType } from "./shop";
 export { ShopWallet, ShopWalletModel } from "./shop-wallet";
 export { ShopPaymentModel, ShopPayment } from "./shop-payment";
 export { Rider, RiderModel, RiderAvailability } from "./rider";

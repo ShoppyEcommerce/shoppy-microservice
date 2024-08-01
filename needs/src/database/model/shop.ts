@@ -1,7 +1,12 @@
 import { Model, DataTypes } from "sequelize";
 import { databaseConnection } from "../connection";
 import { ModuleModel } from "./module";
-
+export enum EventType {
+  UPDATE = "UPDATE",
+  SUSPEND = "SUSPEND",
+  DEACTIVATE = "DEACTIVATE",
+  ACTIVATE = "ACTIVATE",
+}
 export interface Shop {
   id: string;
   phoneNumber: string;
@@ -18,6 +23,11 @@ export interface Shop {
   numOfProductSold: number;
   rating?: number;
   numRating?: number;
+  thirdPartyStore?: boolean;
+  thirdPartyStoreId?: string;
+  // merchant_id?: string;
+  // merchant_status?: EventType;
+
   favorite?: String[];
   shopDetails: {
     logo: string;
@@ -153,6 +163,22 @@ ShopModel.init(
       type: DataTypes.JSONB,
       allowNull: true,
     },
+    thirdPartyStore: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    // merchant_status: {
+    //   type: DataTypes.ENUM(...Object.values(EventType)),
+    //   defaultValue: EventType.ACTIVATE,
+    // },
+    thirdPartyStoreId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    // merchant_id: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true,
+    // },
   },
   { sequelize: databaseConnection, tableName: "shop" }
 );
