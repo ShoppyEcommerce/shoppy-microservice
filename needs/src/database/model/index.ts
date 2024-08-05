@@ -49,6 +49,7 @@ export {
   RiderPayment,
   RiderPaymentModel,
   RiderPaymentStatus,
-  RiderType
+  RiderType,
 } from "./rider-payment";
-export {OrderTimeline, OrderTimelineModel} from "./order-timeline"
+export { OrderTimeline, OrderTimelineModel } from "./order-timeline";
+export { DeliveryAddress, Delivery } from "./delivery-address";

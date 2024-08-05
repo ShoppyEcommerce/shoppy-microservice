@@ -160,12 +160,15 @@ export class PaymentService {
       })) as unknown as Profile;
 
       user.recipient = recipient.data.data.recipient_code;
-      await this.profileRepo.update({id:user.id}, {
-        recipient: recipient.data.data.recipient_code,
-        bankName: recipient.data.data.details.bank_name,
-        accountNumber: recipient.data.data.details.account_number,
-        accountName: recipient.data.data.details.account_name,
-      });
+      await this.profileRepo.update(
+        { id: user.id },
+        {
+          recipient: recipient.data.data.recipient_code,
+          bankName: recipient.data.data.details.bank_name,
+          accountNumber: recipient.data.data.details.account_number,
+          accountName: recipient.data.data.details.account_name,
+        }
+      );
       return "recipient saved successfully";
     } catch (err) {
       const error = err as AxiosError;
@@ -266,7 +269,7 @@ export class PaymentService {
           },
         }
       );
-      return response.data;
+      return response.data.data;
     } catch (error) {
       const err = error as AxiosError;
       const customErr = err?.response?.data as { message: string };

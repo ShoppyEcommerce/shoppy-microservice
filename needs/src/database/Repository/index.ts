@@ -29,3 +29,4 @@ export { RiderRepository } from "./rider-repository";
 export { ShopRatingRepository } from "./shop-rating-repository";
 export { RiderPaymentRepository } from "./rider-payment-repository";
 export { RiderWalletRepository } from "./rider-wallet-repository";
+export { DeliveryAddressRepository } from "./delivery-address-repository";

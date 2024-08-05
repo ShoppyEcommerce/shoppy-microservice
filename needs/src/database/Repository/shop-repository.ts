@@ -19,6 +19,9 @@ export class ShopRepository {
   async getShop(id: string) {
     return await ShopModel.findByPk(id);
   }
+  async getMerchantStore(input: Partial<Shop>) {
+    return (await ShopModel.findOne({ where: input })) as unknown as Shop;
+  }
   async getAllShop() {
     return await ShopModel.findAll();
   }
@@ -38,13 +41,12 @@ export class ShopRepository {
   }
   async getTopSeller() {
     return await ShopModel.findAll({
-      where:{
-        numOfProductSold:{
-          [Op.gt]:0
-        }
+      where: {
+        numOfProductSold: {
+          [Op.gt]: 0,
+        },
       },
       order: [["numOfProductSold", "DESC"]],
     });
   }
-
 }

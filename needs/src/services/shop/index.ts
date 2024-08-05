@@ -30,6 +30,8 @@ import { Utils } from "../../utils";
 import { sendSMS } from "../../lib/sendSmS";
 import { Op } from "sequelize";
 import axios from "axios";
+import { PaymentService } from "../payment";
+import { ShopPaymentService } from "../shop-payment";
 
 interface ShopDetails {
   logo: string;
@@ -79,12 +81,15 @@ interface Activate {
   address: string;
   logo_url: string;
   merchant_id: string;
+  phone_number: string;
+  email: string;
+  city: string;
   bank_detail: {
-    Bank_name: string;
-    Account_name: string;
-    Account_number: string;
+  
+    account_number: string;
+    bank_code: string;
   };
-  eventType: string;
+  eventType: EventType;
 }
 
 export class ShopService {
@@ -92,11 +97,13 @@ export class ShopService {
   private shopWalletRepo: ShopWalletRepository;
   private orderRepo: OrderRepository;
   private shopPaymentRepo: ShopPaymentRepository;
+  private payment: ShopPaymentService;
   constructor() {
     this.repository = new ShopRepository();
     this.shopWalletRepo = new ShopWalletRepository();
     this.orderRepo = new OrderRepository();
     this.shopPaymentRepo = new ShopPaymentRepository();
+    this.payment = new ShopPaymentService();
   }
 
   async merchantStore(input: any) {
@@ -105,21 +112,97 @@ export class ShopService {
     }
 
     if (input.eventType === EventType.ACTIVATE) {
-      await this.ActivateMerchantStore(input);
+      const exist = await this.repository.getMerchantStore({
+        merchant_id: input.merchant_id,
+      });
+
+      if (exist) {
+        throw new BadRequestError("this merchant already exist", "");
+      }
+      const emailExist = await this.repository.find({ email: input.email });
+      if (emailExist) {
+        throw new BadRequestError("email already in use", "");
+      }
+
+      const merchantStore = await this.ActivateMerchantStore(input);
+
+      const { account_number, account_name, bank_code } = input.bank_details;
+      const { data } = await this.payment.verifyAccount({
+        account_number,
+        bank_code,
+      });
+
+      const recipient = await this.payment.createRecipient({
+        name: data.account_name,
+        bank_code,
+        type: "nuban",
+        currency: "NGN",
+        account_number: data.account_number,
+      });
+      await this.repository.update(
+        {
+          paystackRecipient: {
+            bankName: recipient?.bankName!,
+            accountName: recipient?.accountName!,
+            accountNumber: recipient?.accountNumber!,
+            recipient: recipient?.recipient!,
+          },
+        },
+        merchantStore.dataValues.id
+      );
     }
   }
 
   private async ActivateMerchantStore(input: Activate) {
-    // const { error, value } = ActivateMerchant.validate(input, option);
-    // if (error) {
-    //   throw new ValidationError(error.details[0].message, "");
-    // }
-    await this.getcordinates(input.address);
+    const { error, value } = ActivateMerchant.validate(input, option);
+    if (error) {
+      throw new ValidationError(error.details[0].message, "");
+    }
+    value.id = uuid();
+    const address = await this.getcordinates(input.address);
 
-    const data = {};
+    const data: Shop = {
+      id: uuid(),
+      merchant_id: input.merchant_id,
+      merchant_status: input.eventType,
+      thirdPartyStore: true,
+      shopDetails: {
+        latitude: address.latitude,
+        longitude: address.longitude,
+        logo: input.logo_url,
+        storeName: input.name,
+        contactNumber: input.phone_number,
+        Address: input.address,
+      },
+      city: input.city,
+      isVerified: true,
+      verification: true,
+      numOfProductSold: 0,
+      phoneNumber: Utils.intertionalizePhoneNumber(input.phone_number),
+      email: input.email,
+
+      shopSchedule: {
+        Sunday: undefined,
+        Monday: undefined,
+        Tuesday: undefined,
+        Wednesday: undefined,
+        Thursday: undefined,
+        Friday: undefined,
+        Saturday: undefined,
+      },
+      DeliverySettings: {
+        ScheduleOrder: undefined,
+        Delivery: undefined,
+        TakeAway: undefined,
+        MinimumProcessingTime: undefined,
+        ApproximateDeliveryTime: undefined,
+      },
+    };
+
+    return await this.repository.createShop(data);
   }
   private async getcordinates(address: string) {
-    const apiKey = "AIzaSyA1RL1O5ZbbUW5YNl67iQwiOrtd8TSGbXI"; // Replace with your Google Maps API key
+    const apiKey = "AIzaSyB1u4N1oefmnN5kL5ee6rlZZ67EV4VflMI"; // Replace with your Google Maps API key
     const encodedAddress = encodeURIComponent(address);
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
     try {
@@ -133,13 +216,14 @@ export class ShopService {
           longitude: location.lng,
         };
       } else {
-        throw new Error(
-          "Geocoding API returned an error: " + response.data.status
+        throw new BadRequestError(
+          "Geocoding API returned an error: " + response.data.status,
+          ""
         );
       }
     } catch (error) {
       console.error("Error getting coordinates:", error);
-      throw error;
+      throw new BadRequestError("Error getting coordinates: " + error, "");
     }
   }
   async createThirdPartyStore(input: ThirdPartyStoreType) {

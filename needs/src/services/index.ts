@@ -34,3 +34,4 @@ export { FavoriteStoreService } from "./favorite-store";
 export { RiderWalletService } from "./rider-wallet";
 export { RiderPaymentService } from "./rider-payment";
 export { FavoriteProductService } from "./favorite-product";
+export { DeliveryAddressService } from "./delivery-address";

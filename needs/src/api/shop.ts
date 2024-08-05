@@ -225,7 +225,7 @@ export default (app: Application) => {
     "/store/onboarding",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const data = await service.createThirdPartyStore(req.body);
+        const data = await service.merchantStore(req.body);
 
         return successHandler(res, {
           data,

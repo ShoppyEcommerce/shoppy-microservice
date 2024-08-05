@@ -1,11 +1,18 @@
-import { User, UserModel } from "../model";
+import { DeliveryAddress, User, UserModel } from "../model";
 
 export class UserRepository {
   async createUser(input: User) {
     return await UserModel.create(input);
   }
   async Find(input: Record<string, string>) {
-    return await UserModel.findOne({ where: input });
+    return await UserModel.findOne({
+      where: input,
+      include: [
+        {
+          model: DeliveryAddress,
+        },
+      ],
+    });
   }
   async findAll() {
     return await UserModel.findAll({

@@ -13,7 +13,7 @@ export interface Shop {
   email: string;
   verificationCode?: number | null;
   verificationExpiration?: number | null;
-  applicationReference: string;
+  applicationReference?: string;
   isVerified: boolean;
   verification: boolean;
   country?: string;
@@ -25,19 +25,24 @@ export interface Shop {
   numRating?: number;
   thirdPartyStore?: boolean;
   thirdPartyStoreId?: string;
-  // merchant_id?: string;
-  // merchant_status?: EventType;
-
+  merchant_id?: string;
+  merchant_status?: EventType;
+  paystackRecipient?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    recipient: string;
+  };
   favorite?: String[];
   shopDetails: {
     logo: string;
     storeName: string;
     contactNumber: string;
     Address: string;
-    Banner: string;
+    Banner?: string;
     latitude: number;
     longitude: number;
-    storeAdmin: {
+    storeAdmin?: {
       firstName: string;
       lastName: string;
     };
@@ -167,18 +172,22 @@ ShopModel.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    // merchant_status: {
-    //   type: DataTypes.ENUM(...Object.values(EventType)),
-    //   defaultValue: EventType.ACTIVATE,
-    // },
+    merchant_status: {
+      type: DataTypes.ENUM(...Object.values(EventType)),
+      allowNull: true,
+    },
     thirdPartyStoreId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    // merchant_id: {
-    //   type: DataTypes.STRING,
-    //   allowNull: true,
-    // },
+    merchant_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    paystackRecipient: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
   },
   { sequelize: databaseConnection, tableName: "shop" }
 );

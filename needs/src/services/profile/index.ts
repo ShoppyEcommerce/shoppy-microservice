@@ -1,7 +1,12 @@
-import { ProfileRepository, Profile } from "../../database";
+import {
+  ProfileRepository,
+  Profile,
+  DeliveryAddressRepository,
+} from "../../database";
 
 import { Utils } from "../../utils";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
+import { DeliveryAddressService } from "../delivery-address";
 import {
   UpdateBankDetails,
   UpdateProfileSchema,
@@ -12,8 +17,10 @@ import { v4 as uuid } from "uuid";
 
 export class ProfileService {
   private repository: ProfileRepository;
+  private delivery: DeliveryAddressService;
   constructor() {
     this.repository = new ProfileRepository();
+    this.delivery = new DeliveryAddressService();
   }
   async createProfile(input: Profile, user: string) {
     const { error, value } = profileSchema.validate(input, option);
@@ -22,6 +29,7 @@ export class ProfileService {
     }
     value.id = uuid();
     value.userId = user;
+
     const profile = await this.repository.create(value);
     return Utils.FormatData(profile);
   }
@@ -42,10 +50,6 @@ export class ProfileService {
     })) as unknown as Profile;
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
-    }
-    if (value.deliveryAddress) {
-      const address: string[] = exist?.deliveryAddress ?? [];
-      value.deliveryAddress = [...address, value.deliveryAddress];
     }
 
     const profile = await this.repository.update({ id: exist.id }, value);
@@ -72,7 +76,7 @@ export class ProfileService {
     if (!profile) {
       throw new BadRequestError("profile not found", "");
     }
-    const update = await this.repository.update({id:profile.id}, input);
+    const update = await this.repository.update({ id: profile.id }, input);
 
     return update[1][0].dataValues;
   }
@@ -88,9 +92,12 @@ export class ProfileService {
     const deliveryAddress = profile.deliveryAddress ?? [];
 
     // Update deliveryAddress field
-    const update = await this.repository.update({id:profile.id}, {
-      deliveryAddress: [...deliveryAddress, address],
-    });
+    const update = await this.repository.update(
+      { id: profile.id },
+      {
+        deliveryAddress: [...deliveryAddress, address],
+      }
+    );
     return update[1][0].dataValues;
   }
   async removeDelivery(address: string, userId: string) {
@@ -104,9 +111,12 @@ export class ProfileService {
     const newAddress = profile.deliveryAddress?.filter(
       (prof) => prof.trim() !== address.trim()
     );
-    const update = await this.repository.update({id:profile.id}, {
-      deliveryAddress: newAddress,
-    });
+    const update = await this.repository.update(
+      { id: profile.id },
+      {
+        deliveryAddress: newAddress,
+      }
+    );
     return update[1][0].dataValues;
   }
 }

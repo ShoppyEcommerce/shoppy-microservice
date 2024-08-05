@@ -28,3 +28,4 @@ export { default as ShopPayment} from "./shop-payment";
 export { default as ShopWallet} from "./shop-wallet";
 export {default as ShopRating} from "./shop-rating"
 export {default as FavoriteStore} from "./favorite-store"
+export {default as DeliveryAddress} from "./delivery-address"

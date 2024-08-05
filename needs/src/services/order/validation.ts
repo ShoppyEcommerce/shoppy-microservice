@@ -9,14 +9,10 @@ export const OrderValidationSchema = Joi.object().keys({
   shopId: Joi.string().required(),
   additionalNotes: Joi.string().optional(),
   deliveryOption: Joi.string().required(),
-  deliveryAddress: Joi.string().required(),
-  floorNumber: Joi.string().optional(),
-  doorNumber: Joi.string().optional(),
-  houseNumber: Joi.string().optional(),
   discount: Joi.string().optional(),
   VatTax: Joi.string().optional(),
-  latitude: Joi.number().required(),
-  longitude: Joi.number().required(),
+
+  deliveryId: Joi.string().required(),
 });
 export const InitializeValidation = Joi.object().keys({
   email: Joi.string().email().required(),

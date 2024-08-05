@@ -33,6 +33,8 @@ import {
   Profile,
   RiderWalletRepository,
   OrderTimelineModel,
+  DeliveryAddressRepository,
+  DeliveryAddress,
 } from "../../database";
 import { BadRequestError, ValidationError } from "../../utils/ErrorHandler";
 import {
@@ -77,6 +79,7 @@ export class OrderService {
   private riderRepository: RiderRepository;
   private riderWalletRepository: RiderWalletRepository;
   private orderTimeLine: OrderTimelineRepository;
+  private deliveryRepo: DeliveryAddressRepository;
   constructor() {
     this.shopRepository = new ShopRepository();
     this.repository = new OrderRepository();
@@ -95,6 +98,7 @@ export class OrderService {
     this.riderRepository = new RiderRepository();
     this.riderWalletRepository = new RiderWalletRepository();
     this.orderTimeLine = new OrderTimelineRepository();
+    this.deliveryRepo = new DeliveryAddressRepository();
   }
   async createOrder(input: Order, ownerId: string) {
     // Validate order input
@@ -113,7 +117,13 @@ export class OrderService {
       throw new BadRequestError("Cart does not exist", "");
     }
 
-    // // Fetch vendor details
+    const deliveryAddress = await this.deliveryRepo.getDeliveryAddress({
+      id: input.deliveryId,
+      userId: ownerId,
+    });
+    if (!deliveryAddress) {
+      throw new BadRequestError("delivery address not found", "");
+    }
 
     const shop = (await this.shopRepository.getShop(
       input.shopId
@@ -187,7 +197,8 @@ export class OrderService {
         input,
         ownerId,
         totalPrice,
-        Number(input?.subTotalAmount)
+        Number(input?.subTotalAmount),
+        deliveryAddress
       );
     } else if (input.paymentType === PaymentType.BANK_TRANSFER) {
       const res = await this.processPaystackPayment(
@@ -205,7 +216,8 @@ export class OrderService {
         input,
         ownerId,
         totalPrice,
-        Number(input?.subTotalAmount)
+        Number(input?.subTotalAmount),
+        deliveryAddress
       );
     } else if (input.paymentType === PaymentType.CASH_ON_DELIVERY) {
       payment = this.createPayment(ownerId, Number(input?.subTotalAmount));
@@ -218,7 +230,8 @@ export class OrderService {
         input,
         ownerId,
         totalPrice,
-        Number(input?.subTotalAmount)
+        Number(input?.subTotalAmount),
+        deliveryAddress
       );
     } else {
       throw new BadRequestError("invalid payment type", "");
@@ -285,28 +298,28 @@ export class OrderService {
     if (socketId) {
       io.to(socketId).emit(VendorOrder, { message: "you have a new order" });
     }
-    if (input.deliveryAddress) {
-      const profile = (await this.profile.getProfile({
-        userId: ownerId,
-      })) as unknown as Profile;
-      if (profile && profile?.deliveryAddress?.length) {
-        const exist = profile.deliveryAddress?.find(
-          (item) => item === input.deliveryAddress
-        );
-        console.log(exist);
-        if (!exist) {
-          const update = await this.profile.update(
-            { userId: ownerId },
-            {
-              deliveryAddress: [
-                ...profile.deliveryAddress,
-                input.deliveryAddress,
-              ],
-            }
-          );
-        }
-      }
-    }
+    // if (input.address) {
+    //   const profile = (await this.profile.getProfile({
+    //     userId: ownerId,
+    //   })) as unknown as Profile;
+    //   if (profile && profile?.deliveryAddress?.length) {
+    //     const exist = profile.deliveryAddress?.find(
+    //       (item) => item === input.deliveryAddress
+    //     );
+    //     console.log(exist);
+    //     if (!exist) {
+    //       const update = await this.profile.update(
+    //         { userId: ownerId },
+    //         {
+    //           deliveryAddress: [
+    //             ...profile.deliveryAddress,
+    //             input.deliveryAddress,
+    //           ],
+    //         }
+    //       );
+    //     }
+    //   }
+    // }
 
     // // Emit event for new order
     // io.emit(VendorOrder, { message:"you have a new Order", vendor: input.vendorId });
@@ -329,7 +342,8 @@ export class OrderService {
     input: any,
     ownerId: string,
     totalPrice: number,
-    subTotalAmount: number
+    subTotalAmount: number,
+    delivery: DeliveryAddress
   ) => {
     const trackingCode = Utils.generateTrackingCode();
     return {
@@ -344,14 +358,10 @@ export class OrderService {
       transactionId: "",
       trackingCode,
       shopId: input.shopId,
-      deliveryAddress: input.deliveryAddress,
+      address: delivery.dataValues,
       deliveryOption: input.deliveryOption,
       additionalNotes: input.additionalNotes,
-      floorNumber: input.floorNumber,
-      houseNumber: input.houseNumber,
-      doorNumber: input.doorNumber,
-      latitude: input.latitude,
-      longitude: input.longitude,
+      deliveryId: delivery.dataValues.id,
     };
   };
   private createTransaction = (

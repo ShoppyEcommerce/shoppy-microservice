@@ -2,7 +2,7 @@ import { databaseConnection } from "../connection";
 import { Model, DataTypes } from "sequelize";
 import { UserModel } from "./user";
 
-export interface Profile {
+;export interface Profile {
   image: string;
   id: string;
   latitude: number;
@@ -13,7 +13,7 @@ export interface Profile {
   accountName?: string;
   accountNumber?: string;
   deliveryAddress?: Array<string>;
-  recipient?: string;
+  recipient?: string
   city?:string;
   state?:string;
   country?:string

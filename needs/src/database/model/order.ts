@@ -16,11 +16,9 @@ export interface Order {
   CancelOrderReason?: string;
   orderStatus: OrderStatus;
   deliveryOption: string;
-  houseNumber: string;
-  floorNumber: string;
-  doorNumber: string;
   additionalNotes: string;
-  deliveryAddress: string;
+  address: any;
+  deliveryId: string;
   deliveryFee?: number;
   riderId?: string;
   riderFee?: number;
@@ -32,8 +30,6 @@ export interface Order {
   createdAt?: Date;
   updatedAt?: Date;
   subTotalAmount?: number;
-  latitude?: number;
-  longitude?: number;
 }
 interface Product {
   id: string;
@@ -84,22 +80,11 @@ const OrderSchema = {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  deliveryAddress: {
-    type: DataTypes.STRING,
+  address: {
+    type: DataTypes.JSONB,
     allowNull: true,
   },
-  houseNumber: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  floorNumber: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  doorNumber: {
-    allowNull: true,
-    type: DataTypes.STRING,
-  },
+
   additionalNotes: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -116,14 +101,7 @@ const OrderSchema = {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
-  latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
-  },
-  longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
-  },
+
   subTotalAmount: {
     type: DataTypes.FLOAT,
     allowNull: true,
@@ -147,6 +125,10 @@ const OrderSchema = {
   },
 
   riderId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  deliveryId: {
     type: DataTypes.UUID,
     allowNull: true,
   },

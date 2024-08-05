@@ -56,12 +56,12 @@ export default (app: Application) => {
     ShopAuth,
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
-        const data = await service.createRecipient(req.body, req.user);
-        return successHandler(res, {
-          data,
-          message: "Recipient created successfully",
-          statusCode: 201,
-        });
+        // const data = await service.createRecipient(req.body, req.user);
+        // return successHandler(res, {
+        //   data,
+        //   message: "Recipient created successfully",
+        //   statusCode: 201,
+        // });
       } catch (error) {
         next(error);
       }

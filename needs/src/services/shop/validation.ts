@@ -1,5 +1,6 @@
 import Joi from "joi";
 import PasswordComplexity from "joi-password-complexity";
+import { EventType } from "../../database";
 
 const complexityOptions = {
   min: 8,
@@ -22,12 +23,17 @@ export const ActivateMerchant = Joi.object().keys({
   merchant_id: Joi.string().required(),
   bank_details: Joi.object()
     .keys({
-      Bank_name: Joi.string().required(),
-      Account_name: Joi.string().required(),
-      Account_number: Joi.string().required(),
+      account_number: Joi.string().required(),
+      bank_code: Joi.string().required(),
     })
     .required(),
-  eventType: Joi.string().required(),
+  eventType: Joi.string()
+    .valid(...Object.values(EventType))
+    .required(),
+  phone_number: PasswordComplexity(phoneComplexity).required(),
+  email: Joi.string().required(),
+  city: Joi.string().required(),
+  logo_url: Joi.string().required(),
 });
 //onboardThirdPartyStore
 export const ThirdPartStoreValidation = Joi.object().keys({
