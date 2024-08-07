@@ -42,7 +42,7 @@ export default (app: Application) => {
     async (req: Request | any, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
-        const { data } = await service.updateProfile(req.user, req.body);
+        const data = await service.updateProfile(req.user, req.body);
         return successHandler(res, {
           data,
           message: "profile updated successfully",

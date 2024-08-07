@@ -4,9 +4,9 @@ export class UserRepository {
   async createUser(input: User) {
     return await UserModel.create(input);
   }
-  async Find(input: Record<string, string>) {
+  async Find(input: Partial<User>) {
     return await UserModel.findOne({
-      where: input,
+      where: {...input, active:true},
       include: [
         {
           model: DeliveryAddress,
@@ -18,8 +18,12 @@ export class UserRepository {
     return await UserModel.findAll({
       where: {
         role: "user",
+        active:true
       },
     });
+  }
+  async update(update: Partial<User>, id: string) {
+    await UserModel.update(update, { where: { id, active:true } });
   }
 
   async deleteAccount(id: string) {

@@ -12,10 +12,10 @@ export interface User {
   referralCode: string;
   role: Role;
   createdAt?: Date;
-
+  active: boolean;
   OTP?: number | null;
   OTPExpiration?: number | null;
-  isverified: boolean
+  isverified: boolean;
 }
 export enum Role {
   ADMIN = "admin",
@@ -71,7 +71,11 @@ UserModel.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-  
+    active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+
     OTP: {
       type: DataTypes.DECIMAL,
       allowNull: true,
@@ -81,10 +85,10 @@ UserModel.init(
       type: DataTypes.DOUBLE,
       allowNull: true,
     },
-    isverified:{
+    isverified: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false
-    }
+      defaultValue: false,
+    },
   },
   { sequelize: databaseConnection, tableName: "user" }
 );

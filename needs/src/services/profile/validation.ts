@@ -1,4 +1,10 @@
 import Joi from "joi";
+import PasswordComplexity from "joi-password-complexity";
+const phoneComplexity = {
+  min: 11,
+  max: 11,
+  requirementCount: 2,
+};
 export const profileSchema = Joi.object().keys({
   image: Joi.string().optional(),
   latitude: Joi.number().required(),
@@ -21,6 +27,9 @@ export const UpdateProfileSchema = Joi.object().keys({
   state: Joi.string().optional(),
   country: Joi.string().optional(),
   deliveryAddress: Joi.array().items(Joi.string().optional()).optional(),
+  firstName: Joi.string().optional(),
+  lastName: Joi.string().optional(),
+  phoneNumber: PasswordComplexity(phoneComplexity).optional(),
 });
 export const UpdateBankDetails = Joi.object().keys({
   bankName: Joi.string().required(),

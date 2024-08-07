@@ -5,6 +5,7 @@ import {
   verifyOTPSchema,
   ResetPasswordValidation,
   ChangePasswordValidation,
+  DeleteValidate,
 } from "./validation";
 import {
   UserRepository,
@@ -318,5 +319,26 @@ export class UserService {
     };
 
     return user;
+  }
+  async deleteUser(body: any, userId: string) {
+    const { error, value } = DeleteValidate.validate(body, option);
+    if (error) {
+      throw new BadRequestError(error.details[0].message, "");
+    }
+
+    const exist = await this.userRepository.Find({ id: userId });
+    if (!exist) {
+      throw new BadRequestError("user does not exists", "");
+    }
+    console.log(exist, value);
+
+    const validate = await Utils.ComparePassword(
+      body.password,
+      exist.dataValues.password
+    );
+    if (!validate) {
+      throw new BadRequestError("invalid password", "");
+    }
+    await this.userRepository.update({active:false}, userId);
   }
 }

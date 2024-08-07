@@ -2,6 +2,7 @@ import {
   ProfileRepository,
   Profile,
   DeliveryAddressRepository,
+  UserRepository,
 } from "../../database";
 
 import { Utils } from "../../utils";
@@ -18,9 +19,11 @@ import { v4 as uuid } from "uuid";
 export class ProfileService {
   private repository: ProfileRepository;
   private delivery: DeliveryAddressService;
+  private userRepo: UserRepository;
   constructor() {
     this.repository = new ProfileRepository();
     this.delivery = new DeliveryAddressService();
+    this.userRepo = new UserRepository();
   }
   async createProfile(input: Profile, user: string) {
     const { error, value } = profileSchema.validate(input, option);
@@ -51,9 +54,34 @@ export class ProfileService {
     if (!exist) {
       throw new BadRequestError("Profile not found", "");
     }
+    if (value.firstName) {
+      await this.updateFirstName(value.firstName, userId);
+    }
+    if (value.lastName) {
+      await this.updateLastName(value.lastName, userId);
+    }
+    if (value.phoneNumber) {
+      await this.updatePhoneNumber(value.phoneNumber, userId);
+    }
 
-    const profile = await this.repository.update({ id: exist.id }, value);
-    return Utils.FormatData(profile[1][0].dataValues);
+    await this.repository.update({ id: exist.id }, value);
+    return "profile updated successfully";
+  }
+  private async updateFirstName(name: string, userId: string) {
+    await this.userRepo.update({ firstName: name }, userId);
+  }
+  private async updateLastName(name: string, userId: string) {
+    await this.userRepo.update({ lastName: name }, userId);
+  }
+  private async updatePhoneNumber(phone: string, userId: string) {
+    const number = Utils.intertionalizePhoneNumber(phone);
+
+    const exist = await this.userRepo.Find({ phone: number });
+    if (exist) {
+      throw new BadRequestError("phone number already in use", "");
+    }
+
+    await this.userRepo.update({ phone: number }, userId);
   }
   async deleteProfile(userId: string) {
     const exist = (await this.repository.getProfile({

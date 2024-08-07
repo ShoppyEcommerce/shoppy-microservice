@@ -157,4 +157,20 @@ export default (app: Application) => {
       }
     }
   );
+  app.delete(
+    "/user",
+    AuthMiddleware.Authenticate(["user"]),
+    async (req: Request | any, res: Response, next: NextFunction) => {
+      try {
+        const data = await service.deleteUser(req.body, req.user);
+        return successHandler(res, {
+          data,
+          message: "user deleted successfully",
+          statusCode: 200,
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
 };

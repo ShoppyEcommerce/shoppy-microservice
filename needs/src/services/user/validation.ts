@@ -42,14 +42,14 @@ export const verifyOTPSchema = Joi.object().keys({
 });
 export const ResetPasswordValidation = Joi.object().keys({
   OTP: Joi.number().required(),
-  phone:PasswordComplexity(phoneComplexity).required(),
+  phone: PasswordComplexity(phoneComplexity).required(),
   password: PasswordComplexity(complexityOptions).required(),
 });
 export const ChangePasswordValidation = Joi.object().keys({
   phone: PasswordComplexity(phoneComplexity).required(),
-  oldPassword:PasswordComplexity(complexityOptions).required(),
-  newPassword:PasswordComplexity(complexityOptions).required(),
-})
+  oldPassword: PasswordComplexity(complexityOptions).required(),
+  newPassword: PasswordComplexity(complexityOptions).required(),
+});
 export const option = {
   abortEarly: false,
   errors: {
@@ -58,3 +58,8 @@ export const option = {
     },
   },
 };
+
+export const DeleteValidate = Joi.object().keys({
+  password: PasswordComplexity(complexityOptions).required(),
+  reason: Joi.string().required(),
+});
